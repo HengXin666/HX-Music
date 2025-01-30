@@ -1,3 +1,21 @@
 <RCC>
     <qresource prefix="/"/>
+    <qresource prefix="/icons">
+    <file alias="back.svg">SrcFile/icons/back.svg</file>
+    <file alias="close.svg">SrcFile/icons/close.svg</file>
+    <file alias="download.svg">SrcFile/icons/download.svg</file>
+    <file alias="dropdown.svg">SrcFile/icons/dropdown.svg</file>
+    <file alias="edit.svg">SrcFile/icons/edit.svg</file>
+    <file alias="enter.svg">SrcFile/icons/enter.svg</file>
+    <file alias="follow_gray.svg">SrcFile/icons/follow_gray.svg</file>
+    <file alias="good.svg">SrcFile/icons/good.svg</file>
+    <file alias="home.svg">SrcFile/icons/home.svg</file>
+    <file alias="like.svg">SrcFile/icons/like.svg</file>
+    <file alias="message.svg">SrcFile/icons/message.svg</file>
+    <file alias="more.svg">SrcFile/icons/more.svg</file>
+    <file alias="search.svg">SrcFile/icons/search.svg</file>
+    <file alias="share.svg">SrcFile/icons/share.svg</file>
+    <file alias="time.svg">SrcFile/icons/time.svg</file>
+    <file alias="tip.svg">SrcFile/icons/tip.svg</file>
+</qresource>
 </RCC>
