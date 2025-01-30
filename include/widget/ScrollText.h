@@ -17,16 +17,18 @@
  * You should have received a copy of the GNU General Public License
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef _HX_MAIN_WINDOW_H_
-#define _HX_MAIN_WINDOW_H_
+#ifndef _HX_SCROLL_TEXT_H_
+#define _HX_SCROLL_TEXT_H_
 
-#include <QMainWindow>
-#include <QWidget>
+#include <QLabel>
 
-class MainWindow : public QWidget {
+/**
+ * @brief 滚动文本 (如果文本长度大于控件长度, 则会滚动)
+ */
+class ScrollText : public QLabel {
     Q_OBJECT
 public:
-    explicit MainWindow(QWidget *parent = nullptr);
+    explicit ScrollText(QWidget* parent = nullptr);
 };
 
-#endif // !_HX_MAIN_WINDOW_H_
+#endif // !_HX_SCROLL_TEXT_H_

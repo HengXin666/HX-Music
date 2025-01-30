@@ -1,12 +1,3 @@
-# 改用 clang 编译器
-# set(CMAKE_C_COMPILER clang)
-# set(CMAKE_CXX_COMPILER clang++)
-
-# 启用QT预编译
-set(CMAKE_AUTOUIC ON)
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-
 # 是否开启单元测试
 option(BUILD_UNIT_TESTS "Build unit tests" ON)
 message(STATUS "BUILD_UNIT_TESTS: ${BUILD_UNIT_TESTS}")
@@ -15,7 +6,8 @@ if(BUILD_UNIT_TESTS)
 endif()
 
 # 启用地址清理程序
-option(ENABLE_SANITIZER "Enable sanitizer(Debug+Gcc/Clang/AppleClang)" ON)
+# @todo 似乎有 bug
+option(ENABLE_SANITIZER "Enable sanitizer(Debug+Gcc/Clang/AppleClang)" OFF)
 
 if(ENABLE_SANITIZER AND NOT MSVC)
     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -31,7 +23,7 @@ endif()
 set(CMAKE_CXX_STANDARD 17) # 设置C++标准为C++17
 set(CMAKE_C_STANDARD 11)   # 设置C语言标准为C11
 set(CMAKE_CXX_STANDARD_REQUIRED ON) # 指定C++标准是必需的
-set(CMAKE_CXX_EXTENSIONS OFF) # 禁用编译器的扩展
+set(CMAKE_CXX_EXTENSIONS OFF)       # 禁用编译器的扩展
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fcoroutines") # 显式启动C++协程
 
 # 警告
