@@ -66,7 +66,6 @@ PlayBar::PlayBar(QWidget* parent)
         "单次播放",
         "单曲循环",
     });
-    _volumeBar->setIcon(QIcon(":/icons/volume_up.svg"));
     _btnLyric->setText("歌词");
     hPlaySettingLayout->addWidget(_cbxPlayMode);
     hPlaySettingLayout->addWidget(_volumeBar);

@@ -20,34 +20,56 @@
 #ifndef _HX_VOLUME_BAR_H_
 #define _HX_VOLUME_BAR_H_
 
+#include <QWidget>
 #include <QPushButton>
 #include <QSlider>
+#include <QLabel>
 #include <QEvent>
+#include <QVBoxLayout>
+
+#include <QDebug>
 
 /**
  * @brief 音量条: 点击是开关, 带有音量条鼠标悬浮
  */
-class VolumeBar : public QPushButton {
+class VolumeBar : public QWidget {
     Q_OBJECT
+
+    class VolumeSlider : public QWidget {
+        
+    public:
+        VolumeSlider(QWidget* parent = nullptr) 
+            : QWidget(parent) 
+        {
+            setWindowFlags(Qt::FramelessWindowHint | Qt::Popup); // 无边框 + 悬浮窗
+
+            _slider->setRange(0, 100);
+            _slider->setValue(75);
+
+            _textPercentage->setText(QString("%1%").arg(_slider->value()));
+
+            QVBoxLayout* vBL = new QVBoxLayout(this);
+            vBL->addWidget(_textPercentage);
+            vBL->addWidget(_slider);
+            setLayout(vBL);
+        }
+
+    protected:
+        void focusOutEvent(QFocusEvent* event) override {
+            hide(); // 失去焦点时自动隐藏
+        }
+    
+    private:
+        QSlider* _slider = new QSlider(Qt::Vertical, this);
+        QLabel* _textPercentage = new QLabel(this);
+    };
+
 public:
     explicit VolumeBar(QWidget* parent = nullptr);
 
-protected:
-    bool event(QEvent *event) override {
-        if (event->type() == QEvent::Enter) {
-            // 鼠标进入时显示音量条
-            if (isChecked()) {
-                _slider->setVisible(true);
-            }
-        } else if (event->type() == QEvent::Leave) {
-            // 鼠标离开时隐藏音量条
-            _slider->setVisible(false);
-        }
-        return QPushButton::event(event);
-    }
-
 private:
-    QSlider* _slider = new QSlider(Qt::Vertical, this);
+    VolumeSlider* _slider = new VolumeSlider(this);
+    QPushButton* _btn = new QPushButton(this);
 };
 
 #endif // !_HX_VOLUME_BAR_H_
