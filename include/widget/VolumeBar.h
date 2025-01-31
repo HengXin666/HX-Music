@@ -27,49 +27,72 @@
 #include <QEvent>
 #include <QVBoxLayout>
 
-#include <QDebug>
+/**
+ * @brief 悬浮音量条
+ */
+class VolumeSlider : public QWidget {
+    Q_OBJECT
+public:
+    VolumeSlider(QWidget* parent = nullptr, QPushButton* btn = nullptr) 
+        : QWidget(parent) 
+    {
+        setAttribute(Qt::WA_TranslucentBackground); // 设置没有窗体
+        setWindowFlags(Qt::FramelessWindowHint | Qt::Popup); // 无边框 + 悬浮窗
+
+        _slider->setRange(0, 100);
+        _slider->setValue(75);
+
+        _textPercentage->setText(QString("%1%").arg(_slider->value()));
+
+        QVBoxLayout* vBL = new QVBoxLayout(this);
+        vBL->addWidget(_textPercentage);
+        vBL->addWidget(_slider);
+        setLayout(vBL);
+
+        // 预先加载图标, 避免每次都加载文件
+        QIcon vLowIcon(":/icons/volume_low.svg");
+        QIcon vUpIcon(":/icons/volume_up.svg");
+        QIcon vOffIcon(":/icons/volume_off.svg");
+
+        // 拖动条值改变槽
+        connect(_slider, &QSlider::valueChanged, this,
+            [this, btn,
+            vLowIcon = std::move(vLowIcon),
+            vUpIcon = std::move(vUpIcon),
+            vOffIcon = std::move(vOffIcon)
+        ](
+            int val
+        ) {
+            _textPercentage->setText(QString("%1%").arg(val));
+            // 触发修改图标
+            // 如果音量在之前的区间则不修改
+            if (val >= 50) {
+                btn->setIcon(vUpIcon); // 使用缓存的图标
+            } else if (val > 0) {
+                btn->setIcon(vLowIcon);
+            } else {
+                btn->setIcon(vOffIcon);
+            }
+            // @todo 是否需要使用命令模式 + 观察者模式重构?
+        });
+    }
+
+private:
+    QSlider* _slider = new QSlider(Qt::Vertical, this);
+    QLabel* _textPercentage = new QLabel(this);
+};
 
 /**
  * @brief 音量条: 点击是开关, 带有音量条鼠标悬浮
  */
 class VolumeBar : public QWidget {
     Q_OBJECT
-
-    class VolumeSlider : public QWidget {
-        
-    public:
-        VolumeSlider(QWidget* parent = nullptr) 
-            : QWidget(parent) 
-        {
-            setWindowFlags(Qt::FramelessWindowHint | Qt::Popup); // 无边框 + 悬浮窗
-
-            _slider->setRange(0, 100);
-            _slider->setValue(75);
-
-            _textPercentage->setText(QString("%1%").arg(_slider->value()));
-
-            QVBoxLayout* vBL = new QVBoxLayout(this);
-            vBL->addWidget(_textPercentage);
-            vBL->addWidget(_slider);
-            setLayout(vBL);
-        }
-
-    protected:
-        void focusOutEvent(QFocusEvent* event) override {
-            hide(); // 失去焦点时自动隐藏
-        }
-    
-    private:
-        QSlider* _slider = new QSlider(Qt::Vertical, this);
-        QLabel* _textPercentage = new QLabel(this);
-    };
-
 public:
     explicit VolumeBar(QWidget* parent = nullptr);
 
 private:
-    VolumeSlider* _slider = new VolumeSlider(this);
     QPushButton* _btn = new QPushButton(this);
+    VolumeSlider* _slider = new VolumeSlider(this, _btn);
 };
 
 #endif // !_HX_VOLUME_BAR_H_
