@@ -3,6 +3,7 @@
 #include <QGridLayout>
 
 #include <widget/PlayBar.h>
+#include <widget/Sidebar.h>
 
 MainWindow::MainWindow(QWidget *parent)
     : QWidget(parent)
@@ -21,6 +22,8 @@ MainWindow::MainWindow(QWidget *parent)
     QGridLayout* gL = new QGridLayout(this);
 
     // 侧边栏
+    Sidebar* _leftSidebar = new Sidebar(this);
+    gL->addWidget(_leftSidebar, 1, 0, 1, 1);
 
     // 顶部栏
 
@@ -28,7 +31,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 底部播放栏
     PlayBar* _playBar = new PlayBar(this); 
-    gL->addWidget(_playBar, 1, 0, 1, 3);
+    gL->addWidget(_playBar, 2, 0, 1, 3);
 
     setLayout(gL);
 }

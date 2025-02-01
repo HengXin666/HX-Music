@@ -39,6 +39,8 @@ public:
         setAttribute(Qt::WA_TranslucentBackground); // 设置没有窗体
         setWindowFlags(Qt::FramelessWindowHint | Qt::Popup); // 无边框 + 悬浮窗
 
+        btn->setIcon(QIcon(":/icons/volume_up.svg"));
+
         _slider->setRange(0, 100);
         _slider->setValue(75);
 
@@ -73,7 +75,7 @@ public:
             } else {
                 btn->setIcon(vOffIcon);
             }
-            // @todo 是否需要使用命令模式 + 观察者模式重构?
+            // @todo 是否需要使用命令模式 + 观察者模式/中介者模式 重构?
         });
     }
 

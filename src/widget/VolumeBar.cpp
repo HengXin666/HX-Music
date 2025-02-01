@@ -6,7 +6,6 @@
 VolumeBar::VolumeBar(QWidget* parent)
     : QWidget(parent)
 {
-    _btn->setIcon(QIcon(":/icons/volume_up.svg"));
     _slider->hide();        // 初始隐藏
 
     QVBoxLayout* layout = new QVBoxLayout(this);
