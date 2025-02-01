@@ -6,6 +6,7 @@
 #include <widget/PlayBar.h>
 #include <widget/Sidebar.h>
 #include <widget/MainDisplayBar.h>
+#include <widget/TopBar.h>
 
 MainWindow::MainWindow(QWidget *parent)
     : QWidget(parent)
@@ -38,6 +39,8 @@ MainWindow::MainWindow(QWidget *parent)
     gL->addWidget(_leftSidebar, 1, 0, 1, 1);
 
     // 顶部栏
+    TopBar* _topBal = new TopBar(this);
+    gL->addWidget(_topBal, 0, 1, 1, -1);
 
     // 中间正文
     MainDisplayBar* _mainDisplayBar = new MainDisplayBar(this);
