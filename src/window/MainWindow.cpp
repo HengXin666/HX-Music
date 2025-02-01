@@ -1,6 +1,7 @@
 #include <window/MainWindow.h>
 
 #include <QGridLayout>
+#include <QImage>
 
 #include <widget/PlayBar.h>
 #include <widget/Sidebar.h>
@@ -21,6 +22,14 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 网格布局
     QGridLayout* gL = new QGridLayout(this);
+
+    // logo
+    QImage logoImg = QImage(":/logo/HXMusic_logo.png");
+    QLabel* _logo = new QLabel(this);
+    _logo->setPixmap(QPixmap::fromImage(logoImg).scaled(160, 100, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    _logo->setGeometry(logoImg.rect());
+    _logo->setFixedSize({160, 50});
+    gL->addWidget(_logo, 0, 0, 1, 1);
 
     // 侧边栏
     Sidebar* _leftSidebar = new Sidebar(this);

@@ -2,8 +2,6 @@
 
 #include <QVBoxLayout>
 
-#include <QLabel>
-
 MainDisplayBar::MainDisplayBar(QWidget* parent)
     : QWidget(parent)
 {

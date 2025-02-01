@@ -25,4 +25,7 @@
         <file alias="volume_low.svg">icons/volume_low.svg</file>
         <file alias="volume_off.svg">icons/volume_off.svg</file>
     </qresource>
+    <qresource prefix="/logo">
+        <file alias="HXMusic_logo.png">logo/HXMusic_logo.png</file>
+    </qresource>
 </RCC>
