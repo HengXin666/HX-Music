@@ -1,6 +1,12 @@
 #include <widget/Sidebar.h>
 
+#include <vector>
+#include <tuple>
+#include <functional>
 #include <QPushButton>
+
+#include <utils/TupleElementExtractor.hpp>
+#include <widget/DividerWidget.h>
 
 Sidebar::Sidebar(QWidget* parent)
     : QListWidget(parent)
@@ -15,27 +21,50 @@ Sidebar::Sidebar(QWidget* parent)
         我的歌单
         ...
     */
-    QString divider{"-----"};
+    QString divider{};
 
-    for (auto& it : {
-        new QListWidgetItem {QIcon{":/icons/home.svg"}, "音乐"},
-        new QListWidgetItem {divider},
-        new QListWidgetItem {QIcon{":/icons/like.svg"}, "我的收藏"},
-        new QListWidgetItem {QIcon{":/icons/time.svg"}, "最近播放"},
-        new QListWidgetItem {QIcon{":/icons/download.svg"}, "本地与下载"},
-        new QListWidgetItem {divider},
-    }) {
-        addItem(it);
+    std::vector<std::tuple<QListWidgetItem*, std::function<void()>>>
+        itemFuns {
+        {new QListWidgetItem {QIcon{
+            ":/icons/home.svg"},
+            "音乐"}, 
+        []{}},
+        {new QListWidgetItem {divider}, []{}},
+        {new QListWidgetItem {QIcon{
+            ":/icons/like.svg"},
+            "我的收藏"},
+        []{}},
+        {new QListWidgetItem {QIcon{
+            ":/icons/time.svg"},
+            "最近播放"},
+        []{}},
+        {new QListWidgetItem {
+            QIcon{":/icons/download.svg"},
+            "本地与下载"},
+        []{
+            // 切换到 本地与下载 界面
+        }},
+        {new QListWidgetItem {divider}, []{}},
+    };
+
+    for (auto& it : HX::TupleElementExtractor::extractorToVector<0>(itemFuns)) {
+        if (it->text() == divider) {
+            QListWidgetItem* dividerItem = new QListWidgetItem();
+            dividerItem->setFlags(Qt::NoItemFlags); // 禁用选择效果
+            addItem(dividerItem);
+            setItemWidget(dividerItem, new DividerWidget());
+        } else {
+            addItem(it);
+        }
     }
 
     // 连接 currentRowChanged 信号到槽, 获取点击的项的索引
     connect(this, &QListWidget::currentRowChanged, this,
-    [this, divider = std::move(divider)](
+    [this, funs = HX::TupleElementExtractor::extractorToVector<1>(itemFuns)](
         int index
     ) {
         auto* item = this->item(index);
-        if (item->text() == divider) // 屏蔽分割线的影响
-            return;
         qDebug() << index;
+        funs[index]();
     });
 }
