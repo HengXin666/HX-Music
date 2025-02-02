@@ -5,6 +5,8 @@
         <file alias="close.svg">icons/close.svg</file>
         <file alias="download.svg">icons/download.svg</file>
         <file alias="dropdown.svg">icons/dropdown.svg</file>
+        <file alias="up.svg">icons/up.svg</file>
+        <file alias="restore.svg">icons/restore.svg</file>
         <file alias="edit.svg">icons/edit.svg</file>
         <file alias="enter.svg">icons/enter.svg</file>
         <file alias="follow_gray.svg">icons/follow_gray.svg</file>
@@ -24,6 +26,8 @@
         <file alias="volume_up.svg">icons/volume_up.svg</file>
         <file alias="volume_low.svg">icons/volume_low.svg</file>
         <file alias="volume_off.svg">icons/volume_off.svg</file>
+        <file alias="mail.svg">icons/mail.svg</file>
+        <file alias="setting.svg">icons/setting.svg</file>
     </qresource>
     <qresource prefix="/logo">
         <file alias="HXMusic_logo.png">logo/HXMusic_logo.png</file>

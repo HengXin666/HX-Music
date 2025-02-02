@@ -16,7 +16,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 配置为无边窗口 | Qt::FramelessWindowHint
     // Arch本机不可用
-    // setWindowFlags(Qt::Window);
+    // setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
 
     // 设置窗口大小
     resize(800, 600);
