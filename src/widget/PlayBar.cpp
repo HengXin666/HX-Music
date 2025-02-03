@@ -22,10 +22,10 @@ PlayBar::PlayBar(QWidget* parent)
     _testMusicData->setText("歌曲信息(滚动) (歌曲名称 歌手名称 均可点击)");
     
     // 水平布局 (下方 总操作布局)
-    QHBoxLayout* hMainMusicOp = new QHBoxLayout(this);
+    QHBoxLayout* hMainMusicOp = new QHBoxLayout();
 
     // 操作 水平布局
-    QHBoxLayout* hLayoutActions = new QHBoxLayout(this);
+    QHBoxLayout* hLayoutActions = new QHBoxLayout();
     
     _btnLike->setIcon(QIcon(":/icons/like.svg"));
     _btnComment->setIcon(QIcon(":/icons/message.svg"));
@@ -41,7 +41,7 @@ PlayBar::PlayBar(QWidget* parent)
     hLayoutActions->addWidget(_textTimeProgress);
 
     // 歌曲信息&操作垂直布局
-    QVBoxLayout* vSongDataAndOpLayout = new QVBoxLayout(this);
+    QVBoxLayout* vSongDataAndOpLayout = new QVBoxLayout();
     vSongDataAndOpLayout->addWidget(_testMusicData);
     vSongDataAndOpLayout->addLayout(hLayoutActions);
 
@@ -49,7 +49,7 @@ PlayBar::PlayBar(QWidget* parent)
     vBL->addLayout(hMainMusicOp);
 
     // 上一首/暂停/下一首
-    QHBoxLayout* hPlayOpLayout = new QHBoxLayout(this);
+    QHBoxLayout* hPlayOpLayout = new QHBoxLayout();
     _btnPrevious->setIcon(QIcon(":/icons/previous.svg"));
     _btnPlayPause->setIcon(QIcon(":/icons/play.svg"));
     _btnNext->setIcon(QIcon(":/icons/next.svg"));
@@ -59,7 +59,7 @@ PlayBar::PlayBar(QWidget* parent)
     hMainMusicOp->addLayout(hPlayOpLayout);
 
     // 播放序列/音量大小/歌词
-    QHBoxLayout* hPlaySettingLayout = new QHBoxLayout(this);
+    QHBoxLayout* hPlaySettingLayout = new QHBoxLayout();
     _cbxPlayMode->addItems({
         "列表循环",
         "随机播放",
@@ -71,6 +71,4 @@ PlayBar::PlayBar(QWidget* parent)
     hPlaySettingLayout->addWidget(_volumeBar);
     hPlaySettingLayout->addWidget(_btnLyric);
     hMainMusicOp->addLayout(hPlaySettingLayout);
-
-    setLayout(vBL);
 }

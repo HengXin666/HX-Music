@@ -21,7 +21,8 @@
 #define _HX_LOCAL_AND_DOWNLOAD_VIEW_H_
 
 #include <QWidget>
-#include <QTreeWidget>
+
+#include <widget/MusicTreeWidget.h>
 
 /**
  * @brief 本地与下载界面
@@ -33,7 +34,7 @@ public:
     explicit LocalAndDownloadView(QWidget* parent = nullptr);
 
 private:
-    QTreeWidget* _tree = new QTreeWidget(this);
+    MusicTreeWidget* _tree = new MusicTreeWidget(this);
 };
 
 #endif // !_HX_LOCAL_AND_DOWNLOAD_VIEW_H_

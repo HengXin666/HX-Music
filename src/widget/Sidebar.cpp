@@ -66,8 +66,7 @@ Sidebar::Sidebar(QWidget* parent)
     [this, funs = HX::TupleElementExtractor::extractorToVector<1>(itemFuns)](
         int index
     ) {
-        auto* item = this->item(index);
-        qDebug() << index;
+        // auto* item = this->item(index);
         funs[index]();
     });
 }

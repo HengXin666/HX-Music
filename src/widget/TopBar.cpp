@@ -24,7 +24,7 @@ TopBar::TopBar(QWidget* parent)
     });
 
     // 搜索栏
-    QHBoxLayout* hlSearch = new QHBoxLayout(this);
+    QHBoxLayout* hlSearch = new QHBoxLayout();
     _btnSearch->setIcon(QIcon{":/icons/search.svg"});
     _textSearch->setPlaceholderText("搜索");
     hlSearch->addWidget(_btnSearch);
@@ -33,7 +33,7 @@ TopBar::TopBar(QWidget* parent)
     hBL->addStretch();
 
     // 头像 用户名 等级
-    QHBoxLayout* hlUser = new QHBoxLayout(this);
+    QHBoxLayout* hlUser = new QHBoxLayout();
     _imgAvatar->setText("头像");
     _textUsername->setText("用户名");
     _textLevel->setText("Lv 6");
@@ -60,7 +60,7 @@ TopBar::TopBar(QWidget* parent)
     hBL->addWidget(separator);
 
     // 隐藏 最大化 关闭
-    QHBoxLayout* hlWindow = new QHBoxLayout(this);
+    QHBoxLayout* hlWindow = new QHBoxLayout();
     _btnHide->setIcon(QIcon{":/icons/dropdown.svg"});
     _btnMaximize->setIcon(QIcon{":/icons/up.svg"});
     _btnClose->setIcon(QIcon{":/icons/close.svg"});
@@ -82,6 +82,4 @@ TopBar::TopBar(QWidget* parent)
     hlWindow->addWidget(_btnMaximize);
     hlWindow->addWidget(_btnClose);
     hBL->addLayout(hlWindow);
-
-    setLayout(hBL);
 }
