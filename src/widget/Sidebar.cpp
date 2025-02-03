@@ -7,6 +7,8 @@
 
 #include <utils/TupleElementExtractor.hpp>
 #include <widget/DividerWidget.h>
+#include <singleton/GlobalSingleton.hpp>
+#include <views/LocalAndDownloadView.h>
 
 Sidebar::Sidebar(QWidget* parent)
     : QListWidget(parent)
@@ -43,6 +45,7 @@ Sidebar::Sidebar(QWidget* parent)
             "本地与下载"},
         []{
             // 切换到 本地与下载 界面
+            GlobalSingleton::get().imp.pushView(new LocalAndDownloadView);
         }},
         {new QListWidgetItem {divider}, []{}},
     };

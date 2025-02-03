@@ -3,13 +3,25 @@
 #include <QHBoxLayout>
 #include <QMenu>
 
+#include <singleton/GlobalSingleton.hpp>
+
 TopBar::TopBar(QWidget* parent)
     : QWidget(parent)
 {
     /* 顶部栏 ui
-        搜索栏 | ... | 头像 用户名 等级 | 消息 更多(设置/...反正是个选项卡) | 隐藏 最大化 关闭
+        (回退) | 搜索栏 | ... | 头像 用户名 等级 | 消息 更多(设置/...反正是个选项卡) | 隐藏 最大化 关闭
     */
     QHBoxLayout* hBL = new QHBoxLayout(this);
+
+    // 如果存在可回退界面, 则显示该按钮
+    _btnPop->setIcon(QIcon{":/icons/back.svg"});
+    _btnPop->setToolTip("回退");
+    hBL->addWidget(_btnPop);
+
+    // 回退按钮
+    connect(_btnPop, &QPushButton::clicked, this, [this]() {
+        GlobalSingleton::get().imp.popView();
+    });
 
     // 搜索栏
     QHBoxLayout* hlSearch = new QHBoxLayout(this);

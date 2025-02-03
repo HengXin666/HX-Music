@@ -17,28 +17,25 @@
  * You should have received a copy of the GNU General Public License
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef _HX_MAIN_DISPLAY_BAR_H_
-#define _HX_MAIN_DISPLAY_BAR_H_
+#ifndef _HX_GLOBAL_SINGLETON_H_
+#define _HX_GLOBAL_SINGLETON_H_
 
-#include <QStackedWidget>
-#include <QPushButton>
-#include <QStack>
-#include <QPointer>
+#include <views/InterfaceManagementProxy.h>
 
 /**
- * @brief 主显示栏
+ * @brief 全局单例
  */
-class MainDisplayBar : public QWidget {
-    Q_OBJECT
-public:
-    explicit MainDisplayBar(QWidget* parent = nullptr);
+struct GlobalSingleton {
+    inline static GlobalSingleton& get() {
+        static GlobalSingleton s{};
+        return s;
+    }
 
+    /// @brief 界面管理代理类
+    InterfaceManagementProxy imp;
 private:
-    friend class InterfaceManagementProxy;
-
-    // 页面栈, 当前控件永远只显示栈顶的控件
-    // QStack<QPointer<QWidget>> _pageStack {}; // todo 屁用没有
-    QStackedWidget* _stackedWidget = new QStackedWidget(this);
+    GlobalSingleton() = default;
+    GlobalSingleton& operator=(GlobalSingleton&&) = default;
 };
 
-#endif // !_HX_MAIN_DISPLAY_BAR_H_
+#endif // !_HX_GLOBAL_SINGLETON_H_

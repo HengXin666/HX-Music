@@ -82,6 +82,9 @@ private:
         }
     }
 
+    // 如果存在可回退界面, 则显示该按钮
+    QPushButton* _btnPop = new QPushButton(this);
+
     // 搜索栏
     QPushButton* _btnSearch = new QPushButton(this);
     QLineEdit* _textSearch = new QLineEdit(this);

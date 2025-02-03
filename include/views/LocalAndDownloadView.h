@@ -17,28 +17,23 @@
  * You should have received a copy of the GNU General Public License
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef _HX_MAIN_DISPLAY_BAR_H_
-#define _HX_MAIN_DISPLAY_BAR_H_
+#ifndef _HX_LOCAL_AND_DOWNLOAD_VIEW_H_
+#define _HX_LOCAL_AND_DOWNLOAD_VIEW_H_
 
-#include <QStackedWidget>
-#include <QPushButton>
-#include <QStack>
-#include <QPointer>
+#include <QWidget>
+#include <QTreeWidget>
 
 /**
- * @brief 主显示栏
+ * @brief 本地与下载界面
  */
-class MainDisplayBar : public QWidget {
+class LocalAndDownloadView : public QWidget {
     Q_OBJECT
+
 public:
-    explicit MainDisplayBar(QWidget* parent = nullptr);
+    explicit LocalAndDownloadView(QWidget* parent = nullptr);
 
 private:
-    friend class InterfaceManagementProxy;
-
-    // 页面栈, 当前控件永远只显示栈顶的控件
-    // QStack<QPointer<QWidget>> _pageStack {}; // todo 屁用没有
-    QStackedWidget* _stackedWidget = new QStackedWidget(this);
+    QTreeWidget* _tree = new QTreeWidget(this);
 };
 
-#endif // !_HX_MAIN_DISPLAY_BAR_H_
+#endif // !_HX_LOCAL_AND_DOWNLOAD_VIEW_H_
