@@ -6,7 +6,7 @@
 #include <taglib/fileref.h>
 #include <taglib/tag.h>
 
-#include <utils/FileInfo.hpp>
+#include <utils/MusicInfo.hpp>
 
 MusicTreeWidget::MusicTreeWidget(QWidget* parent)
     : QTreeWidget(parent)
@@ -85,27 +85,7 @@ bool MusicTreeWidget::addFileItem(
     QTreeWidgetItem *parentItem
 ) {
     QTreeWidgetItem *item = new QTreeWidgetItem;
-
-    QSet<QString> extensionList {
-        "mp3",
-        "wav",
-        "flac",
-        "ogg",
-        "mpc",
-        "spx",
-        "wv",
-        "tta",
-        "aiff",
-        "aif",
-        "mp4",
-        "ape",
-        "asf",
-        "dsf",
-        "dff",
-        "acc",
-    };
-
-    if (extensionList.find(fileInfo.suffix()) == extensionList.end()) {
+    if (HX::MusicInfo::isNotSupport(fileInfo)) {
         return false;
     }
 
@@ -113,32 +93,17 @@ bool MusicTreeWidget::addFileItem(
     const char* encodedName = fileName.constData();
     TagLib::FileRef musicFile{encodedName};
 
-    if (!musicFile.isNull() && musicFile.tag()) {
-        TagLib::Tag* tag = musicFile.tag();
-        auto title = QString::fromStdString(tag->title().to8Bit(true));
-        if (title.isEmpty()) {
-            item->setText(1, fileInfo.fileName());
-        } else {
-            item->setText(1, title);
-        }
-        item->setText(2, QString::fromStdString(tag->artist().to8Bit(true)));
-        item->setText(3, QString::fromStdString(tag->album().to8Bit(true)));
-    } else {
-        item->setText(1, fileInfo.fileName());
-    }
-
-    if (!musicFile.isNull() && musicFile.audioProperties()) {
-        TagLib::AudioProperties *properties = musicFile.audioProperties();
-        int time = properties->lengthInSeconds();
-        int hTime = time / 3600;
-        item->setText(4, QString{"%1%2:%3"}.arg(
-            hTime ? QString{"%1:"}.arg(hTime) : ""
-        ).arg(time / 60 % 60).arg(time % 60));
-    }
-
+    HX::MusicInfo musicInfo{fileInfo};
+    item->setText(1, musicInfo.getTitle());
+    item->setText(2, musicInfo.getArtist());
+    item->setText(3, musicInfo.getAlbum());
+    item->setText(4, musicInfo.formatTimeLengthToHHMMSS());
     item->setText(5, HX::FileInfo::convertByteSizeToHumanReadable(fileInfo.size()));
     // 根据需要设置图标，这里假设你已经有相应的图标资源
-    // item->setIcon(0, QIcon(":/icon/file.png"));
+    item->setIcon(1, QIcon(
+        musicInfo.getAlbumArtAdvanced()
+    ));
+    
     
     setNodeType(item, NodeType::File);
 
