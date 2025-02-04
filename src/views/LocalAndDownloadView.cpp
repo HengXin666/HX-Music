@@ -28,14 +28,5 @@ LocalAndDownloadView::LocalAndDownloadView(QWidget* parent)
     //     "}"
     // );
 
-
-    _tree->setHeaderLabels({
-        "",
-        "名称",
-        "专辑",
-        "时长",
-        "大小"
-    });
-
     setLayout(vBL);
 }

@@ -25,8 +25,6 @@
 #include <QMimeData>
 #include <QFileInfo>
 
-#include <utils/FileInfo.hpp>
-
 /**
  * @brief 音乐树状显示控件
  */
@@ -47,7 +45,7 @@ class MusicTreeWidget : public QTreeWidget {
         );
         item->setData(0, Qt::UserRole, static_cast<unsigned int>(type));
     }
-
+    
     NodeType getNodeType(QTreeWidgetItem *item) {
         return static_cast<NodeType>(
             item->data(0, Qt::UserRole).toUInt()
@@ -65,24 +63,7 @@ public:
      * @return true 添加成功
      * @return false 添加失败: 该元素不可播放/暂不支持
      */
-    bool addFileItem(const QFileInfo &fileInfo, int index, QTreeWidgetItem *parentItem) {
-        QTreeWidgetItem *item = new QTreeWidgetItem;
-        item->setText(1, fileInfo.fileName());
-        item->setText(4, HX::FileInfo::convertByteSizeToHumanReadable(fileInfo.size()));
-        // 根据需要设置图标，这里假设你已经有相应的图标资源
-        // item->setIcon(0, QIcon(":/icon/file.png"));
-        
-        setNodeType(item, NodeType::File);
-
-        // 如果拖拽到某个文件夹项上，可以进行判断并添加为其子项
-        if (parentItem && getNodeType(parentItem) == NodeType::Folder) {
-            parentItem->insertChild(index, item);
-            parentItem->setExpanded(true);
-        } else {
-            insertTopLevelItem(index, item);
-        }
-        return true;
-    }
+    bool addFileItem(const QFileInfo &fileInfo, int index, QTreeWidgetItem *parentItem);
 
     /**
      * @brief 添加一个文件夹节点
@@ -90,62 +71,13 @@ public:
      * @param index 
      * @param parentItem 
      */
-    void addFolderItem(const QFileInfo &fileInfo, int index, QTreeWidgetItem *parentItem) {
-        namespace fs = std::filesystem;
-
-        // 1. 新建一个目录元素
-        QTreeWidgetItem* item = new QTreeWidgetItem;
-        item->setIcon(1, QIcon{":/icons/folder-open.svg"});
-        item->setText(1, fileInfo.fileName());
-        setNodeType(item, NodeType::Folder);
-
-
-        if (parentItem && getNodeType(parentItem) == NodeType::Folder) {
-            parentItem->insertChild(index, item);
-            parentItem->setExpanded(true);
-        } else {
-            insertTopLevelItem(index, item);
-        }
-
-        // 2. 递归遍历文件夹, 并且构建
-        int i = 0;
-        for (auto const& it : fs::directory_iterator{
-            fileInfo.filesystemFilePath()
-        }) {
-            if (it.is_directory()) { // 是文件夹
-                addFolderItem(QFileInfo{it.path()}, i, item);
-            } else {
-                addFileItem(QFileInfo{it.path()}, i, item);
-            }
-            ++i;
-        }
-
-        // 3. 更新计数
-        updateItemNumber(item);
-    }
+    void addFolderItem(const QFileInfo &fileInfo, int index, QTreeWidgetItem *parentItem);
 
     /**
      * @brief 更新`parentItem`代表的`一层`音频的编号
      * @param parentItem 需要更新的元素的父节点, 如果是顶层则为`nullptr`
      */
-    void updateItemNumber(QTreeWidgetItem *parentItem) {
-        int fileCnt = 0;
-        if (!parentItem) {
-            for (int i = 0; i < topLevelItemCount(); ++i) {
-                auto* child = topLevelItem(i);
-                if (getNodeType(child) == NodeType::File) {
-                    child->setText(0, QString("%1.").arg(++fileCnt));
-                }
-            }
-            return;
-        }
-        for (int i = 0; i < parentItem->childCount(); ++i) {
-            auto* child = parentItem->child(i);
-            if (getNodeType(child) == NodeType::File) {
-                child->setText(0, QString("%1.").arg(++fileCnt));
-            }
-        }
-    }
+    void updateItemNumber(QTreeWidgetItem *parentItem);
 
 protected:
     void dragEnterEvent(QDragEnterEvent *event) override {
@@ -177,6 +109,7 @@ protected:
             // 目标位置
             auto [parentItem, insertRow] = determineDropPosition(event);
 
+            // 保证不能是 往普通文件中插入
             if (parentItem 
                 && insertRow < parentItem->childCount()
                 && getNodeType(parentItem->child(insertRow)) == NodeType::File

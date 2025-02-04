@@ -42,6 +42,13 @@ target_link_libraries(HX-Music
     PRIVATE Qt${QT_VERSION_MAJOR}::Gui
 )
 
+# find_package(Qt6 REQUIRED COMPONENTS Multimedia)
+# target_link_libraries(HX-Music PRIVATE Qt6::Multimedia)
+
+# 第三方依赖
+find_package(TagLib REQUIRED)
+target_link_libraries(HX-Music PRIVATE TagLib)
+
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an
 # explicit, fixed bundle identifier manually though.

@@ -27,30 +27,29 @@ namespace HX {
 
 struct FileInfo {
 
-/**
- * @brief 转换`字节`为人类可读的单位
- * @param bytes 
- * @return QString 
- */
-inline static QString convertByteSizeToHumanReadable(float bytes) {
-    QStringList unitList {
-        "KiB",
-        "MiB",
-        "GiB",
-        "TiB",
-    };
+    /**
+    * @brief 转换`字节`为人类可读的单位
+    * @param bytes 
+    * @return QString 
+    */
+    inline static QString convertByteSizeToHumanReadable(float bytes) {
+        QStringList unitList {
+            "KiB",
+            "MiB",
+            "GiB",
+            "TiB",
+        };
 
-    QStringListIterator it{unitList};
-    QString unit{"B"};
+        QStringListIterator it{unitList};
+        QString unit{"B"};
 
-    while(bytes >= 1024.0 && it.hasNext())
-     {
-        unit = it.next();
-        bytes /= 1024.0;
+        while(bytes >= 1024.0 && it.hasNext())
+        {
+            unit = it.next();
+            bytes /= 1024.0;
+        }
+        return QString().setNum(bytes,'f',2) + " " + unit;
     }
-    return QString().setNum(bytes,'f',2) + " " + unit;
-}
-
 };
 
 } // namespace HX

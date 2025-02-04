@@ -1,18 +1,31 @@
 #include <widget/MusicTreeWidget.h>
 
 #include <QMenu>
+#include <QHeaderView>
+
+#include <taglib/fileref.h>
+#include <taglib/tag.h>
+
+#include <utils/FileInfo.hpp>
 
 MusicTreeWidget::MusicTreeWidget(QWidget* parent)
     : QTreeWidget(parent)
 {
-    setStyleSheet("QTreeWidget::item { "
-        "margin: 10px;"
-    " }");
-
     setDragEnabled(true);
     setAcceptDrops(true);
     setDropIndicatorShown(true);
     setDragDropMode(QAbstractItemView::InternalMove);
+
+    setHeaderLabels({
+        "",
+        "名称",
+        "歌手",
+        "专辑",
+        "时长",
+        "大小"
+    });
+
+    header()->setSectionResizeMode(QHeaderView::ResizeToContents); // 自动调整列宽
 
     // 点击节点
     connect(this, &QTreeWidget::itemClicked, this, 
@@ -64,4 +77,130 @@ MusicTreeWidget::MusicTreeWidget(QWidget* parent)
             qDebug() << "选择了属性：" << item->text(0);
         }
     });
+}
+
+bool MusicTreeWidget::addFileItem(
+    const QFileInfo &fileInfo, 
+    int index, 
+    QTreeWidgetItem *parentItem
+) {
+    QTreeWidgetItem *item = new QTreeWidgetItem;
+
+    QSet<QString> extensionList {
+        "mp3",
+        "wav",
+        "flac",
+        "ogg",
+        "mpc",
+        "spx",
+        "wv",
+        "tta",
+        "aiff",
+        "aif",
+        "mp4",
+        "ape",
+        "asf",
+        "dsf",
+        "dff",
+        "acc",
+    };
+
+    if (extensionList.find(fileInfo.suffix()) == extensionList.end()) {
+        return false;
+    }
+
+    QByteArray fileName = QFile::encodeName( fileInfo.canonicalFilePath() );
+    const char* encodedName = fileName.constData();
+    TagLib::FileRef musicFile{encodedName};
+
+    if (!musicFile.isNull() && musicFile.tag()) {
+        TagLib::Tag* tag = musicFile.tag();
+        auto title = QString::fromStdString(tag->title().to8Bit(true));
+        if (title.isEmpty()) {
+            item->setText(1, fileInfo.fileName());
+        } else {
+            item->setText(1, title);
+        }
+        item->setText(2, QString::fromStdString(tag->artist().to8Bit(true)));
+        item->setText(3, QString::fromStdString(tag->album().to8Bit(true)));
+    } else {
+        item->setText(1, fileInfo.fileName());
+    }
+
+    if (!musicFile.isNull() && musicFile.audioProperties()) {
+        TagLib::AudioProperties *properties = musicFile.audioProperties();
+        int time = properties->lengthInSeconds();
+        int hTime = time / 3600;
+        item->setText(4, QString{"%1%2:%3"}.arg(
+            hTime ? QString{"%1:"}.arg(hTime) : ""
+        ).arg(time / 60 % 60).arg(time % 60));
+    }
+
+    item->setText(5, HX::FileInfo::convertByteSizeToHumanReadable(fileInfo.size()));
+    // 根据需要设置图标，这里假设你已经有相应的图标资源
+    // item->setIcon(0, QIcon(":/icon/file.png"));
+    
+    setNodeType(item, NodeType::File);
+
+    // 如果拖拽到某个文件夹项上，可以进行判断并添加为其子项
+    if (parentItem && getNodeType(parentItem) == NodeType::Folder) {
+        parentItem->insertChild(index, item);
+        parentItem->setExpanded(true);
+    } else {
+        insertTopLevelItem(index, item);
+    }
+    return true;
+}
+
+void MusicTreeWidget::addFolderItem(const QFileInfo &fileInfo, int index, QTreeWidgetItem *parentItem)  {
+    namespace fs = std::filesystem;
+
+    // 1. 新建一个目录元素
+    QTreeWidgetItem* item = new QTreeWidgetItem;
+    item->setIcon(1, QIcon{":/icons/folder-open.svg"});
+    item->setText(1, fileInfo.fileName());
+    setNodeType(item, NodeType::Folder);
+
+
+    if (parentItem && getNodeType(parentItem) == NodeType::Folder) {
+        parentItem->insertChild(index, item);
+        parentItem->setExpanded(true);
+    } else {
+        insertTopLevelItem(index, item);
+    }
+
+    // 2. 递归遍历文件夹, 并且构建
+    int i = 0;
+    for (auto const& it : fs::directory_iterator{
+        fileInfo.filesystemFilePath()
+    }) {
+        if (it.is_directory()) { // 是文件夹
+            addFolderItem(QFileInfo{it.path()}, i, item);
+        } else {
+            addFileItem(QFileInfo{it.path()}, i, item);
+        }
+        ++i;
+    }
+
+    // 3. 更新计数
+    updateItemNumber(item);
+}
+
+void MusicTreeWidget::updateItemNumber(QTreeWidgetItem *parentItem) {
+    int fileCnt = 0;
+    if (!parentItem) {
+        for (int i = 0; i < topLevelItemCount(); ++i) {
+            auto* child = topLevelItem(i);
+            if (getNodeType(child) == NodeType::File) {
+                child->setText(0, QString("%1.").arg(++fileCnt));
+            }
+        }
+        return;
+    }
+    for (int i = 0; i < parentItem->childCount(); ++i) {
+        auto* child = parentItem->child(i);
+        if (getNodeType(child) == NodeType::File) {
+            child->setText(0, QString("%1.").arg(++fileCnt));
+        }
+    }
 }
