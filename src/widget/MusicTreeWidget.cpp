@@ -6,7 +6,6 @@ MusicTreeWidget::MusicTreeWidget(QWidget* parent)
     : QTreeWidget(parent)
 {
     setStyleSheet("QTreeWidget::item { "
-        "border-color: green;"
         "margin: 10px;"
     " }");
 

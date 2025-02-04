@@ -152,25 +152,23 @@ protected:
         if (event->source() == this) {
             event->accept();
             return;
-        }
-        // 判断是否包含文件URL数据
-        if (event->mimeData()->hasUrls()) {
+        } else if (event->mimeData()->hasUrls()) {
             event->acceptProposedAction();
         } else {
             event->ignore();
         }
+        QTreeWidget::dragEnterEvent(event);
     }
 
     void dragMoveEvent(QDragMoveEvent *event) override {
         if (event->source() == this) {
             event->accept();
-            return;
-        }
-        if (event->mimeData()->hasUrls()) {
+        } else if (event->mimeData()->hasUrls()) {
             event->acceptProposedAction();
         } else {
             event->ignore();
         }
+        QTreeWidget::dragMoveEvent(event);
     }
 
     void dropEvent(QDropEvent *event) override {
@@ -179,7 +177,6 @@ protected:
             // 目标位置
             auto [parentItem, insertRow] = determineDropPosition(event);
 
-            qDebug() << dropIndicatorPosition();
             if (parentItem 
                 && insertRow < parentItem->childCount()
                 && getNodeType(parentItem->child(insertRow)) == NodeType::File
@@ -196,7 +193,7 @@ protected:
                     oldParent = invisibleRootItem();
                 }
             }
-            
+
             // 默认实现处理内部拖拽
             QTreeWidget::dropEvent(event);
             
