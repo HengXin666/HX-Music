@@ -30,8 +30,7 @@ LocalAndDownloadView::LocalAndDownloadView(QWidget* parent)
 
 
     _tree->setHeaderLabels({
-        "计数",
-        "图片",
+        "",
         "名称",
         "专辑",
         "时长",

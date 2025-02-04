@@ -28,6 +28,8 @@
         <file alias="volume_off.svg">icons/volume_off.svg</file>
         <file alias="mail.svg">icons/mail.svg</file>
         <file alias="setting.svg">icons/setting.svg</file>
+        <file alias="folder-open.svg">icons/folder-open.svg</file>
+        <file alias="folder-close.svg">icons/folder-close.svg</file>
     </qresource>
     <qresource prefix="/logo">
         <file alias="HXMusic_logo.png">logo/HXMusic_logo.png</file>
