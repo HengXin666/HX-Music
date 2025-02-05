@@ -37,10 +37,13 @@ class ActionsPushButton : public SvgIconPushButton {
 public:
     explicit ActionsPushButton(
         const QString& svgPath, 
-        const QSize& size, 
         QWidget* parent = nullptr
     )
-        : SvgIconPushButton(svgPath, size, parent)
+        : SvgIconPushButton(
+            svgPath,
+            QColor("#990099"),
+            QColor("RED"), 
+            parent)
     {
         // 设置样式
         setStyleSheet(R"(
@@ -56,10 +59,6 @@ public:
 
         setFixedSize(24, 24);
     }
-
-    explicit ActionsPushButton(const QString& svgPath, QWidget* parent = nullptr)
-        : ActionsPushButton(svgPath, {24, 24}, parent)
-    {}
 };
 
 /**

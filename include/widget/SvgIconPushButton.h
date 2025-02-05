@@ -22,42 +22,30 @@
 
 #include <QPushButton>
 
-#include <graphics/SvgIconEngine.hpp>
-
 /**
  * @brief 支持svg变色的按钮
  */
 class SvgIconPushButton : public QPushButton {
     Q_OBJECT
 public:
+    /**
+     * @brief 支持svg变色的按钮
+     * @param svgPath svg文件的路径
+     * @param ordinary 平常的颜色
+     * @param hover 按下的颜色
+     * @param parent 父控件
+     */
     explicit SvgIconPushButton(
-        const QString& svgPath, 
-        const QSize& size, 
+        const QString& svgPath,
+        const QColor& ordinary,
+        const QColor& hover,
         QWidget* parent = nullptr
-    )
-        : QPushButton(parent)
-        , _iconEngine(new SvgIconEngine(svgPath, size))
-    {
-        _iconEngine->switchColor("#990099");
-        setIcon(QIcon(_iconEngine));
-    }
-
-    explicit SvgIconPushButton(const QString& svgPath, QWidget* parent = nullptr)
-        : SvgIconPushButton(svgPath, {24, 24}, parent)
-    {}
-
-    void switchColor(const QColor& color) {
-        _iconEngine->switchColor(color);
-        setIcon(QIcon(_iconEngine));
-    }
-
-    void setSize(const QSize& size) {
-        _iconEngine->setSize(size);
-        setIcon(QIcon(_iconEngine));
-    }
+    );
 
 private:
-    SvgIconEngine* _iconEngine;
+    QString _svgPath;
+    QIcon _ordinaryIcon;
+    QIcon _hoverIcon;
 };
 
 #endif // !_HX_SVG_ICON_PUSH_BUTTON_H_
