@@ -7,9 +7,9 @@ PlayBar::PlayBar(QWidget* parent)
     : QWidget(parent)
 {
     /*ui
-    | ---------------------------- 播放进度 ---------------------------> |
-    | 歌曲信息(滚动) (歌曲名称 歌手名称 均可点击)     上  暂  下     播放 音 歌 |
-    | 喜欢/评论/下载/分享   播放时长/总时长          首  停  首     序列 量 词 |
+    | ----------------------------- 播放条 ------------------------------> |
+    | 图 歌曲信息(滚动) (歌曲名称 歌手名称 均可点击)     上  暂  下     播放 音 歌 |
+    | 片 喜欢/评论/下载/分享   播放时长/总时长          首  停  首     序列 量 词 |
     */
     
     // 垂直布局
@@ -24,14 +24,16 @@ PlayBar::PlayBar(QWidget* parent)
     // 水平布局 (下方 总操作布局)
     QHBoxLayout* hMainMusicOp = new QHBoxLayout();
 
+    // 图片
+    QPixmap pixmap(":/icons/audio.svg");
+    pixmap = pixmap.scaled(50, 50, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    _imgMusic->setPixmap(pixmap);
+    _imgMusic->setFixedSize(50, 50);
+    hMainMusicOp->addWidget(_imgMusic);
+
     // 操作 水平布局
     QHBoxLayout* hLayoutActions = new QHBoxLayout();
     
-    _btnLike->setIcon(QIcon(":/icons/like.svg"));
-    _btnComment->setIcon(QIcon(":/icons/message.svg"));
-    _btnDownload->setIcon(QIcon(":/icons/download.svg"));
-    _btnShare->setIcon(QIcon(":/icons/share.svg"));
-
     hLayoutActions->addWidget(_btnLike);
     hLayoutActions->addWidget(_btnComment);
     hLayoutActions->addWidget(_btnDownload);
@@ -48,6 +50,8 @@ PlayBar::PlayBar(QWidget* parent)
     hMainMusicOp->addLayout(vSongDataAndOpLayout);
     vBL->addLayout(hMainMusicOp);
 
+    hMainMusicOp->addStretch();
+
     // 上一首/暂停/下一首
     QHBoxLayout* hPlayOpLayout = new QHBoxLayout();
     _btnPrevious->setIcon(QIcon(":/icons/previous.svg"));
@@ -57,6 +61,8 @@ PlayBar::PlayBar(QWidget* parent)
     hPlayOpLayout->addWidget(_btnPlayPause);
     hPlayOpLayout->addWidget(_btnNext);
     hMainMusicOp->addLayout(hPlayOpLayout);
+
+    hMainMusicOp->addStretch();
 
     // 播放序列/音量大小/歌词
     QHBoxLayout* hPlaySettingLayout = new QHBoxLayout();

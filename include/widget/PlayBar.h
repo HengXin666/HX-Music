@@ -29,6 +29,38 @@
 #include <widget/TimeProgressText.h>
 #include <widget/ScrollText.h>
 #include <widget/VolumeBar.h>
+#include <widget/SvgIconPushButton.h>
+
+// 音频操作按钮 (仅设置样式)
+class ActionsPushButton : public SvgIconPushButton {
+    Q_OBJECT
+public:
+    explicit ActionsPushButton(
+        const QString& svgPath, 
+        const QSize& size, 
+        QWidget* parent = nullptr
+    )
+        : SvgIconPushButton(svgPath, size, parent)
+    {
+        // 设置样式
+        setStyleSheet(R"(
+            QPushButton {
+                background: transparent;
+                border: none;
+                border-radius: 12px;
+            }
+            QPushButton:hover {
+                color: #990099;
+            }
+        )");
+
+        setFixedSize(24, 24);
+    }
+
+    explicit ActionsPushButton(const QString& svgPath, QWidget* parent = nullptr)
+        : ActionsPushButton(svgPath, {24, 24}, parent)
+    {}
+};
 
 /**
  * @brief 播放栏控件
@@ -42,14 +74,21 @@ private:
     // 进度条
     QProgressBar* _barPlayProgress = new QProgressBar(this);
 
+    // 歌曲图片
+    QLabel* _imgMusic = new QLabel(this);
+
     // 滚动歌曲信息
     ScrollText* _testMusicData = new ScrollText(this);
 
     // 喜欢/评论/下载/分享
-    QPushButton* _btnLike = new QPushButton(this);
-    QPushButton* _btnComment = new QPushButton(this);
-    QPushButton* _btnDownload = new QPushButton(this);
-    QPushButton* _btnShare = new QPushButton(this);
+    ActionsPushButton* _btnLike = new ActionsPushButton(
+        ":/icons/like.svg", this);
+    ActionsPushButton* _btnComment = new ActionsPushButton(
+        ":/icons/message.svg", this);
+    ActionsPushButton* _btnDownload = new ActionsPushButton(
+        ":/icons/download.svg", this);
+    ActionsPushButton* _btnShare = new ActionsPushButton(
+        ":/icons/share.svg", this);
 
     // 播放时长文本
     TimeProgressText* _textTimeProgress = new TimeProgressText(this);

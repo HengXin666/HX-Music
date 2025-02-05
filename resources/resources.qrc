@@ -30,6 +30,7 @@
         <file alias="setting.svg">icons/setting.svg</file>
         <file alias="folder-open.svg">icons/folder-open.svg</file>
         <file alias="folder-close.svg">icons/folder-close.svg</file>
+        <file alias="audio.svg">icons/audio.svg</file>
     </qresource>
     <qresource prefix="/logo">
         <file alias="HXMusic_logo.png">logo/HXMusic_logo.png</file>
