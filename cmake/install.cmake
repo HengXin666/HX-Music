@@ -42,8 +42,9 @@ target_link_libraries(HX-Music
     PRIVATE Qt${QT_VERSION_MAJOR}::Gui
 )
 
-# find_package(Qt6 REQUIRED COMPONENTS Multimedia)
-# target_link_libraries(HX-Music PRIVATE Qt6::Multimedia)
+# Qt拓展 (音频播放)
+find_package(Qt6 REQUIRED COMPONENTS Multimedia)
+target_link_libraries(HX-Music PRIVATE Qt6::Multimedia)
 
 # Qt拓展 (SVG)
 find_package(Qt6 REQUIRED COMPONENTS Svg)

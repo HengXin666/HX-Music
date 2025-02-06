@@ -3,6 +3,7 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 
+#include <singleton/GlobalSingleton.hpp>
 #include <singleton/SignalBusSingleton.h>
 
 PlayBar::PlayBar(QWidget* parent)
@@ -28,8 +29,7 @@ PlayBar::PlayBar(QWidget* parent)
 
     // 图片
     QPixmap pixmap(":/icons/audio.svg");
-    pixmap = pixmap.scaled(50, 50, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-    _imgMusic->setPixmap(pixmap);
+    _imgMusic->setPixmap(pixmap.scaled(50, 50, Qt::KeepAspectRatio, Qt::SmoothTransformation));
     _imgMusic->setFixedSize(50, 50);
     hMainMusicOp->addWidget(_imgMusic);
 
@@ -82,7 +82,19 @@ PlayBar::PlayBar(QWidget* parent)
 
     // === 连接信号槽 (SignalBusSingleton) ===
     /* NewSongLoaded (加载新歌) */
-    connect(&SignalBusSingleton::get(), &SignalBusSingleton::NewSongLoaded, this, [this]() {
-
+    connect(&SignalBusSingleton::get(), &SignalBusSingleton::newSongLoaded, this,
+        [this](
+            HX::MusicInfo const& info
+        ) {
+        // todo: 处理歌手
+        _textMusicData->setText(info.getTitle());
+        if (auto img = info.getAlbumArtAdvanced()) {
+            _imgMusic->setPixmap(img->scaled(50, 50, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        } else {
+            _imgMusic->setPixmap(
+                QPixmap{":/icons/audio.svg"}.scaled(50, 50, Qt::KeepAspectRatio, Qt::SmoothTransformation)
+            );
+        }
+        GlobalSingleton::get().music.switchMusic(info.filePath()).play();
     });
 }

@@ -7,6 +7,7 @@
 #include <taglib/tag.h>
 
 #include <utils/MusicInfo.hpp>
+#include <singleton/SignalBusSingleton.h>
 
 MusicTreeWidget::MusicTreeWidget(QWidget* parent)
     : QTreeWidget(parent)
@@ -27,15 +28,18 @@ MusicTreeWidget::MusicTreeWidget(QWidget* parent)
 
     header()->setSectionResizeMode(QHeaderView::ResizeToContents); // 自动调整列宽
 
-    // 点击节点
-    connect(this, &QTreeWidget::itemClicked, this, 
+    // 双击节点
+    connect(this, &QTreeWidget::itemActivated, this, 
         [this](QTreeWidgetItem* item, int column) {
         if (getNodeType(item) == NodeType::Folder) {
             // 文件夹操作
-            qDebug() << "点击的是文件夹：" << item->text(0);
+            qDebug() << "双击的是文件夹：" << item->text(0);
         } else {
             // 播放音乐
-            qDebug() << "点击的是文件：" << item->data(static_cast<int>(ItemData::FilePath), Qt::UserRole);
+            qDebug() << "双击的是文件：" << item->data(static_cast<int>(ItemData::FilePath), Qt::UserRole);
+            SignalBusSingleton::get().newSongLoaded(HX::MusicInfo{
+                QFileInfo{item->data(static_cast<int>(ItemData::FilePath), Qt::UserRole).toString()}
+            });
         }
     });
 
@@ -100,9 +104,11 @@ bool MusicTreeWidget::addFileItem(
     item->setText(4, musicInfo.formatTimeLengthToHHMMSS());
     item->setText(5, HX::FileInfo::convertByteSizeToHumanReadable(fileInfo.size()));
     // 根据需要设置图标，这里假设你已经有相应的图标资源
-    item->setIcon(1, QIcon(
-        musicInfo.getAlbumArtAdvanced()
-    ));
+    if (auto img = musicInfo.getAlbumArtAdvanced()) {
+        item->setIcon(1, QIcon{*img});
+    } else {
+        item->setIcon(1, QIcon{":/icons/audio.svg"});
+    }
     
     item->setData(
         static_cast<int>(ItemData::FilePath),

@@ -20,6 +20,8 @@
 #ifndef _HX_MUSIC_INFO_H_
 #define _HX_MUSIC_INFO_H_
 
+#include <optional>
+
 #include <taglib/fileref.h>
 #include <taglib/tag.h>
 #include <taglib/audioproperties.h>
@@ -151,8 +153,7 @@ public:
     }
 
     // 高性能获取专辑图片函数，支持 MP3、FLAC、MP4/M4A 格式
-    QPixmap getAlbumArtAdvanced() {
-        QPixmap pixmap;
+    std::optional<QPixmap> getAlbumArtAdvanced() const {
         QString ext = _fileInfo.suffix().toLower();
 
         // 1. MP3（及部分 AAC 封装在 MP3 容器中）处理: 使用 ID3v2
@@ -188,6 +189,7 @@ public:
                 if (pic) {
                     const TagLib::ByteVector& bv = pic->data();
                     QByteArray ba(bv.data(), static_cast<int>(bv.size()));
+                    QPixmap pixmap;
                     pixmap.loadFromData(ba);
                     return pixmap;
                 }
@@ -205,6 +207,7 @@ public:
                         TagLib::MP4::CoverArt cover = coverList.front();
                         const TagLib::ByteVector& bv = cover.data();
                         QByteArray ba(bv.data(), static_cast<int>(bv.size()));
+                        QPixmap pixmap;
                         pixmap.loadFromData(ba);
                         return pixmap;
                     }
@@ -212,7 +215,11 @@ public:
             }
         }
         // 其他格式暂未实现或没有嵌入专辑图片，返回空QPixmap
-        return pixmap;
+        return {};
+    }
+
+    QString filePath() const {
+        return _fileInfo.filePath();
     }
 
 private:

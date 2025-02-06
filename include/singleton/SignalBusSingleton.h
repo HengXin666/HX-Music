@@ -23,6 +23,8 @@
 #include <QObject>
 #include <QMutex>
 
+#include <utils/MusicInfo.hpp>
+
 /**
  * @brief 信号总线单例
  */
@@ -45,8 +47,11 @@ public:
     }
 
 Q_SIGNALS:
-    // 加载新歌
-    void NewSongLoaded();
+    /**
+     * @brief 加载新歌信号
+     * @param info 歌曲信息
+     */
+    void newSongLoaded(HX::MusicInfo const& info);
 };
 
 #endif // !_HX_SIGNAL_BUS_SINGLETON_H_

@@ -21,6 +21,7 @@
 #define _HX_GLOBAL_SINGLETON_H_
 
 #include <views/InterfaceManagementProxy.h>
+#include <utils/MusicPlayer.hpp>
 
 /**
  * @brief 全局单例
@@ -33,6 +34,9 @@ struct GlobalSingleton {
 
     /// @brief 界面管理代理类
     InterfaceManagementProxy imp{};
+
+    /// @brief 音频播放实例
+    MusicPlayer music{};
 private:
     GlobalSingleton() = default;
     GlobalSingleton& operator=(GlobalSingleton&&) = delete;
