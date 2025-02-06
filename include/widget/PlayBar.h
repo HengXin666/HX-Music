@@ -52,9 +52,6 @@ public:
                 border: none;
                 border-radius: 12px;
             }
-            QPushButton:hover {
-                color: #990099;
-            }
         )");
 
         setFixedSize(24, 24);
@@ -77,7 +74,7 @@ private:
     QLabel* _imgMusic = new QLabel(this);
 
     // 滚动歌曲信息
-    ScrollText* _testMusicData = new ScrollText(this);
+    ScrollText* _textMusicData = new ScrollText(this);
 
     // 喜欢/评论/下载/分享
     ActionsPushButton* _btnLike = new ActionsPushButton(

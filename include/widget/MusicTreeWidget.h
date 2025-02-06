@@ -31,6 +31,11 @@
 class MusicTreeWidget : public QTreeWidget {
     Q_OBJECT
 
+    enum class ItemData : int {
+        NodeType = 0,
+        FilePath = 1
+    };
+
     enum class NodeType : unsigned int {
         File,
         Folder
@@ -43,12 +48,12 @@ class MusicTreeWidget : public QTreeWidget {
             | Qt::ItemIsSelectable 
             | Qt::ItemIsEnabled
         );
-        item->setData(0, Qt::UserRole, static_cast<unsigned int>(type));
+        item->setData(static_cast<int>(ItemData::NodeType), Qt::UserRole, static_cast<unsigned int>(type));
     }
     
     NodeType getNodeType(QTreeWidgetItem *item) {
         return static_cast<NodeType>(
-            item->data(0, Qt::UserRole).toUInt()
+            item->data(static_cast<int>(ItemData::NodeType), Qt::UserRole).toUInt()
         );
     }
 

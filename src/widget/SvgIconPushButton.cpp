@@ -37,3 +37,25 @@ SvgIconPushButton::SvgIconPushButton(
 
     setIcon(_ordinaryIcon);
 }
+
+SvgIconPushButton* SvgIconPushButton::setOrdinaryIconColor(QColor const& color) {
+    _ordinaryIcon
+        = HX::SvgPars{_svgPath}
+            .replaceTagAndAttributeAndVal(
+                "path",
+                "fill",
+                color.name())
+            .makeIcon();
+    return this;
+}
+
+SvgIconPushButton* SvgIconPushButton::setHoverIconColor(QColor const& color) {
+    _hoverIcon
+        = HX::SvgPars{_svgPath}
+            .replaceTagAndAttributeAndVal(
+                "path",
+                "fill",
+                color.name())
+            .makeIcon();
+    return this;
+}

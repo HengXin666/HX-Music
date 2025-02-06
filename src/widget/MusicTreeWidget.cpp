@@ -35,7 +35,7 @@ MusicTreeWidget::MusicTreeWidget(QWidget* parent)
             qDebug() << "点击的是文件夹：" << item->text(0);
         } else {
             // 播放音乐
-            qDebug() << "点击的是文件：" << item->text(0);
+            qDebug() << "点击的是文件：" << item->data(static_cast<int>(ItemData::FilePath), Qt::UserRole);
         }
     });
 
@@ -104,6 +104,11 @@ bool MusicTreeWidget::addFileItem(
         musicInfo.getAlbumArtAdvanced()
     ));
     
+    item->setData(
+        static_cast<int>(ItemData::FilePath),
+        Qt::UserRole,
+        fileInfo.filePath()
+    );
     
     setNodeType(item, NodeType::File);
 
@@ -126,6 +131,11 @@ void MusicTreeWidget::addFolderItem(const QFileInfo &fileInfo, int index, QTreeW
     item->setText(1, fileInfo.fileName());
     setNodeType(item, NodeType::Folder);
 
+    item->setData(
+        static_cast<int>(ItemData::FilePath),
+        Qt::UserRole,
+        fileInfo.filePath()
+    );
 
     if (parentItem && getNodeType(parentItem) == NodeType::Folder) {
         parentItem->insertChild(index, item);

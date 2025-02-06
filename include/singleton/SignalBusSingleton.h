@@ -17,25 +17,36 @@
  * You should have received a copy of the GNU General Public License
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef _HX_GLOBAL_SINGLETON_H_
-#define _HX_GLOBAL_SINGLETON_H_
+#ifndef _HX_SIGNAL_BUS_SINGLETON_H_
+#define _HX_SIGNAL_BUS_SINGLETON_H_
 
-#include <views/InterfaceManagementProxy.h>
+#include <QObject>
+#include <QMutex>
 
 /**
- * @brief 全局单例
+ * @brief 信号总线单例
  */
-struct GlobalSingleton {
-    inline static GlobalSingleton& get() {
-        static GlobalSingleton s{};
-        return s;
+class SignalBusSingleton : public QObject {
+    Q_OBJECT
+
+    explicit SignalBusSingleton() noexcept {}
+    SignalBusSingleton& operator=(SignalBusSingleton&&) = delete;
+
+public:
+    /**
+     * @brief `线程安全`获取信号总线单例
+     * @return SignalBusSingleton& 
+     */
+    inline static SignalBusSingleton& get() {
+        static QMutex mutex{};
+        QMutexLocker _{&mutex};
+        static SignalBusSingleton singleton{};
+        return singleton;
     }
 
-    /// @brief 界面管理代理类
-    InterfaceManagementProxy imp{};
-private:
-    GlobalSingleton() = default;
-    GlobalSingleton& operator=(GlobalSingleton&&) = delete;
+Q_SIGNALS:
+    // 加载新歌
+    void NewSongLoaded();
 };
 
-#endif // !_HX_GLOBAL_SINGLETON_H_
+#endif // !_HX_SIGNAL_BUS_SINGLETON_H_

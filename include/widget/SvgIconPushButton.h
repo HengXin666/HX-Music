@@ -42,6 +42,15 @@ public:
         QWidget* parent = nullptr
     );
 
+    [[nodiscard]] SvgIconPushButton* setOrdinaryIconColor(QColor const& color);
+    [[nodiscard]] SvgIconPushButton* setHoverIconColor(QColor const& color);
+
+    /**
+     * @brief 立即修改图标
+     */
+    void modifyIcon() {
+        setIcon(_ordinaryIcon);
+    }
 private:
     QString _svgPath;
     QIcon _ordinaryIcon;

@@ -3,6 +3,8 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 
+#include <singleton/SignalBusSingleton.h>
+
 PlayBar::PlayBar(QWidget* parent)
     : QWidget(parent)
 {
@@ -19,7 +21,7 @@ PlayBar::PlayBar(QWidget* parent)
     vBL->addWidget(_barPlayProgress);
 
     // 歌曲信息
-    _testMusicData->setText("歌曲信息(滚动) (歌曲名称 歌手名称 均可点击)");
+    _textMusicData->setText("歌曲信息(滚动) (歌曲名称 歌手名称 均可点击)");
     
     // 水平布局 (下方 总操作布局)
     QHBoxLayout* hMainMusicOp = new QHBoxLayout();
@@ -44,7 +46,7 @@ PlayBar::PlayBar(QWidget* parent)
 
     // 歌曲信息&操作垂直布局
     QVBoxLayout* vSongDataAndOpLayout = new QVBoxLayout();
-    vSongDataAndOpLayout->addWidget(_testMusicData);
+    vSongDataAndOpLayout->addWidget(_textMusicData);
     vSongDataAndOpLayout->addLayout(hLayoutActions);
 
     hMainMusicOp->addLayout(vSongDataAndOpLayout);
@@ -77,4 +79,10 @@ PlayBar::PlayBar(QWidget* parent)
     hPlaySettingLayout->addWidget(_volumeBar);
     hPlaySettingLayout->addWidget(_btnLyric);
     hMainMusicOp->addLayout(hPlaySettingLayout);
+
+    // === 连接信号槽 (SignalBusSingleton) ===
+    /* NewSongLoaded (加载新歌) */
+    connect(&SignalBusSingleton::get(), &SignalBusSingleton::NewSongLoaded, this, [this]() {
+
+    });
 }
