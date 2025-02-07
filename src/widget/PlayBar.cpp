@@ -77,6 +77,7 @@ PlayBar::PlayBar(QWidget* parent)
         "单次播放",
         "单曲循环",
     });
+    _cbxPlayMode->setCurrentIndex(static_cast<int>(GlobalSingleton::get().musicConfig.playMode));
     _btnLyric->setText("歌词");
     hPlaySettingLayout->addWidget(_cbxPlayMode);
     hPlaySettingLayout->addWidget(_volumeBar);
@@ -103,23 +104,37 @@ PlayBar::PlayBar(QWidget* parent)
 
     /* musicPaused (音乐暂停) */
     connect(&SignalBusSingleton::get(), &SignalBusSingleton::musicPaused, this,
-    [this, playIcon = std::move(playIcon)]() {
+        [this, playIcon = std::move(playIcon)]() {
         _btnPlayPause->setIcon(playIcon);
         _isPlay = false;
     });
 
     /* musicResumed (音乐继续) */
     connect(&SignalBusSingleton::get(), &SignalBusSingleton::musicResumed, this,
-    [this, pauseIcon]() {
+        [this, pauseIcon]() {
         _btnPlayPause->setIcon(pauseIcon);
         _isPlay = true;
     });
 
-    connect(_btnPlayPause, &QPushButton::clicked, this, [this, pauseIcon]() {
+    // 播放与继续按钮
+    connect(_btnPlayPause, &QPushButton::clicked, this,
+        [this, pauseIcon]() {
         if (_isPlay) {
             MusicCommand::pause();
         } else {
             MusicCommand::resume();
         }
+    });
+
+    /* playModeChanged (播放模式) */
+    connect(&SignalBusSingleton::get(), &SignalBusSingleton::playModeChanged, this,
+        [this](PlayMode mode){
+        _cbxPlayMode->setCurrentIndex(static_cast<int>(mode));
+    });
+
+    // 下拉框: 播放模式
+    connect(_cbxPlayMode, &QComboBox::currentIndexChanged, this,
+        [this](int idx) {
+        MusicCommand::setPlayMode(PlayMode{idx});
     });
 }

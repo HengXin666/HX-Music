@@ -26,10 +26,11 @@
  * @brief 播放模式
  */
 enum class PlayMode {
-    ListLoop,   // 列表循环
-    RandomPlay, // 随机播放
-    SinglePlay, // 单曲播放
-    SingleLoop, // 单曲循环
+    ListLoop = 0,   // 列表循环
+    RandomPlay,     // 随机播放
+    SinglePlay,     // 单曲播放
+    SingleLoop,     // 单曲循环
+    PlayModeCnt,    // !保留字段! 用于计算长度
 };
 
 /**

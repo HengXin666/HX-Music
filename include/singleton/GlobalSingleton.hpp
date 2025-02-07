@@ -22,7 +22,7 @@
 
 #include <config/ConfigManager.hpp>
 #include <views/InterfaceManagementProxy.h>
-#include <utils/MusicPlayer.hpp>
+#include <utils/MusicPlayer.h>
 
 /**
  * @brief 全局单例

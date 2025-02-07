@@ -32,21 +32,7 @@
 class MusicPlayer : public QObject {
     Q_OBJECT
 public:
-    explicit MusicPlayer()
-        : _player()
-    {
-        auto audioOutput = new QAudioOutput(&_player);
-        _player.setAudioOutput(audioOutput);
-        audioOutput->setVolume(100);
-        connect(&_player, &QMediaPlayer::mediaStatusChanged, this, [this](
-            QMediaPlayer::MediaStatus mediaState
-        ){
-            if (mediaState != QMediaPlayer::MediaStatus::EndOfMedia) {
-                return;
-            }
-            qDebug() << "播放完毕";
-        });
-    }
+    explicit MusicPlayer();
 
     /**
      * @brief 切换音乐

@@ -23,6 +23,7 @@
 #include <QObject>
 #include <QMutex>
 
+#include <config/MusicConfig.hpp>
 #include <utils/MusicInfo.hpp>
 
 /**
@@ -68,6 +69,11 @@ Q_SIGNALS:
      * @brief 音乐播放、音乐继续
      */
     void musicResumed();
+
+    /**
+     * @brief 播放模式变化
+     */
+     void playModeChanged(PlayMode mode);
 };
 
 #endif // !_HX_SIGNAL_BUS_SINGLETON_H_

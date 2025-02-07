@@ -52,6 +52,14 @@ struct MusicCommand {
         GlobalSingleton::get().music.play();
         SignalBusSingleton::get().musicResumed();
     }
+
+    /**
+     * @brief 修改播放模式
+     */
+    static void setPlayMode(PlayMode mode) {
+        GlobalSingleton::get().musicConfig.playMode = mode;
+        SignalBusSingleton::get().playModeChanged(mode);
+    }
 };
 
 #endif // !_HX_MUSIC_COMMAND_H_
