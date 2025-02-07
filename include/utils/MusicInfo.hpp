@@ -42,6 +42,7 @@
 #include <taglib/asffile.h>
 #include <taglib/asftag.h>
 
+#include <QTime>
 #include <QFileInfo>
 #include <QPixmap>
 
@@ -141,15 +142,15 @@ public:
         if (mpegFile.isNull() || !mpegFile.audioProperties()) {
             return errRes;
         }
-        TagLib::AudioProperties* properties = mpegFile.audioProperties();
-        int time = properties->lengthInSeconds();
-        int hTime = time / 3600;
-        return QString{"%1%2:%3"}
-            .arg(hTime 
-                    ? QString{"%1:"}.arg(hTime) 
-                    : "")
-            .arg(time / 60 % 60)
-            .arg(time % 60);
+        if (auto sec = mpegFile.audioProperties()->lengthInSeconds(); sec < 3600) {
+            return QTime{0, 0}.addSecs(
+                sec
+            ).toString("mm:ss");
+        } else {
+            return QTime{0, 0}.addSecs(
+                sec
+            ).toString("hh:mm:ss");
+        }
     }
 
     // 高性能获取专辑图片函数，支持 MP3、FLAC、MP4/M4A 格式

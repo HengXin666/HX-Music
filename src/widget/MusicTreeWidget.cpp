@@ -36,10 +36,14 @@ MusicTreeWidget::MusicTreeWidget(QWidget* parent)
             qDebug() << "双击的是文件夹：" << item->text(0);
         } else {
             // 播放音乐
-            qDebug() << "双击的是文件：" << item->data(static_cast<int>(ItemData::FilePath), Qt::UserRole);
-            SignalBusSingleton::get().newSongLoaded(HX::MusicInfo{
-                QFileInfo{item->data(static_cast<int>(ItemData::FilePath), Qt::UserRole).toString()}
-            });
+            SignalBusSingleton::get().newSongLoaded(
+                HX::MusicInfo{QFileInfo{
+                    item->data(
+                        static_cast<int>(ItemData::FilePath), 
+                        Qt::UserRole
+                    ).toString()
+                }}
+            );
         }
     });
 

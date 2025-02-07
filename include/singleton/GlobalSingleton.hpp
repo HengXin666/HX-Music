@@ -20,6 +20,7 @@
 #ifndef _HX_GLOBAL_SINGLETON_H_
 #define _HX_GLOBAL_SINGLETON_H_
 
+#include <config/ConfigManager.hpp>
 #include <views/InterfaceManagementProxy.h>
 #include <utils/MusicPlayer.hpp>
 
@@ -27,6 +28,10 @@
  * @brief 全局单例
  */
 struct GlobalSingleton {
+    /**
+     * @brief 获取单例
+     * @return GlobalSingleton& 
+     */
     inline static GlobalSingleton& get() {
         static GlobalSingleton s{};
         return s;
@@ -37,8 +42,20 @@ struct GlobalSingleton {
 
     /// @brief 音频播放实例
     MusicPlayer music{};
+
+    /// @brief 音频配置
+    MusicConfig musicConfig;
 private:
-    GlobalSingleton() = default;
+    explicit GlobalSingleton() {
+        ConfigManager config;
+        musicConfig = config.loadConfig();
+    }
+    
+    ~GlobalSingleton() noexcept {
+        ConfigManager config;
+        config.saveConfig(musicConfig);
+    }
+
     GlobalSingleton& operator=(GlobalSingleton&&) = delete;
 };
 

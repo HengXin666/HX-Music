@@ -20,29 +20,49 @@
 #ifndef _HX_MUSIC_PLAYER_H_
 #define _HX_MUSIC_PLAYER_H_
 
-#include <memory>
-
 #include <QAudioOutput>
 #include <QMediaPlayer>
 #include <QUrl>
 
-class MusicPlayer {
+#include <QDebug>
+
+/**
+ * @brief 音乐播放类
+ */
+class MusicPlayer : public QObject {
+    Q_OBJECT
 public:
     explicit MusicPlayer()
-        : _player(std::make_unique<QMediaPlayer>())
+        : _player()
     {
-        auto audioOutput = new QAudioOutput;
-        _player->setAudioOutput(audioOutput);
-        audioOutput->setVolume(50);
+        auto audioOutput = new QAudioOutput(&_player);
+        _player.setAudioOutput(audioOutput);
+        audioOutput->setVolume(100);
+        connect(&_player, &QMediaPlayer::mediaStatusChanged, this, [this](
+            QMediaPlayer::MediaStatus mediaState
+        ){
+            if (mediaState != QMediaPlayer::MediaStatus::EndOfMedia) {
+                return;
+            }
+            qDebug() << "播放完毕";
+        });
     }
 
+    /**
+     * @brief 切换音乐
+     * @param musicPath 目标音乐的路径
+     * @return MusicPlayer& 
+     */
     MusicPlayer& switchMusic(QString const& musicPath) {
-        _player->setSource(QUrl::fromLocalFile(musicPath));
+        _player.setSource(QUrl::fromLocalFile(musicPath));
         return *this;
     }
 
-    void play() const {
-        _player->play();
+    /**
+     * @brief 播放音乐
+     */
+    void play() {
+        _player.play();
     }
 
     /**
@@ -50,11 +70,21 @@ public:
      * @param position 单位: 毫秒(ms)
      */
     MusicPlayer& setPosition(qint64 position) {
-        _player->setPosition(position);
+        _player.setPosition(position);
+        return *this;
+    }
+
+    /**
+     * @brief 设置音量大小
+     * @param volume 0 ~ 100
+     * @return MusicPlayer& 
+     */
+    MusicPlayer& setVolume(float volume) {
+        _player.audioOutput()->setVolume(volume);
         return *this;
     }
 private:
-    std::unique_ptr<QMediaPlayer> _player;
+    QMediaPlayer _player;
 };
 
 #endif // !_HX_MUSIC_PLAYER_H_

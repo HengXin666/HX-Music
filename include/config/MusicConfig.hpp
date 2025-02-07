@@ -17,39 +17,28 @@
  * You should have received a copy of the GNU General Public License
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef _HX_VOLUME_BAR_H_
-#define _HX_VOLUME_BAR_H_
+#ifndef _HX_MUSIC_CONFIG_H_
+#define _HX_MUSIC_CONFIG_H_
 
-#include <QWidget>
-#include <QPushButton>
-#include <QSlider>
-#include <QLabel>
-#include <QEvent>
+#include <QString>
 
 /**
- * @brief 悬浮音量条
+ * @brief 播放模式
  */
-class VolumeSlider : public QWidget {
-    Q_OBJECT
-public:
-    VolumeSlider(QWidget* parent = nullptr, QPushButton* btn = nullptr);
-
-private:
-    QSlider* _slider = new QSlider(Qt::Vertical, this);
-    QLabel* _textPercentage = new QLabel(this);
+enum class PlayMode {
+    ListLoop,   // 列表循环
+    RandomPlay, // 随机播放
+    SinglePlay, // 单曲播放
+    SingleLoop, // 单曲循环
 };
 
 /**
- * @brief 音量条: 点击是开关, 带有音量条鼠标悬浮
+ * @brief 音乐配置
  */
-class VolumeBar : public QWidget {
-    Q_OBJECT
-public:
-    explicit VolumeBar(QWidget* parent = nullptr);
-
-private:
-    QPushButton* _btn = new QPushButton(this);
-    VolumeSlider* _slider = new VolumeSlider(this, _btn);
+struct MusicConfig {
+    float volume;       // 音量大小
+    PlayMode playMode;  // 播放模式
+    qint64 position;    // 播放位置
 };
 
-#endif // !_HX_VOLUME_BAR_H_
+#endif // !_HX_MUSIC_CONFIG_H_

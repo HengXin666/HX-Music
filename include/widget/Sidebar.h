@@ -23,6 +23,9 @@
 #include <QWidget>
 #include <QListWidget>
 
+/**
+ * @brief 侧边栏
+ */
 class Sidebar : public QListWidget {
     Q_OBJECT
 public:

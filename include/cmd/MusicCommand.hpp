@@ -17,39 +17,25 @@
  * You should have received a copy of the GNU General Public License
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef _HX_VOLUME_BAR_H_
-#define _HX_VOLUME_BAR_H_
+#ifndef _HX_MUSIC_COMMAND_H_
+#define _HX_MUSIC_COMMAND_H_
 
-#include <QWidget>
-#include <QPushButton>
-#include <QSlider>
-#include <QLabel>
-#include <QEvent>
+#include <singleton/GlobalSingleton.hpp>
+#include <singleton/SignalBusSingleton.h>
 
 /**
- * @brief 悬浮音量条
+ * @brief 音乐相关的命令
  */
-class VolumeSlider : public QWidget {
-    Q_OBJECT
-public:
-    VolumeSlider(QWidget* parent = nullptr, QPushButton* btn = nullptr);
-
-private:
-    QSlider* _slider = new QSlider(Qt::Vertical, this);
-    QLabel* _textPercentage = new QLabel(this);
+struct MusicCommand {
+    /**
+     * @brief 修改音量
+     * @param volume 
+     */
+    static void setVolume(float volume) {
+        GlobalSingleton::get().musicConfig.volume = volume;
+        GlobalSingleton::get().music.setVolume(volume);
+        SignalBusSingleton::get().volumeChanged(volume);
+    }
 };
 
-/**
- * @brief 音量条: 点击是开关, 带有音量条鼠标悬浮
- */
-class VolumeBar : public QWidget {
-    Q_OBJECT
-public:
-    explicit VolumeBar(QWidget* parent = nullptr);
-
-private:
-    QPushButton* _btn = new QPushButton(this);
-    VolumeSlider* _slider = new VolumeSlider(this, _btn);
-};
-
-#endif // !_HX_VOLUME_BAR_H_
+#endif // !_HX_MUSIC_COMMAND_H_

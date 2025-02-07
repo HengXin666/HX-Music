@@ -52,6 +52,12 @@ Q_SIGNALS:
      * @param info 歌曲信息
      */
     void newSongLoaded(HX::MusicInfo const& info);
+
+    /**
+     * @brief 音量变化
+     * @param volume 新的音量
+     */
+    void volumeChanged(float volume);
 };
 
 #endif // !_HX_SIGNAL_BUS_SINGLETON_H_
