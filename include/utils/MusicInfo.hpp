@@ -134,7 +134,7 @@ public:
     }
 
     /**
-     * @brief 格式化音频时长为`HH:MM:SS`格式, 如`3:14`(不含前导0)
+     * @brief 格式化音频时长为`HH:MM:SS`格式, 如`03:14`
      * @param errRes 获取失败返回的值
      * @return QString 
      */

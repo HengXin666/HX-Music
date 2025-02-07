@@ -66,6 +66,13 @@ public:
     }
 
     /**
+     * @brief 暂停音乐
+     */
+    void pause() {
+        _player.pause();
+    }
+
+    /**
      * @brief 跳转到指定时间
      * @param position 单位: 毫秒(ms)
      */
@@ -76,7 +83,7 @@ public:
 
     /**
      * @brief 设置音量大小
-     * @param volume 0 ~ 100
+     * @param volume 0.00f ~ 1.00f
      * @return MusicPlayer& 
      */
     MusicPlayer& setVolume(float volume) {

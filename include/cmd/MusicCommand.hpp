@@ -36,6 +36,22 @@ struct MusicCommand {
         GlobalSingleton::get().music.setVolume(volume);
         SignalBusSingleton::get().volumeChanged(volume);
     }
+
+    /**
+     * @brief 音乐暂停
+     */
+    static void pause() {
+        GlobalSingleton::get().music.pause();
+        SignalBusSingleton::get().musicPaused();
+    }
+
+    /**
+     * @brief 音乐播放、音乐继续
+     */
+    static void resume() {
+        GlobalSingleton::get().music.play();
+        SignalBusSingleton::get().musicResumed();
+    }
 };
 
 #endif // !_HX_MUSIC_COMMAND_H_

@@ -8,6 +8,7 @@
 
 #include <utils/MusicInfo.hpp>
 #include <singleton/SignalBusSingleton.h>
+#include <cmd/MusicCommand.hpp>
 
 MusicTreeWidget::MusicTreeWidget(QWidget* parent)
     : QTreeWidget(parent)
@@ -44,6 +45,7 @@ MusicTreeWidget::MusicTreeWidget(QWidget* parent)
                     ).toString()
                 }}
             );
+            MusicCommand::resume();
         }
     });
 

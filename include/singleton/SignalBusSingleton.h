@@ -58,6 +58,16 @@ Q_SIGNALS:
      * @param volume 新的音量
      */
     void volumeChanged(float volume);
+
+    /**
+     * @brief 音乐暂停
+     */
+    void musicPaused();
+
+    /**
+     * @brief 音乐播放、音乐继续
+     */
+    void musicResumed();
 };
 
 #endif // !_HX_SIGNAL_BUS_SINGLETON_H_

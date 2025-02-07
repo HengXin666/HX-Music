@@ -5,6 +5,7 @@
 
 #include <singleton/GlobalSingleton.hpp>
 #include <singleton/SignalBusSingleton.h>
+#include <cmd/MusicCommand.hpp>
 
 PlayBar::PlayBar(QWidget* parent)
     : QWidget(parent)
@@ -57,7 +58,9 @@ PlayBar::PlayBar(QWidget* parent)
     // 上一首/暂停/下一首
     QHBoxLayout* hPlayOpLayout = new QHBoxLayout();
     _btnPrevious->setIcon(QIcon(":/icons/previous.svg"));
-    _btnPlayPause->setIcon(QIcon(":/icons/play.svg"));
+    QIcon playIcon{":/icons/play.svg"};
+    QIcon pauseIcon{":/icons/pause.svg"};
+    _btnPlayPause->setIcon(playIcon);
     _btnNext->setIcon(QIcon(":/icons/next.svg"));
     hPlayOpLayout->addWidget(_btnPrevious);
     hPlayOpLayout->addWidget(_btnPlayPause);
@@ -96,5 +99,27 @@ PlayBar::PlayBar(QWidget* parent)
             );
         }
         GlobalSingleton::get().music.switchMusic(info.filePath()).play();
+    });
+
+    /* musicPaused (音乐暂停) */
+    connect(&SignalBusSingleton::get(), &SignalBusSingleton::musicPaused, this,
+    [this, playIcon = std::move(playIcon)]() {
+        _btnPlayPause->setIcon(playIcon);
+        _isPlay = false;
+    });
+
+    /* musicResumed (音乐继续) */
+    connect(&SignalBusSingleton::get(), &SignalBusSingleton::musicResumed, this,
+    [this, pauseIcon]() {
+        _btnPlayPause->setIcon(pauseIcon);
+        _isPlay = true;
+    });
+
+    connect(_btnPlayPause, &QPushButton::clicked, this, [this, pauseIcon]() {
+        if (_isPlay) {
+            MusicCommand::pause();
+        } else {
+            MusicCommand::resume();
+        }
     });
 }
