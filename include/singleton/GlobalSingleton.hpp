@@ -27,11 +27,15 @@
 
 inline int __test__ = []{
     HX::PlayQueue pq;
-    pq.insert(nullptr, HX::PlayQueue::Tp {{}, {}});
-    pq.insert(nullptr, HX::PlayQueue::Tp {{}, {}});
-    pq.next();
-    pq.next();
-    // pq.next(); err
+    // pq.insert(nullptr, HX::PlayQueue::Tp {{}, {"1"}});
+    // pq.insert(nullptr, HX::PlayQueue::Tp {{}, {"2"}});
+    for (int i = 0; i < 10; ++i) {
+        auto o = pq.next();
+        if (o) {
+            qDebug() << (*o)->getData();
+        }
+    }
+    exit(0);
     return 0;
 }();
 

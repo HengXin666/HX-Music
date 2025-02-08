@@ -23,6 +23,7 @@
 #include <list>
 #include <memory>
 #include <variant>
+#include <optional>
 #include <type_traits>
 #include <QString>
 
@@ -44,16 +45,34 @@ struct Node {
     std::unique_ptr<Node<T>> parent{nullptr};
     std::variant<T, List> data{nullptr};
 
+    T& getData() {
+        return std::get<T>(data);
+    }
+
+    bool isList() const {
+        return data.index();
+    }
+
     List& getList() {
         return std::get<List>(data);
     }
 
     iterator find(iterator it) {
         auto& list = getList();
-        for (auto res = list.begin(); res != list.end(); ++res)
-            if (*it == *res)
+        auto res = list.begin();
+        for (; res != list.end(); ++res)
+            if (it == res)
                 return res;
-        return list.end(); // 不可能
+        return res; // 不可能
+    }
+
+    iterator begin() {
+        auto& list = getList();
+        auto res = list.begin();
+        for (; res != list.end(); ++res)
+            if (!res->isList())
+                return res;
+        return res; // 空文件夹
     }
 
     bool operator==(Node<T> const& that) const {
@@ -84,20 +103,37 @@ public:
             auto& rootList = _root.getList();
             rootList.emplace_back(std::forward<U>(data));
             if (_it == rootList.end()) {
-                _it = rootList.begin();
+                _it = _root.begin();
             }
             return;
         }
         parent->getList().emplace_back(std::forward<U>(data));
     }
 
-    iterator next() {
-        auto& paList = _parentPtr ? _parentPtr->getList() : _root.getList();
-        while (_it == paList.end()) {
-            _it = ++_parentPtr->find(_it);
-            _parentPtr = _parentPtr->parent.get();
+    std::optional<iterator> next() {
+        auto* paListPtr = _parentPtr ? &_parentPtr->getList() : &_root.getList();
+
+        // 空文件夹
+        if (paListPtr->begin() == paListPtr->end()) [[unlikely]] {
+            return {};
         }
+
+        // 走一步
         ++_it;
+
+        // 如果是末尾, 就先退回到父节点
+        while (_it == paListPtr->end()) {
+            if (!_parentPtr) { // 已经是根啦
+                // 循环一周
+                _it = _root.begin();
+                return _it;
+            }
+            _it = _parentPtr->find(_it);
+            _parentPtr = _parentPtr->parent.get();
+            paListPtr = _parentPtr ? &_parentPtr->getList() : &_root.getList();
+        }
+
+        // 如果可以进入文件夹, 就进入
         while (_it->data.index()) {
             _parentPtr = &*_it;
             _it = _it->getList().begin();
@@ -105,7 +141,7 @@ public:
         return _it;
     }
 
-    iterator prev() {
+    std::optional<iterator> prev() {
         if (!_parentPtr && _it == _it->data.begin())
             return _it; // todo!!!
         --_it;
