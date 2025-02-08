@@ -106,20 +106,18 @@ PlayBar::PlayBar(QWidget* parent)
     connect(&SignalBusSingleton::get(), &SignalBusSingleton::musicPaused, this,
         [this, playIcon = std::move(playIcon)]() {
         _btnPlayPause->setIcon(playIcon);
-        _isPlay = false;
     });
 
     /* musicResumed (音乐继续) */
     connect(&SignalBusSingleton::get(), &SignalBusSingleton::musicResumed, this,
         [this, pauseIcon]() {
         _btnPlayPause->setIcon(pauseIcon);
-        _isPlay = true;
     });
 
     // 播放与继续按钮
     connect(_btnPlayPause, &QPushButton::clicked, this,
         [this, pauseIcon]() {
-        if (_isPlay) {
+        if (GlobalSingleton::get().musicConfig.isPlay) {
             MusicCommand::pause();
         } else {
             MusicCommand::resume();

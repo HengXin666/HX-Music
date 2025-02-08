@@ -40,6 +40,7 @@ struct MusicConfig {
     float volume;       // 音量大小
     PlayMode playMode;  // 播放模式
     qint64 position;    // 播放位置
+    bool isPlay{false}; // 是正在播放
 };
 
 #endif // !_HX_MUSIC_CONFIG_H_

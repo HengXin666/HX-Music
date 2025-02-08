@@ -3,7 +3,7 @@
 #include <singleton/GlobalSingleton.hpp>
 #include <cmd/MusicCommand.hpp>
 
-MusicPlayer::MusicPlayer()
+HX::MusicPlayer::MusicPlayer()
     : _player()
 {
     auto audioOutput = new QAudioOutput(&_player);

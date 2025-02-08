@@ -98,9 +98,6 @@ private:
     QComboBox* _cbxPlayMode = new QComboBox(this);
     VolumeBar* _volumeBar = new VolumeBar(this);
     QPushButton* _btnLyric = new QPushButton(this);
-
-    // 正在播放
-    bool _isPlay = false;
 };
 
 #endif // !_HX_PLAY_BAR_H_

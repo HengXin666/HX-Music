@@ -213,6 +213,8 @@ private:
         }
         return {parentItem, insertRow};
     }
+
+    QList<QTreeWidgetItem*> _list;
 };
 
 #endif // !_HX_MUSIC_TREE_WIDGET_H_

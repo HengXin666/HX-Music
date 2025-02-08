@@ -24,7 +24,7 @@
 #include <QMediaPlayer>
 #include <QUrl>
 
-#include <QDebug>
+namespace HX {
 
 /**
  * @brief 音乐播放类
@@ -79,5 +79,7 @@ public:
 private:
     QMediaPlayer _player;
 };
+
+} // namespace HX
 
 #endif // !_HX_MUSIC_PLAYER_H_

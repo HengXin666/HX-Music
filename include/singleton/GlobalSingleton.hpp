@@ -23,6 +23,17 @@
 #include <config/ConfigManager.hpp>
 #include <views/InterfaceManagementProxy.h>
 #include <utils/MusicPlayer.h>
+#include <utils/PlayQueue.hpp>
+
+inline int __test__ = []{
+    HX::PlayQueue pq;
+    pq.insert(nullptr, HX::PlayQueue::Tp {{}, {}});
+    pq.insert(nullptr, HX::PlayQueue::Tp {{}, {}});
+    pq.next();
+    pq.next();
+    // pq.next(); err
+    return 0;
+}();
 
 /**
  * @brief 全局单例
@@ -41,10 +52,13 @@ struct GlobalSingleton {
     InterfaceManagementProxy imp{};
 
     /// @brief 音频播放实例
-    MusicPlayer music{};
+    HX::MusicPlayer music{};
 
     /// @brief 音频配置
-    MusicConfig musicConfig;
+    MusicConfig musicConfig{};
+
+    /// @brief 播放队列
+    HX::PlayQueue playQueue{};
 private:
     explicit GlobalSingleton() {
         ConfigManager config;

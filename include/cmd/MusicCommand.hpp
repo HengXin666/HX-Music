@@ -41,6 +41,7 @@ struct MusicCommand {
      * @brief 音乐暂停
      */
     static void pause() {
+        GlobalSingleton::get().musicConfig.isPlay = false;
         GlobalSingleton::get().music.pause();
         SignalBusSingleton::get().musicPaused();
     }
@@ -49,6 +50,7 @@ struct MusicCommand {
      * @brief 音乐播放、音乐继续
      */
     static void resume() {
+        GlobalSingleton::get().musicConfig.isPlay = true;
         GlobalSingleton::get().music.play();
         SignalBusSingleton::get().musicResumed();
     }
