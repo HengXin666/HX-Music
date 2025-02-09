@@ -33,7 +33,8 @@ class MusicTreeWidget : public QTreeWidget {
 
     enum class ItemData : int {
         NodeType = 0,
-        FilePath = 1
+        FilePath = 1,
+        PlayQueue = 2,
     };
 
     enum class NodeType : unsigned int {

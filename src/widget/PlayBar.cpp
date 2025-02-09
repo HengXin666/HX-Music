@@ -57,12 +57,12 @@ PlayBar::PlayBar(QWidget* parent)
 
     // 上一首/暂停/下一首
     QHBoxLayout* hPlayOpLayout = new QHBoxLayout();
-    _btnPrevious->setIcon(QIcon(":/icons/previous.svg"));
+    _btnPrev->setIcon(QIcon(":/icons/previous.svg"));
     QIcon playIcon{":/icons/play.svg"};
     QIcon pauseIcon{":/icons/pause.svg"};
     _btnPlayPause->setIcon(playIcon);
     _btnNext->setIcon(QIcon(":/icons/next.svg"));
-    hPlayOpLayout->addWidget(_btnPrevious);
+    hPlayOpLayout->addWidget(_btnPrev);
     hPlayOpLayout->addWidget(_btnPlayPause);
     hPlayOpLayout->addWidget(_btnNext);
     hMainMusicOp->addLayout(hPlayOpLayout);
@@ -134,5 +134,15 @@ PlayBar::PlayBar(QWidget* parent)
     connect(_cbxPlayMode, &QComboBox::currentIndexChanged, this,
         [this](int idx) {
         MusicCommand::setPlayMode(PlayMode{idx});
+    });
+
+    // 上一首
+    connect(_btnPrev, &QPushButton::clicked, this, [this]() {
+        MusicCommand::prevMusic();
+    });
+
+    // 下一首
+    connect(_btnNext, &QPushButton::clicked, this, [this]() {
+        MusicCommand::nextMusic();
     });
 }

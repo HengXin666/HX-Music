@@ -90,7 +90,7 @@ private:
     TimeProgressText* _textTimeProgress = new TimeProgressText(this);
 
     // 上一首/暂停或继续/下一首
-    QPushButton* _btnPrevious = new QPushButton(this);
+    QPushButton* _btnPrev = new QPushButton(this);
     QPushButton* _btnPlayPause = new QPushButton(this);
     QPushButton* _btnNext = new QPushButton(this);
 

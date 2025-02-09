@@ -62,6 +62,38 @@ struct MusicCommand {
         GlobalSingleton::get().musicConfig.playMode = mode;
         SignalBusSingleton::get().playModeChanged(mode);
     }
+
+    /**
+     * @brief 下一首
+     */
+    static void nextMusic() {
+        if (auto it = GlobalSingleton::get().playQueue.next()) {
+            SignalBusSingleton::get().newSongLoaded(
+                HX::MusicInfo{
+                    QFileInfo{
+                        (*it)->getData()
+                    }
+                }
+            );
+            SignalBusSingleton::get().musicResumed();
+        }
+    }
+
+    /**
+     * @brief 上一首
+     */
+     static void prevMusic() {
+        if (auto it = GlobalSingleton::get().playQueue.prev()) {
+            SignalBusSingleton::get().newSongLoaded(
+                HX::MusicInfo{
+                    QFileInfo{
+                        (*it)->getData()
+                    }
+                }
+            );
+            SignalBusSingleton::get().musicResumed();
+        }
+    }
 };
 
 #endif // !_HX_MUSIC_COMMAND_H_

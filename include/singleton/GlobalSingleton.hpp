@@ -25,29 +25,6 @@
 #include <utils/MusicPlayer.h>
 #include <utils/PlayQueue.hpp>
 
-inline int __test__ = []{
-    HX::PlayQueue pq;
-    auto it1 = pq.insert({},  HX::PlayQueue::Tp {
-        {}, HX::PlayQueue::List{}});
-    pq.insert(it1, HX::PlayQueue::Tp {"1"});
-    pq.insert({}, HX::PlayQueue::Tp {"2"});
-    pq.insert(it1, HX::PlayQueue::Tp {"3"});
-    pq.insert(it1, HX::PlayQueue::Tp {
-        {}, HX::PlayQueue::List{}});
-    pq.insert({},  HX::PlayQueue::Tp {
-        {}, HX::PlayQueue::List{}});
-    pq.insert({},  HX::PlayQueue::Tp {
-        {}, HX::PlayQueue::List{}});
-    for (int i = 0; i < 10; ++i) {
-        auto o = pq.prev();
-        if (o) {
-            qDebug() << (*o)->getData();
-        }
-    }
-    exit(0);
-    return 0;
-}();
-
 /**
  * @brief 全局单例
  */

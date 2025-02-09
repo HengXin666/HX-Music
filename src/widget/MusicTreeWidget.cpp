@@ -6,8 +6,9 @@
 #include <taglib/fileref.h>
 #include <taglib/tag.h>
 
-#include <utils/MusicInfo.hpp>
 #include <singleton/SignalBusSingleton.h>
+#include <singleton/GlobalSingleton.hpp>
+#include <utils/MusicInfo.hpp>
 #include <cmd/MusicCommand.hpp>
 
 MusicTreeWidget::MusicTreeWidget(QWidget* parent)
@@ -99,9 +100,8 @@ bool MusicTreeWidget::addFileItem(
         return false;
     }
 
-    QByteArray fileName = QFile::encodeName( fileInfo.canonicalFilePath() );
-    const char* encodedName = fileName.constData();
-    TagLib::FileRef musicFile{encodedName};
+    QByteArray fileName = QFile::encodeName(fileInfo.canonicalFilePath());
+    TagLib::FileRef musicFile{fileName.constData()};
 
     HX::MusicInfo musicInfo{fileInfo};
     item->setText(1, musicInfo.getTitle());
@@ -124,6 +124,22 @@ bool MusicTreeWidget::addFileItem(
     
     setNodeType(item, NodeType::File);
 
+    QVariant v{};
+    v.setValue(GlobalSingleton::get().playQueue.insert(
+        parentItem && getNodeType(parentItem) == NodeType::Folder
+            ? HX::PlayQueue::ItOpt{parentItem->data(
+                    static_cast<int>(ItemData::PlayQueue),
+                    Qt::UserRole
+                ).value<HX::PlayQueue::iterator>()}
+            : HX::PlayQueue::ItOpt{}, 
+        HX::PlayQueue::Node{fileInfo.canonicalFilePath()}
+    ));
+    item->setData(
+        static_cast<int>(ItemData::PlayQueue),
+        Qt::UserRole,
+        v
+    );
+
     // 如果拖拽到某个文件夹项上，可以进行判断并添加为其子项
     if (parentItem && getNodeType(parentItem) == NodeType::Folder) {
         parentItem->insertChild(index, item);
@@ -134,7 +150,7 @@ bool MusicTreeWidget::addFileItem(
     return true;
 }
 
-void MusicTreeWidget::addFolderItem(const QFileInfo &fileInfo, int index, QTreeWidgetItem *parentItem)  {
+void MusicTreeWidget::addFolderItem(const QFileInfo &fileInfo, int index, QTreeWidgetItem* parentItem)  {
     namespace fs = std::filesystem;
 
     // 1. 新建一个目录元素
@@ -147,6 +163,22 @@ void MusicTreeWidget::addFolderItem(const QFileInfo &fileInfo, int index, QTreeW
         static_cast<int>(ItemData::FilePath),
         Qt::UserRole,
         fileInfo.filePath()
+    );
+
+    QVariant v{};
+    v.setValue(GlobalSingleton::get().playQueue.insert(
+        parentItem && getNodeType(parentItem) == NodeType::Folder
+            ? HX::PlayQueue::ItOpt{parentItem->data(
+                    static_cast<int>(ItemData::PlayQueue),
+                    Qt::UserRole
+                ).value<HX::PlayQueue::iterator>()}
+            : HX::PlayQueue::ItOpt{}, 
+        HX::PlayQueue::Node{HX::PlayQueue::List{}}
+    ));
+    item->setData(
+        static_cast<int>(ItemData::PlayQueue),
+        Qt::UserRole,
+        v
     );
 
     if (parentItem && getNodeType(parentItem) == NodeType::Folder) {
