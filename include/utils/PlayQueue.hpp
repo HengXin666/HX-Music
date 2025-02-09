@@ -77,30 +77,37 @@ private:
     }
 
     /**
-     * @brief 
-     * @param it 
-     * @return iterator 
-     */
-    iterator find(iterator it) { // todo 找得不对
-        auto& list = getList();
-        auto res = list.begin();
-        for (; res != list.end(); ++res)
-            if (it == res)
-                return res;
-        return res; // 不可能: 因为儿子必然存在, 只能与`parentPtr`使用
-    }
-
-    /**
      * @brief 返回第一个文件的迭代器, 如果有文件夹会进入
      * @return iterator 
      */
     std::optional<iterator> begin() {
         auto& list = getList();
         auto res = list.begin();
-        // 如果是多个空文件夹呢
+        // 如果是多个空文件夹, 需要考虑略过
         for (; res != list.end(); ++res) {
             if (res->isList()) {
                 if (auto ans = res->begin()) {
+                    return *ans;
+                }
+            } else {
+                return res;
+            }
+        }
+        return {};
+    }
+
+    /**
+     * @brief 返回最后一个文件的迭代器, 如果有文件夹会进入
+     * @return iterator 
+     */
+    std::optional<iterator> end() {
+        auto& list = getList();
+        auto res = list.end();
+        // 如果是多个空文件夹, 需要考虑略过
+        for (; res != list.begin(); ) {
+            --res;
+            if (res->isList()) {
+                if (auto ans = res->end()) {
                     return *ans;
                 }
             } else {
@@ -125,8 +132,7 @@ public:
 
     explicit NodeTree()
         : _root({}, List{})
-        , _it(_root.getList().begin())
-        , _parentPtr(nullptr)
+        , _it(_root.getList().end())
     {}
 
     template <typename U, 
@@ -135,79 +141,81 @@ public:
         auto& list = parentIt ? (*parentIt)->getList() : _root.getList();
         data._parentIt = parentIt;
         list.emplace_back(std::forward<U>(data));
-        if (_it == _root.getList().end()) {
-            if (auto it = _root.begin()) {
-                _it = *it;
-            }
+        auto res = --list.end();
+        // 如果播放队列没有歌曲, 那么更新一下; 前提是: 添加的不是文件夹
+        if (_it == _root.getList().end() && !res->isList()) {
+            _it = *_root.begin();
         }
-        return --list.end();
+        return res;
+    }
+
+    bool empty() const noexcept {
+        return _root.getList().size();
     }
 
     std::optional<iterator> next() {
-        if (auto list = _root.getList(); _it == _root.getList().end()) {
+        // 保证有文件, 而不是全是文件夹
+        if (auto list = _root.getList(); _it == _root.getList().end()) [[unlikely]] {
             if (list.empty()) {
                 return {};
             }
             return _it = *_root.begin();
         }
+
+        // 下一个
         auto mae = _it++;
+        
+        // 不是尾部; 如果是, 则迭代退出
         while (mae->_parentIt && _it == (*mae->_parentIt)->getList().end()) {
-            _it = *mae->_parentIt;
-            mae = _it++;
-        }
-        return mae->_parentIt ? _it : _root.begin();
-    }
-
-    /**
-     * @brief 下一首歌
-     * @return std::optional<iterator> 
-     */
-    std::optional<iterator> _next() {
-        auto* paListPtr = _parentPtr 
-            ? &_parentPtr->getList() 
-            : &_root.getList();
-
-        // 0. 空文件夹 <唯一可能的是没有音乐>
-        if (paListPtr->begin() == paListPtr->end()) [[unlikely]] {
-            return {};
+            _it = *mae->_parentIt;  // 退出
+            mae = _it++;            // 下一个
         }
 
-        // 1. 走一步
-        ++_it;
+        // 是根, 并且是尾部
+        if (!mae->_parentIt && _it == _root.getList().end()) {
+            return _it = *_root.begin(); // 循环一次
+        }
 
-        // 2. 如果是末尾, 就先退回到父节点, 然后再走
-        while (_it == paListPtr->end()) {
-            if (!_parentPtr) { // 已经是根啦
-                // 循环一周
-                _it = _root.begin();
-                return _it;
+        // 新节点, 看看需不需要进入文件夹
+        if (_it->isList()) {
+            if (auto ans = _it->begin()) {
+                return _it = *ans;
             }
-            // 不是根, 就可以往上走
-            do {
-                _it = _parentPtr->find(_it); // 好像没用...
-                _parentPtr = _parentPtr->parent;
-                paListPtr = _parentPtr 
-                    ? &_parentPtr->getList() 
-                    : &_root.getList();
-            } while (_it == paListPtr->end());
-            ++_it;
-        }
-
-        // 3. 如果可以进入文件夹, 就进入
-        while (_it->data.index()) {
-            _parentPtr = &*_it;
-            _it = _it->getList().begin();
+            // 如果是空文件夹, 就继续
+            return next();
         }
         return _it;
     }
 
-    std::optional<iterator> _prev() {
-        if (!_parentPtr && _it == _it->data.begin())
-            return _it; // todo!!!
+    std::optional<iterator> prev() {
+        // 保证有文件, 而不是全是文件夹
+        if (auto list = _root.getList(); _it == _root.getList().end()) [[unlikely]] {
+            if (list.empty()) {
+                return {};
+            }
+            return _it = *_root.begin();
+        }
+
+        // 不是头部; 如果是, 则迭代退出
+        while (_it->_parentIt && _it == (*_it->_parentIt)->getList().begin()) {
+            _it = *_it->_parentIt;  // 退出
+        }
+
+        // 是根, 并且是头部
+        if (!_it->_parentIt && _it == _root.getList().begin()) {
+            return _it = *_root.end();
+        }
+
+        // 上一个
         --_it;
-        while (_it == _it->data.begin()) {
-            _it = _parentPtr;
-            _parentPtr = _parentPtr->parent;
+        
+        // 新节点, 看看需不需要进入文件夹
+        if (_it->isList()) {
+            if (auto ans = _it->end()) {
+                return _it = *ans;
+            }
+            // 如果是空文件夹, 就继续
+            return prev();
         }
         return _it;
     }
@@ -215,7 +223,6 @@ public:
 private:
     Tp _root;
     iterator _it;
-    Tp* _parentPtr; // 只读, 不控制生命周期
 };
 
 class PlayQueue : public NodeTree<QString> {
