@@ -150,6 +150,10 @@ public:
         return _root.getList().empty();
     }
 
+    void setNowIt(iterator it) {
+        _it = it;
+    }
+
     std::optional<iterator> next() {
         // 保证有文件, 而不是全是文件夹
         if (auto list = _root.getList(); _it == _root.getList().end()) [[unlikely]] {

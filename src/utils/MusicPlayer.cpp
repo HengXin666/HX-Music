@@ -17,7 +17,7 @@ HX::MusicPlayer::MusicPlayer()
         }
         switch (GlobalSingleton::get().musicConfig.playMode) {
         case PlayMode::ListLoop:    // 列表循环
-            // todo
+            MusicCommand::nextMusic();
             break;
         case PlayMode::RandomPlay:  // 随机播放
             // todo

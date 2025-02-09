@@ -27,6 +27,15 @@
  * @brief 音乐相关的命令
  */
 struct MusicCommand {
+    static void switchMusic(HX::PlayQueue::iterator it) {
+        GlobalSingleton::get().playQueue.setNowIt(it);
+        SignalBusSingleton::get().newSongLoaded(
+            HX::MusicInfo{QFileInfo{
+                it->getData()
+            }}
+        );
+    }
+
     /**
      * @brief 修改音量
      * @param volume 
@@ -68,13 +77,7 @@ struct MusicCommand {
      */
     static void nextMusic() {
         if (auto it = GlobalSingleton::get().playQueue.next()) {
-            SignalBusSingleton::get().newSongLoaded(
-                HX::MusicInfo{
-                    QFileInfo{
-                        (*it)->getData()
-                    }
-                }
-            );
+            switchMusic(*it);
             SignalBusSingleton::get().musicResumed();
         }
     }
@@ -84,13 +87,7 @@ struct MusicCommand {
      */
      static void prevMusic() {
         if (auto it = GlobalSingleton::get().playQueue.prev()) {
-            SignalBusSingleton::get().newSongLoaded(
-                HX::MusicInfo{
-                    QFileInfo{
-                        (*it)->getData()
-                    }
-                }
-            );
+            switchMusic(*it);
             SignalBusSingleton::get().musicResumed();
         }
     }

@@ -38,13 +38,11 @@ MusicTreeWidget::MusicTreeWidget(QWidget* parent)
             qDebug() << "双击的是文件夹：" << item->text(0);
         } else {
             // 播放音乐
-            SignalBusSingleton::get().newSongLoaded(
-                HX::MusicInfo{QFileInfo{
-                    item->data(
-                        static_cast<int>(ItemData::FilePath), 
-                        Qt::UserRole
-                    ).toString()
-                }}
+            MusicCommand::switchMusic(
+                item->data(
+                    static_cast<int>(ItemData::PlayQueue),
+                    Qt::UserRole
+                ).value<HX::PlayQueue::iterator>()  
             );
             MusicCommand::resume();
         }
