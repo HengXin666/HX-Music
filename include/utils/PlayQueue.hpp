@@ -21,7 +21,6 @@
 #define _HX_PLAY_QUEUE_H_
 
 #include <list>
-#include <memory>
 #include <variant>
 #include <optional>
 #include <type_traits>
@@ -37,49 +36,83 @@
 namespace HX {
 
 template <typename T>
-struct Node {
-    using List = std::list<Node<T>>;
-    using Tp = typename std::list<Node<T>>::value_type;
+class NodeTree;
+
+template <typename T>
+class Node {
+    friend class NodeTree<T>;
+public:
+    using Tp = Node<T>;
+    using List = std::list<Tp>;
+    using LT = typename std::list<Tp>::value_type;
     using iterator = typename List::iterator;
 
-    std::unique_ptr<Node<T>> parent{nullptr};
-    std::variant<T, List> data{nullptr};
-
     T& getData() {
-        return std::get<T>(data);
+        return std::get<T>(_data);
     }
 
+    explicit Node(T&& t)
+        : _parentIt()
+        , _data(std::forward<T>(t))
+    {}
+
+    template <typename U, 
+        typename = std::enable_if_t<
+            std::is_same_v<T, U> || std::is_same_v<List, U>>>
+    explicit Node(std::optional<iterator> pIt, U&& u)
+        : _parentIt(pIt)
+        , _data(std::forward<U>(u))
+    {}
+
+private:
+    std::optional<iterator> _parentIt;
+    std::variant<T, List> _data;
+
     bool isList() const {
-        return data.index();
+        return _data.index();
     }
 
     List& getList() {
-        return std::get<List>(data);
+        return std::get<List>(_data);
     }
 
-    iterator find(iterator it) {
+    /**
+     * @brief 
+     * @param it 
+     * @return iterator 
+     */
+    iterator find(iterator it) { // todo 找得不对
         auto& list = getList();
         auto res = list.begin();
         for (; res != list.end(); ++res)
             if (it == res)
                 return res;
-        return res; // 不可能
+        return res; // 不可能: 因为儿子必然存在, 只能与`parentPtr`使用
     }
 
-    iterator begin() {
+    /**
+     * @brief 返回第一个文件的迭代器, 如果有文件夹会进入
+     * @return iterator 
+     */
+    std::optional<iterator> begin() {
         auto& list = getList();
         auto res = list.begin();
-        for (; res != list.end(); ++res)
-            if (!res->isList())
+        // 如果是多个空文件夹呢
+        for (; res != list.end(); ++res) {
+            if (res->isList()) {
+                if (auto ans = res->begin()) {
+                    return *ans;
+                }
+            } else {
                 return res;
-        return res; // 空文件夹
+            }
+        }
+        return {};
     }
 
     bool operator==(Node<T> const& that) const {
-        if (parent != that.parent || data != that.data) {
-            return false;
-        }
-        return true;
+        return _parentIt == that._parentIt 
+            && _data == that._data;
     }
 };
 
@@ -87,53 +120,80 @@ template <typename T>
 class NodeTree {
 public:
     using Tp = Node<T>;
+    using List = typename Tp::List;
     using iterator = typename Tp::iterator;
 
     explicit NodeTree()
-        : _root({nullptr, std::list<Tp>{}})
+        : _root({}, List{})
         , _it(_root.getList().begin())
         , _parentPtr(nullptr)
     {}
 
     template <typename U, 
         typename = std::enable_if_t<std::is_same_v<U, Tp>>>
-    void insert(Tp* parent, U&& data) {
-        if (!parent) {
-            data.parent = nullptr;
-            auto& rootList = _root.getList();
-            rootList.emplace_back(std::forward<U>(data));
-            if (_it == rootList.end()) {
-                _it = _root.begin();
+    iterator insert(std::optional<iterator> parentIt, U&& data) {
+        auto& list = parentIt ? (*parentIt)->getList() : _root.getList();
+        data._parentIt = parentIt;
+        list.emplace_back(std::forward<U>(data));
+        if (_it == _root.getList().end()) {
+            if (auto it = _root.begin()) {
+                _it = *it;
             }
-            return;
         }
-        parent->getList().emplace_back(std::forward<U>(data));
+        return --list.end();
     }
 
     std::optional<iterator> next() {
-        auto* paListPtr = _parentPtr ? &_parentPtr->getList() : &_root.getList();
+        if (auto list = _root.getList(); _it == _root.getList().end()) {
+            if (list.empty()) {
+                return {};
+            }
+            return _it = *_root.begin();
+        }
+        auto mae = _it++;
+        while (mae->_parentIt && _it == (*mae->_parentIt)->getList().end()) {
+            _it = *mae->_parentIt;
+            mae = _it++;
+        }
+        return mae->_parentIt ? _it : _root.begin();
+    }
 
-        // 空文件夹
+    /**
+     * @brief 下一首歌
+     * @return std::optional<iterator> 
+     */
+    std::optional<iterator> _next() {
+        auto* paListPtr = _parentPtr 
+            ? &_parentPtr->getList() 
+            : &_root.getList();
+
+        // 0. 空文件夹 <唯一可能的是没有音乐>
         if (paListPtr->begin() == paListPtr->end()) [[unlikely]] {
             return {};
         }
 
-        // 走一步
+        // 1. 走一步
         ++_it;
 
-        // 如果是末尾, 就先退回到父节点
+        // 2. 如果是末尾, 就先退回到父节点, 然后再走
         while (_it == paListPtr->end()) {
             if (!_parentPtr) { // 已经是根啦
                 // 循环一周
                 _it = _root.begin();
                 return _it;
             }
-            _it = _parentPtr->find(_it);
-            _parentPtr = _parentPtr->parent.get();
-            paListPtr = _parentPtr ? &_parentPtr->getList() : &_root.getList();
+            // 不是根, 就可以往上走
+            do {
+                _it = _parentPtr->find(_it); // 好像没用...
+                _parentPtr = _parentPtr->parent;
+                paListPtr = _parentPtr 
+                    ? &_parentPtr->getList() 
+                    : &_root.getList();
+            } while (_it == paListPtr->end());
+            ++_it;
         }
 
-        // 如果可以进入文件夹, 就进入
+        // 3. 如果可以进入文件夹, 就进入
         while (_it->data.index()) {
             _parentPtr = &*_it;
             _it = _it->getList().begin();
@@ -141,7 +201,7 @@ public:
         return _it;
     }
 
-    std::optional<iterator> prev() {
+    std::optional<iterator> _prev() {
         if (!_parentPtr && _it == _it->data.begin())
             return _it; // todo!!!
         --_it;
@@ -155,7 +215,7 @@ public:
 private:
     Tp _root;
     iterator _it;
-    Tp* _parentPtr; // 只读
+    Tp* _parentPtr; // 只读, 不控制生命周期
 };
 
 class PlayQueue : public NodeTree<QString> {

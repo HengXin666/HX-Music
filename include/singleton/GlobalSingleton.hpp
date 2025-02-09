@@ -27,8 +27,9 @@
 
 inline int __test__ = []{
     HX::PlayQueue pq;
-    // pq.insert(nullptr, HX::PlayQueue::Tp {{}, {"1"}});
-    // pq.insert(nullptr, HX::PlayQueue::Tp {{}, {"2"}});
+    auto it1 = pq.insert({},  HX::PlayQueue::Tp {
+        {}, HX::PlayQueue::List{}});
+    pq.insert(it1, HX::PlayQueue::Tp {"2"});
     for (int i = 0; i < 10; ++i) {
         auto o = pq.next();
         if (o) {
