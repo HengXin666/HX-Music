@@ -24,6 +24,8 @@
 #include <QMediaPlayer>
 #include <QUrl>
 
+#include <utils/MusicInfo.hpp>
+
 namespace HX {
 
 /**
@@ -76,8 +78,33 @@ public:
         _player.audioOutput()->setVolume(volume);
         return *this;
     }
+
+    /**
+     * @brief 获取当前播放的位置(单位: 毫秒(ms))
+     */
+    qint64 getNowPos() {
+        return _player.position();
+    }
+
+    /**
+     * @brief 获取当前音频的总毫秒数
+     * @return qint64 
+     */
+    qint64 getLengthInMilliseconds() {
+        return _lengthInMilliseconds;
+    }
+
+    /**
+     * @brief 设置当前音频的总毫秒数
+     * @param pos 
+     */
+    void setLengthInMilliseconds(int pos) {
+        _lengthInMilliseconds = pos;
+    }
+
 private:
     QMediaPlayer _player;
+    int _lengthInMilliseconds{0}; // 毫秒长度
 };
 
 } // namespace HX

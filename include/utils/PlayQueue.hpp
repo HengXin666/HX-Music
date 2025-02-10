@@ -59,12 +59,10 @@ public:
     }
 
 private:
-    // 考虑没有歌曲的情况!
     ItOpt random() {
         std::mt19937 rng{std::random_device{}()};
         ItOpt it = {};
         std::size_t nextCnt = std::uniform_int_distribution<std::size_t>{1, _cnt}(rng);
-        qDebug() << nextCnt;
         for (std::size_t i = 0; i < nextCnt; ++i) {
             it = next();
         }

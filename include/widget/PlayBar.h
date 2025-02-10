@@ -21,7 +21,7 @@
 #define _HX_PLAY_BAR_H_
 
 #include <QWidget>
-#include <QProgressBar>
+#include <QSlider>
 #include <QLabel>
 #include <QPushButton>
 #include <QComboBox>
@@ -68,7 +68,7 @@ public:
 
 private:
     // 进度条
-    QProgressBar* _barPlayProgress = new QProgressBar(this);
+    QSlider* _sliderPlayBar = new QSlider(Qt::Horizontal, this);
 
     // 歌曲图片
     QLabel* _imgMusic = new QLabel(this);

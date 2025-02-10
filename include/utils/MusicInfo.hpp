@@ -153,6 +153,30 @@ public:
         }
     }
 
+    /**
+     * @brief 获取音频的总秒数
+     * @param errRes 获取失败返回的值
+     * @return int 
+     */
+    int getLengthInSeconds(int errRes = 0) const {
+        if (mpegFile.isNull() || !mpegFile.audioProperties()) {
+            return errRes;
+        }
+        return mpegFile.audioProperties()->lengthInSeconds();
+    }
+
+    /**
+     * @brief 获取音频的总毫秒数
+     * @param errRes 获取失败返回的值
+     * @return int 
+     */
+     int getLengthInMilliseconds(int errRes = 0) const {
+        if (mpegFile.isNull() || !mpegFile.audioProperties()) {
+            return errRes;
+        }
+        return mpegFile.audioProperties()->lengthInMilliseconds();
+    }
+
     // 高性能获取专辑图片函数，支持 MP3、FLAC、MP4/M4A 格式
     std::optional<QPixmap> getAlbumArtAdvanced() const {
         QString ext = _fileInfo.suffix().toLower();

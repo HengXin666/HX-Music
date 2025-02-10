@@ -9,12 +9,14 @@ HX::MusicPlayer::MusicPlayer()
     auto audioOutput = new QAudioOutput(&_player);
     _player.setAudioOutput(audioOutput);
     audioOutput->setVolume(100);
+    // 播放状态变化
     connect(&_player, &QMediaPlayer::mediaStatusChanged, this, [this](
         QMediaPlayer::MediaStatus mediaState
     ){
         if (mediaState != QMediaPlayer::MediaStatus::EndOfMedia) {
             return;
         }
+        // 播放完毕
         switch (GlobalSingleton::get().musicConfig.playMode) {
         case PlayMode::ListLoop:    // 列表循环
         case PlayMode::RandomPlay:  // 随机播放
@@ -28,6 +30,14 @@ HX::MusicPlayer::MusicPlayer()
             break;
         case PlayMode::PlayModeCnt: // !保留!
             break;
+        }
+    });
+
+    // 播放位置变化
+    connect(&_player, &QMediaPlayer::positionChanged, this, [this](qint64 pos) {
+        SignalBusSingleton::get().musicPlayPosChanged(pos);
+        if (!(pos % 1000)) {
+            SignalBusSingleton::get().musicPlayPosChangedBySec(pos / 1000);
         }
     });
 }

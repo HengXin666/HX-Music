@@ -20,7 +20,8 @@ PlayBar::PlayBar(QWidget* parent)
     QVBoxLayout* vBL = new QVBoxLayout(this);
 
     // 添加播放进度条
-    vBL->addWidget(_barPlayProgress);
+    _sliderPlayBar->setRange(0, 1'00'00); // 100.00% 百分比
+    vBL->addWidget(_sliderPlayBar);
 
     // 歌曲信息
     _textMusicData->setText("歌曲信息(滚动) (歌曲名称 歌手名称 均可点击)");
@@ -99,7 +100,6 @@ PlayBar::PlayBar(QWidget* parent)
                 QPixmap{":/icons/audio.svg"}.scaled(50, 50, Qt::KeepAspectRatio, Qt::SmoothTransformation)
             );
         }
-        GlobalSingleton::get().music.switchMusic(info.filePath()).play();
     });
 
     /* musicPaused (音乐暂停) */
@@ -144,5 +144,22 @@ PlayBar::PlayBar(QWidget* parent)
     // 下一首
     connect(_btnNext, &QPushButton::clicked, this, [this]() {
         MusicCommand::nextMusic();
+    });
+
+    /* musicPlayPosChanged (播放毫秒改变) */
+    connect(&SignalBusSingleton::get(), &SignalBusSingleton::musicPlayPosChanged, this,
+        [this](qint64 pos) {
+        if (_sliderPlayBar->isSliderDown()) // 如果是在拖动, 就先不更新位置了
+            return;
+        _sliderPlayBar->setSliderPosition(
+            ((double)pos / GlobalSingleton::get().music.getLengthInMilliseconds()) * 1'00'00
+        );
+    });
+
+    // 拖动位置释放 sliderReleased
+    connect(_sliderPlayBar, &QSlider::sliderReleased, this, [this]() {
+        MusicCommand::setMusicPos(
+            ((double)_sliderPlayBar->sliderPosition() / 1'00'00) * GlobalSingleton::get().music.getLengthInMilliseconds()
+        );
     });
 }

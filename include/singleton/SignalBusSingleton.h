@@ -74,6 +74,18 @@ Q_SIGNALS:
      * @brief 播放模式变化
      */
     void playModeChanged(PlayMode mode);
+
+    /**
+     * @brief 播放位置变化
+     * @param pos 当前播放位置 (单位: 毫秒(ms))
+     */
+    void musicPlayPosChanged(qint64 pos);
+
+    /**
+     * @brief 播放位置变化
+     * @param sec 当前播放位置 (单位: 秒(s))
+     */
+    void musicPlayPosChangedBySec(qint64 sec);
 };
 
 #endif // !_HX_SIGNAL_BUS_SINGLETON_H_

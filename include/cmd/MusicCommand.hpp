@@ -29,11 +29,15 @@
 struct MusicCommand {
     static void switchMusic(HX::PlayQueue::iterator it) {
         GlobalSingleton::get().playQueue.setNowIt(it);
+        auto fileInfo = QFileInfo{
+            it->getData()
+        };
+        auto info = HX::MusicInfo{fileInfo};
         SignalBusSingleton::get().newSongLoaded(
-            HX::MusicInfo{QFileInfo{
-                it->getData()
-            }}
+            info
         );
+        GlobalSingleton::get().music.setLengthInMilliseconds(info.getLengthInMilliseconds());
+        GlobalSingleton::get().music.switchMusic(info.filePath()).play();
     }
 
     /**
@@ -99,7 +103,7 @@ struct MusicCommand {
     /**
      * @brief 上一首
      */
-     static void prevMusic() {
+    static void prevMusic() {
         switch (GlobalSingleton::get().musicConfig.playMode) {
         case PlayMode::ListLoop:    // 列表循环
         case PlayMode::SinglePlay:  // 单曲播放
@@ -118,6 +122,10 @@ struct MusicCommand {
         case PlayMode::PlayModeCnt: // !保留!
             break;
         }
+    }
+
+    static void setMusicPos(qint64 pos) {
+        GlobalSingleton::get().music.setPosition(pos);
     }
 };
 
