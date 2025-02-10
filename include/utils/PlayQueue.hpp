@@ -20,6 +20,8 @@
 #ifndef _HX_PLAY_QUEUE_H_
 #define _HX_PLAY_QUEUE_H_
 
+#include <random>
+
 #include <QString>
 #include <QVariant>
 
@@ -34,7 +36,49 @@ public:
 
     explicit PlayQueue()
         : FileTree<QString>()
+        , _pq()
+        , _pqIt(_pq.end())
     {}
+
+    ItOpt randomPrev() {
+        if (_pq.empty())
+            return {};
+        if (_pqIt == _pq.begin())
+            return *_pqIt;
+        if (_pq.size() == 1)
+            return *(_pqIt = _pq.begin());
+        return _pqIt == _pq.end() ? *----_pqIt : *--_pqIt;
+    }
+
+    ItOpt randomNext() {
+        if (_root.getList().empty() || !_root.begin())
+            return {};
+        if (_pqIt == _pq.end() || ++_pqIt == _pq.end())
+            return random();
+        return *_pqIt;
+    }
+
+private:
+    // 考虑没有歌曲的情况!
+    ItOpt random() {
+        std::mt19937 rng{std::random_device{}()};
+        ItOpt it = {};
+        std::size_t nextCnt = std::uniform_int_distribution<std::size_t>{1, _cnt}(rng);
+        qDebug() << nextCnt;
+        for (std::size_t i = 0; i < nextCnt; ++i) {
+            it = next();
+        }
+        _pq.emplace_back(*it);
+        _pqIt = _pq.end();
+        if (_pq.size() >= 16) {
+            _pq.pop_front();
+        }
+        return it;
+    }
+
+    // 只和`random`相关
+    std::list<iterator> _pq;
+    std::list<iterator>::iterator _pqIt;
 };
 
 } // namespace HX

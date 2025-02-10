@@ -59,22 +59,23 @@ public:
         return std::get<T>(_data);
     }
 
-private:
-    std::optional<iterator> _parentIt;
-    std::variant<T, List> _data;
-
     bool isList() const {
         return _data.index();
     }
 
+    /**
+     * @brief 获取list
+     * @warning 请保证`_data`处于list类型, 否则抛出异常
+     * @return List& 
+     */
     List& getList() {
         return std::get<List>(_data);
     }
 
     /**
-        * @brief 返回第一个文件的迭代器, 如果有文件夹会进入
-        * @return iterator 
-        */
+     * @brief 返回第一个文件的迭代器, 如果有文件夹会进入
+     * @return std::optional<iterator> 
+     */
     std::optional<iterator> begin() {
         auto& list = getList();
         auto res = list.begin();
@@ -92,9 +93,9 @@ private:
     }
 
     /**
-        * @brief 返回最后一个文件的迭代器, 如果有文件夹会进入
-        * @return iterator 
-        */
+     * @brief 返回最后一个文件的迭代器, 如果有文件夹会进入
+     * @return std::optional<iterator> 
+     */
     std::optional<iterator> end() {
         auto& list = getList();
         auto res = list.end();
@@ -116,6 +117,10 @@ private:
         return _parentIt == that._parentIt 
             && _data == that._data;
     }
+
+private:
+    std::optional<iterator> _parentIt;
+    std::variant<T, List> _data;
 };
 
 template <typename T>
@@ -143,6 +148,8 @@ public:
         if (_it == _root.getList().end() && !res->isList()) {
             _it = *_root.begin();
         }
+        // 记录非文件夹节点的数量
+        _cnt += !res->isList();
         return res;
     }
 
@@ -150,6 +157,10 @@ public:
         return _root.getList().empty();
     }
 
+    /**
+     * @brief 设置当前迭代器位置
+     * @param it 
+     */
     void setNowIt(iterator it) {
         _it = it;
     }
@@ -221,9 +232,10 @@ public:
         return _it;
     }
 
-private:
+protected:
     Tp _root;
     iterator _it;
+    std::size_t _cnt; // 只记录文件节点
 };
 
 } // namespace HX
