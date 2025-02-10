@@ -124,6 +124,10 @@ struct MusicCommand {
         }
     }
 
+    /**
+     * @brief 设置当前音乐的播放位置 (单位: 毫秒(ms))
+     * @param pos 
+     */
     static void setMusicPos(qint64 pos) {
         GlobalSingleton::get().music.setPosition(pos);
     }
