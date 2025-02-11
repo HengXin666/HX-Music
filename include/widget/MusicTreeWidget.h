@@ -116,11 +116,18 @@ protected:
             auto [parentItem, insertRow] = determineDropPosition(event);
 
             // 保证不能是 往普通文件中插入
-            if (parentItem 
+            if (QTreeWidgetItem* targetItem = itemAt(event->position().toPoint()); 
+                (parentItem 
                 && insertRow < parentItem->childCount()
                 && getNodeType(parentItem->child(insertRow)) == NodeType::File
                 && dropIndicatorPosition() == QAbstractItemView::OnItem)
+                || 
+                (targetItem // 特别处理`QAbstractItemView::OnViewport`情况, 也就是往树而不是文件项
+                && getNodeType(targetItem) == NodeType::File
+                && dropIndicatorPosition() == QAbstractItemView::OnViewport)
+            ) {
                 return;
+            }
 
             // 记录拖动元素的原始父节点
             QList<QTreeWidgetItem*> selectedItemList = selectedItems(); // 被选中的所有项

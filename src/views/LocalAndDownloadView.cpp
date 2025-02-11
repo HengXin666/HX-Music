@@ -7,7 +7,10 @@ LocalAndDownloadView::LocalAndDownloadView(QWidget* parent)
 {
     QVBoxLayout* vBL = new QVBoxLayout(this);
     vBL->addWidget(_tree);
-    
+
+    // 设置交替项颜色
+    _tree->setAlternatingRowColors(true);
+    // _tree->setPalette(QPalette(Qt::gray));
     // _tree->setStyleSheet(
     //     "QTreeWidget {"
     //     "    border: none;"
