@@ -10,11 +10,12 @@ ScrollText::ScrollText(QWidget* parent)
 
 void ScrollText::setText(const QString& text) {
     _text = text;
+    // 滚动偏移: 归位!
     _offset = 0;
     update();
     updateGeometry();
-    int textWidth = fontMetrics().horizontalAdvance(_text);
-    if (textWidth >= width()) {
+    // 只有大于等于控件宽度, 才会滚动
+    if (fontMetrics().horizontalAdvance(_text) >= width()) {
         _timerState = TimerState::Open;
         openTimer();
     } else {

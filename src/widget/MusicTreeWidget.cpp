@@ -144,7 +144,7 @@ MusicTreeWidget::MusicTreeWidget(QWidget* parent)
             qDebug() << "双击的是文件夹：" << item->text(0);
         } else {
             // 播放音乐
-            MusicCommand::switchMusic(
+            MusicCommand::selectMusic(
                 item->data(
                     static_cast<int>(ItemData::PlayQueue),
                     Qt::UserRole

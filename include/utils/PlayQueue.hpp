@@ -40,16 +40,35 @@ public:
         , _pqIt(_pq.end())
     {}
 
-    ItOpt randomPrev() {
+    /**
+     * @brief 上一首音乐
+     * @return ItOpt 
+     */
+    ItOpt prev() {
         if (_pq.empty())
             return {};
-        if (_pqIt == _pq.begin())
-            return *_pqIt;
         if (_pq.size() == 1)
             return *(_pqIt = _pq.begin());
+        if (_pqIt == _pq.begin())
+            return *_pqIt;
         return _pqIt == _pq.end() ? *----_pqIt : *--_pqIt;
     }
 
+    ItOpt next() {
+        if (_root.getList().empty() || !_root.begin())
+            return {};
+        if (_pqIt == _pq.end() || ++_pqIt == _pq.end()) {
+            auto res = FileTree<QString>::next();
+            push(*res);
+            return res;
+        }
+        return *_pqIt;
+    }
+
+    /**
+     * @brief 随机下一首音乐
+     * @return ItOpt 
+     */
     ItOpt randomNext() {
         if (_root.getList().empty() || !_root.begin())
             return {};
@@ -58,19 +77,27 @@ public:
         return *_pqIt;
     }
 
+    /**
+     * @brief 添加音乐进入队列尾部
+     * @param it 
+     */
+    void push(iterator it) {
+        _pq.emplace_back(it);
+        _pqIt = _pq.end();
+        if (_pq.size() >= 16) {
+            _pq.pop_front();
+        }
+    }
+
 private:
     ItOpt random() {
         std::mt19937 rng{std::random_device{}()};
         ItOpt it = {};
         std::size_t nextCnt = std::uniform_int_distribution<std::size_t>{1, _cnt}(rng);
         for (std::size_t i = 0; i < nextCnt; ++i) {
-            it = next();
+            it = FileTree<QString>::next();
         }
-        _pq.emplace_back(*it);
-        _pqIt = _pq.end();
-        if (_pq.size() >= 16) {
-            _pq.pop_front();
-        }
+        push(*it);
         return it;
     }
 

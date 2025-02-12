@@ -25,7 +25,7 @@
 /**
  * @brief 滚动的文本 (如果文本长度大于控件长度, 则会滚动), 可停止
  */
- class ScrollText : public QLabel {
+class ScrollText : public QLabel {
     Q_OBJECT
 public:
     explicit ScrollText(QWidget* parent = nullptr);

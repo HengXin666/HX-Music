@@ -27,6 +27,19 @@
  * @brief 音乐相关的命令
  */
 struct MusicCommand {
+    /**
+     * @brief 选择音乐, 此时是已知需要播放的音乐的, 因此会添加到播放队列
+     * @param it 
+     */
+    static void selectMusic(HX::PlayQueue::iterator it) {
+        GlobalSingleton::get().playQueue.push(it);
+        switchMusic(it);
+    }
+
+    /**
+     * @brief 切换音乐, 并且播放
+     * @param it 
+     */
     static void switchMusic(HX::PlayQueue::iterator it) {
         GlobalSingleton::get().playQueue.setNowIt(it);
         auto fileInfo = QFileInfo{
@@ -106,23 +119,9 @@ struct MusicCommand {
      * @brief 上一首
      */
     static void prevMusic() {
-        switch (GlobalSingleton::get().musicConfig.playMode) {
-        case PlayMode::ListLoop:    // 列表循环
-        case PlayMode::SinglePlay:  // 单曲播放
-        case PlayMode::SingleLoop:  // 单曲循环
-            if (auto it = GlobalSingleton::get().playQueue.prev()) {
-                switchMusic(*it);
-                SignalBusSingleton::get().musicResumed();
-            }
-            break;
-        case PlayMode::RandomPlay:  // 随机播放
-            if (auto it = GlobalSingleton::get().playQueue.randomPrev()) {
-                switchMusic(*it);
-                SignalBusSingleton::get().musicResumed();
-            }
-            break;
-        case PlayMode::PlayModeCnt: // !保留!
-            break;
+        if (auto it = GlobalSingleton::get().playQueue.prev()) {
+            switchMusic(*it);
+            SignalBusSingleton::get().musicResumed();
         }
     }
 
