@@ -28,6 +28,20 @@
 #include <QPainter>
 
 class MultiLineItemDelegate : public QStyledItemDelegate {
+    // 间距
+    inline static constexpr int Padding = 5;
+
+    // 图片大小
+    inline static constexpr int ImageSize = 48;
+
+    // 文本外边距
+    inline static constexpr int TextMargin = 5;
+
+    // 标题字体大小
+    inline static constexpr int TitleFontSize = 10;
+
+    // 歌手字体大小
+    inline static constexpr int ArtistFontSize = 8;
 public:
     MultiLineItemDelegate(QObject* parent = nullptr) 
         : QStyledItemDelegate(parent) 
@@ -42,20 +56,17 @@ public:
     QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const override {
         if (index.column() == 0) {
             // 固定字体尺寸计算
-            const int padding = 5;
-            const int imageSize = 32;
-            
             QFont titleFont = option.font;
-            titleFont.setPointSize(12);
+            titleFont.setPointSize(TitleFontSize);
             QFont artistFont = titleFont;
-            artistFont.setPointSize(10);
+            artistFont.setPointSize(ArtistFontSize);
             
             const int textHeight = QFontMetrics(titleFont).height() 
                                  + QFontMetrics(artistFont).height() 
                                  + 2; // 行间距
             
             // 取图片高度和文字高度的较大值
-            const int totalHeight = qMax(imageSize, textHeight) + 2 * padding;
+            const int totalHeight = qMax(ImageSize, textHeight) + 2 * Padding;
             
             return QSize(200, totalHeight); // 适当宽度
         }

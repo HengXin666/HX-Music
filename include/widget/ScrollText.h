@@ -23,12 +23,80 @@
 #include <QLabel>
 
 /**
- * @brief 滚动文本 (如果文本长度大于控件长度, 则会滚动)
+ * @brief 滚动的文本 (如果文本长度大于控件长度, 则会滚动), 可停止
  */
-class ScrollText : public QLabel {
+ class ScrollText : public QLabel {
     Q_OBJECT
 public:
     explicit ScrollText(QWidget* parent = nullptr);
+
+    void setText(const QString& text);
+
+    QSize sizeHint() const override {
+        return fontMetrics().size(0, _text);  // 确保返回正确大小
+    }
+
+    /**
+     * @brief 设置滚动间隙
+     * @param gap 
+     */
+    void setGap(unsigned int gap) {
+        _gap = gap;
+    }
+
+    /**
+     * @brief 设置滚动结束, 暂停显示的时间
+     * @param time (单位: 毫秒(ms))
+     */
+    void setPauseTime(unsigned int time) {
+        _pauseTime = time;
+    }
+
+    /**
+     * @brief 设置`刷新间隔/滚动间隔`的时间
+     * @param time (单位: 毫秒(ms))
+     */
+    void setUpdateTime(unsigned int time) {
+        _updateTime = time;
+    }
+
+protected:
+    void paintEvent(QPaintEvent* event) override;
+
+    void timerEvent(QTimerEvent* event) override;
+
+    void showEvent(QShowEvent *event) override {
+        Q_UNUSED(event);
+        openTimer();
+    }
+
+    void hideEvent(QHideEvent *event) override {
+        Q_UNUSED(event);
+        closeTimer();
+    }
+
+private:
+    /**
+     * @brief 开启滚动定时器
+     */
+    void openTimer();
+
+    /**
+     * @brief 关闭滚动定时器
+     */
+    void closeTimer();
+
+    unsigned int _gap = 100;            // 间隙
+    unsigned int _pauseTime = 0;        // 滚动结束, 停止显示的时间 (单位: 毫秒(ms))
+    unsigned int _updateTime = 20;      // 滚动间隔 (单位: 毫秒(ms))
+    enum class TimerState : int {
+        Open,
+        Close,
+    } _timerState = TimerState::Close;  // 定时器状态
+    int _offset = 0;                    // 偏移量
+    int _timerId = 0;                   // 定时器id
+    QString _text;                      // 存储文本内容
 };
+
 
 #endif // !_HX_SCROLL_TEXT_H_

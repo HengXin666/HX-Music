@@ -25,7 +25,10 @@ PlayBar::PlayBar(QWidget* parent)
 
     // 歌曲信息
     _textMusicData->setText("歌曲信息(滚动) (歌曲名称 歌手名称 均可点击)");
-    
+    _textMusicData->setFixedWidth(300);
+    _textMusicData->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    _textMusicData->setPauseTime(1500); // 设置滚动暂停间隔
+
     // 水平布局 (下方 总操作布局)
     QHBoxLayout* hMainMusicOp = new QHBoxLayout();
 
@@ -52,7 +55,6 @@ PlayBar::PlayBar(QWidget* parent)
     vSongDataAndOpLayout->addLayout(hLayoutActions);
 
     hMainMusicOp->addLayout(vSongDataAndOpLayout);
-    vBL->addLayout(hMainMusicOp);
 
     hMainMusicOp->addStretch();
 
@@ -69,6 +71,8 @@ PlayBar::PlayBar(QWidget* parent)
     hMainMusicOp->addLayout(hPlayOpLayout);
 
     hMainMusicOp->addStretch();
+
+    vBL->addLayout(hMainMusicOp);
 
     // 播放序列/音量大小/歌词
     QHBoxLayout* hPlaySettingLayout = new QHBoxLayout();

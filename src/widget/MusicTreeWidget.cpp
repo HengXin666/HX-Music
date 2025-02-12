@@ -22,7 +22,7 @@ void MultiLineItemDelegate::paint(
         initStyleOption(&opt, index);
 
         // 绘制选中状态的背景
-        if (option.state & QStyle::State_Selected) {
+        if (option.state & (QStyle::State_Selected | QStyle::State_MouseOver)) {
             painter->fillRect(option.rect, option.palette.highlight());
             painter->setPen(option.palette.highlightedText().color());
         } else {
@@ -36,41 +36,36 @@ void MultiLineItemDelegate::paint(
         */
 
         // 布局参数
-        const int padding = 5;
-        const int imageSize = 48;
         const QRect contentRect = opt.rect.adjusted(
-            padding, padding, 
-            -padding, -padding
+            Padding, Padding, 
+            -Padding, -Padding
         );
 
         // 绘制图片 (左对齐 + 垂直居中)
         QPixmap pixmap = qvariant_cast<QPixmap>(index.data(Qt::DecorationRole));
         QRect imageRect(
             contentRect.left(), 
-            contentRect.top() + (contentRect.height() - imageSize) / 2,  // 垂直居中
-            imageSize, 
-            imageSize
+            contentRect.top() + (contentRect.height() - ImageSize) / 2,  // 垂直居中
+            ImageSize, 
+            ImageSize
         );
         
         if (!pixmap.isNull()) {
             painter->drawPixmap(
                 imageRect,
                 pixmap.scaled(
-                    imageSize,
-                    imageSize, 
+                    ImageSize,
+                    ImageSize, 
                     Qt::KeepAspectRatio,
                     Qt::SmoothTransformation
                 )
             );
         }
 
-        // 文本外边距
-        int textMargin = 1;
-
         // 文本区域
         QRect textRect = contentRect;
-        textRect.setTop(contentRect.top() + textMargin); // 上边距
-        textRect.setLeft(imageRect.right() + padding);
+        textRect.setTop(contentRect.top() + TextMargin); // 上边距
+        textRect.setLeft(imageRect.right() + Padding);
         textRect.setRight(contentRect.right());
 
         // 分割文本
@@ -80,9 +75,9 @@ void MultiLineItemDelegate::paint(
 
         // 字体设置 (硬编码值)
         QFont titleFont = painter->font();
-        titleFont.setPointSize(10);  // 名称字体
+        titleFont.setPointSize(TitleFontSize);   // 名称字体
         QFont artistFont = titleFont;
-        artistFont.setPointSize(8);  // 歌手字体
+        artistFont.setPointSize(ArtistFontSize); // 歌手字体
 
         // 绘制第一行 (名称)
         painter->setFont(titleFont);
@@ -97,8 +92,8 @@ void MultiLineItemDelegate::paint(
 
             // 计算下边距
             int h = QFontMetrics(artistFont).height();
-            artistRect.setTop(contentRect.bottom() - h - textMargin);
-            artistRect.setBottom(contentRect.bottom() - textMargin);
+            artistRect.setTop(contentRect.bottom() - h - TextMargin);
+            artistRect.setBottom(contentRect.bottom() - TextMargin);
 
             artistRect.setHeight(h);
             painter->drawText(artistRect, Qt::AlignLeft | Qt::AlignVCenter, lines[1]);

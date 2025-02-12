@@ -27,7 +27,8 @@ MainWindow::MainWindow(QWidget *parent)
     // logo
     QImage logoImg = QImage(":/logo/HXMusic_logo.png");
     QLabel* _logo = new QLabel(this);
-    _logo->setPixmap(QPixmap::fromImage(logoImg).scaled(160, 100, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    _logo->setPixmap(QPixmap::fromImage(logoImg).scaled(
+        160, 100, Qt::KeepAspectRatio, Qt::SmoothTransformation));
     _logo->setGeometry(logoImg.rect());
     _logo->setFixedSize({160, 50});
     gL->addWidget(_logo, 0, 0, 1, 1);
@@ -47,7 +48,7 @@ MainWindow::MainWindow(QWidget *parent)
     gL->addWidget(_mainDisplayBar, 1, 1, 1, -1);
 
     // 底部播放栏
-    PlayBar* _playBar = new PlayBar(this); 
+    PlayBar* _playBar = new PlayBar(this);
     gL->addWidget(_playBar, 2, 0, 1, -1);
 
     setLayout(gL);
