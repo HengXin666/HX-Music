@@ -119,9 +119,23 @@ struct MusicCommand {
      * @brief 上一首
      */
     static void prevMusic() {
-        if (auto it = GlobalSingleton::get().playQueue.prev()) {
-            switchMusic(*it);
-            SignalBusSingleton::get().musicResumed();
+        switch (GlobalSingleton::get().musicConfig.playMode) {
+        case PlayMode::ListLoop:    // 列表循环
+        case PlayMode::SinglePlay:  // 单曲播放
+        case PlayMode::SingleLoop:  // 单曲循环
+            if (auto it = GlobalSingleton::get().playQueue.prev()) {
+                switchMusic(*it);
+                SignalBusSingleton::get().musicResumed();
+            }
+            break;
+        case PlayMode::RandomPlay:  // 随机播放
+            if (auto it = GlobalSingleton::get().playQueue.randomPrev()) {
+                switchMusic(*it);
+                SignalBusSingleton::get().musicResumed();
+            }
+            break;
+        case PlayMode::PlayModeCnt: // !保留!
+            break;
         }
     }
 

@@ -41,10 +41,34 @@ public:
     {}
 
     /**
-     * @brief 上一首音乐
+     * @brief 歌单列表下一首
+     * @return ItOpt 
+     */
+    ItOpt next() {
+        auto res = FileTree<QString>::next();
+        if (res) [[likely]] {
+            push(*res);
+        }
+        return res;
+    }
+
+    /**
+     * @brief 歌单列表上一首
      * @return ItOpt 
      */
     ItOpt prev() {
+        auto res = FileTree<QString>::prev();
+        if (res) [[likely]] {
+            push(*res);
+        }
+        return res;
+    }
+
+    /**
+     * @brief 从队列中, 获取上一首音乐
+     * @return ItOpt 
+     */
+    ItOpt randomPrev() {
         if (_pq.empty())
             return {};
         if (_pq.size() == 1)
@@ -52,17 +76,6 @@ public:
         if (_pqIt == _pq.begin())
             return *_pqIt;
         return _pqIt == _pq.end() ? *----_pqIt : *--_pqIt;
-    }
-
-    ItOpt next() {
-        if (_root.getList().empty() || !_root.begin())
-            return {};
-        if (_pqIt == _pq.end() || ++_pqIt == _pq.end()) {
-            auto res = FileTree<QString>::next();
-            push(*res);
-            return res;
-        }
-        return *_pqIt;
     }
 
     /**
