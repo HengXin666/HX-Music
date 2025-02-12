@@ -63,6 +63,8 @@ struct MusicCommand {
      * @brief 音乐播放、音乐继续
      */
     static void resume() {
+        if (GlobalSingleton::get().playQueue.empty())
+            return;
         GlobalSingleton::get().musicConfig.isPlay = true;
         GlobalSingleton::get().music.play();
         SignalBusSingleton::get().musicResumed();

@@ -11,6 +11,103 @@
 #include <utils/MusicInfo.hpp>
 #include <cmd/MusicCommand.hpp>
 
+void MultiLineItemDelegate::paint(
+    QPainter* painter,
+    const QStyleOptionViewItem& option,
+    const QModelIndex& index
+) const {
+    if (index.column() == static_cast<int>(MusicTreeWidget::ItemData::Title)) {
+        // 初始化基本样式 (处理选中状态等)
+        QStyleOptionViewItem opt = option;
+        initStyleOption(&opt, index);
+
+        // 绘制选中状态的背景
+        if (option.state & QStyle::State_Selected) {
+            painter->fillRect(option.rect, option.palette.highlight());
+            painter->setPen(option.palette.highlightedText().color());
+        } else {
+            painter->setPen(option.palette.color(QPalette::Text));
+        }
+
+        /*
+            -----  文本1
+            |图片|
+            -----  文本2
+        */
+
+        // 布局参数
+        const int padding = 5;
+        const int imageSize = 48;
+        const QRect contentRect = opt.rect.adjusted(
+            padding, padding, 
+            -padding, -padding
+        );
+
+        // 绘制图片 (左对齐 + 垂直居中)
+        QPixmap pixmap = qvariant_cast<QPixmap>(index.data(Qt::DecorationRole));
+        QRect imageRect(
+            contentRect.left(), 
+            contentRect.top() + (contentRect.height() - imageSize) / 2,  // 垂直居中
+            imageSize, 
+            imageSize
+        );
+        
+        if (!pixmap.isNull()) {
+            painter->drawPixmap(
+                imageRect,
+                pixmap.scaled(
+                    imageSize,
+                    imageSize, 
+                    Qt::KeepAspectRatio,
+                    Qt::SmoothTransformation
+                )
+            );
+        }
+
+        // 文本外边距
+        int textMargin = 1;
+
+        // 文本区域
+        QRect textRect = contentRect;
+        textRect.setTop(contentRect.top() + textMargin); // 上边距
+        textRect.setLeft(imageRect.right() + padding);
+        textRect.setRight(contentRect.right());
+
+        // 分割文本
+        QStringList lines = index.data(Qt::DisplayRole).toString().split("\n");
+        if (lines.isEmpty()) 
+            return;
+
+        // 字体设置 (硬编码值)
+        QFont titleFont = painter->font();
+        titleFont.setPointSize(10);  // 名称字体
+        QFont artistFont = titleFont;
+        artistFont.setPointSize(8);  // 歌手字体
+
+        // 绘制第一行 (名称)
+        painter->setFont(titleFont);
+        QRect titleRect = textRect;
+        titleRect.setHeight(QFontMetrics(titleFont).height());
+        painter->drawText(titleRect, Qt::AlignLeft | Qt::AlignVCenter, lines[0]);
+
+        // 绘制第二行 (歌手)
+        if (lines.size() > 1) {
+            painter->setFont(artistFont);
+            QRect artistRect = textRect;
+
+            // 计算下边距
+            int h = QFontMetrics(artistFont).height();
+            artistRect.setTop(contentRect.bottom() - h - textMargin);
+            artistRect.setBottom(contentRect.bottom() - textMargin);
+
+            artistRect.setHeight(h);
+            painter->drawText(artistRect, Qt::AlignLeft | Qt::AlignVCenter, lines[1]);
+        }
+    } else {
+        QStyledItemDelegate::paint(painter, option, index);
+    }
+}
+
 MusicTreeWidget::MusicTreeWidget(QWidget* parent)
     : QTreeWidget(parent)
 {
@@ -20,15 +117,29 @@ MusicTreeWidget::MusicTreeWidget(QWidget* parent)
     setDragDropMode(QAbstractItemView::InternalMove);
 
     setHeaderLabels({
-        "",
-        "名称",
-        "歌手",
+        "歌曲",
         "专辑",
         "时长",
-        "大小"
+        ""     // 保留
     });
 
-    header()->setSectionResizeMode(QHeaderView::ResizeToContents); // 自动调整列宽
+    // 禁止拖动项
+    header()->setSectionsMovable(false);
+
+    // 禁止拖动宽度
+    header()->setSectionResizeMode(QHeaderView::Fixed);
+
+    // 禁止显示横向滚动条
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
+    // 设置元素自定义绘制代理类
+    auto* delegate = new MultiLineItemDelegate(this);
+    setItemDelegate(delegate);
+
+    // 设置视图的固定行高
+    QStyleOptionViewItem option;
+    QSize size = delegate->sizeHint(option, model()->index(0, 0));
+    header()->setDefaultSectionSize(size.height());
 
     // 双击节点
     connect(this, &QTreeWidget::itemActivated, this, 
@@ -42,7 +153,7 @@ MusicTreeWidget::MusicTreeWidget(QWidget* parent)
                 item->data(
                     static_cast<int>(ItemData::PlayQueue),
                     Qt::UserRole
-                ).value<HX::PlayQueue::iterator>()  
+                ).value<HX::PlayQueue::iterator>()
             );
             MusicCommand::resume();
         }
@@ -51,13 +162,13 @@ MusicTreeWidget::MusicTreeWidget(QWidget* parent)
     // 展开节点
     connect(this, &QTreeWidget::itemExpanded, this, 
         [this](QTreeWidgetItem *item) {
-        item->setIcon(1, QIcon{":/icons/folder-open.svg"});
+        item->setData(static_cast<int>(ItemData::Title), Qt::DecorationRole, QPixmap{":/icons/folder-open.svg"});
     });
 
     // 关闭节点
     connect(this, &QTreeWidget::itemCollapsed, this, 
         [this](QTreeWidgetItem *item) {
-        item->setIcon(1, QIcon{":/icons/folder-close.svg"});
+        item->setData(static_cast<int>(ItemData::Title), Qt::DecorationRole, QPixmap{":/icons/folder-close.svg"});
     });
 
     // 在构造函数中设置上下文菜单策略并连接信号
@@ -102,16 +213,23 @@ bool MusicTreeWidget::addFileItem(
     TagLib::FileRef musicFile{fileName.constData()};
 
     HX::MusicInfo musicInfo{fileInfo};
-    item->setText(1, musicInfo.getTitle());
-    item->setText(2, musicInfo.getArtist());
-    item->setText(3, musicInfo.getAlbum());
-    item->setText(4, musicInfo.formatTimeLengthToHHMMSS());
-    item->setText(5, HX::FileInfo::convertByteSizeToHumanReadable(fileInfo.size()));
+    item->setData(
+        static_cast<int>(ItemData::Title),
+        Qt::DisplayRole,
+        QString{"%1\n%2"}
+            .arg(musicInfo.getTitle())
+            .arg(musicInfo.getArtist())
+    );
+
+    item->setText(1, musicInfo.getAlbum());
+    item->setText(2, musicInfo.formatTimeLengthToHHMMSS());
+    item->setToolTip(2, HX::FileInfo::convertByteSizeToHumanReadable(fileInfo.size()));
+    
     // 根据需要设置图标，这里假设你已经有相应的图标资源
     if (auto img = musicInfo.getAlbumArtAdvanced()) {
-        item->setIcon(1, QIcon{*img});
+        item->setData(static_cast<int>(ItemData::Title), Qt::DecorationRole, *img);
     } else {
-        item->setIcon(1, QIcon{":/icons/audio.svg"});
+        item->setData(static_cast<int>(ItemData::Title), Qt::DecorationRole, QPixmap{":/icons/audio.svg"});
     }
     
     item->setData(
@@ -153,8 +271,8 @@ void MusicTreeWidget::addFolderItem(const QFileInfo &fileInfo, int index, QTreeW
 
     // 1. 新建一个目录元素
     QTreeWidgetItem* item = new QTreeWidgetItem;
-    item->setIcon(1, QIcon{":/icons/folder-open.svg"});
-    item->setText(1, fileInfo.fileName());
+    item->setData(static_cast<int>(ItemData::Title), Qt::DecorationRole, QPixmap{":/icons/folder-open.svg"});
+    item->setData(static_cast<int>(ItemData::Title), Qt::DisplayRole, fileInfo.fileName());
     setNodeType(item, NodeType::Folder);
 
     item->setData(
@@ -209,7 +327,7 @@ void MusicTreeWidget::updateItemNumber(QTreeWidgetItem *parentItem) {
         for (int i = 0; i < topLevelItemCount(); ++i) {
             auto* child = topLevelItem(i);
             if (getNodeType(child) == NodeType::File) {
-                child->setText(0, QString("%1.").arg(++fileCnt));
+                child->setData(static_cast<int>(ItemData::Title), Qt::UserRole, ++fileCnt);
             }
         }
         return;
@@ -217,7 +335,7 @@ void MusicTreeWidget::updateItemNumber(QTreeWidgetItem *parentItem) {
     for (int i = 0; i < parentItem->childCount(); ++i) {
         auto* child = parentItem->child(i);
         if (getNodeType(child) == NodeType::File) {
-            child->setText(0, QString("%1.").arg(++fileCnt));
+            child->setData(static_cast<int>(ItemData::Title), Qt::UserRole, ++fileCnt);
         }
     }
 }

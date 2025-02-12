@@ -24,6 +24,44 @@
 #include <QDragEnterEvent>
 #include <QMimeData>
 #include <QFileInfo>
+#include <QStyledItemDelegate>
+#include <QPainter>
+
+class MultiLineItemDelegate : public QStyledItemDelegate {
+public:
+    MultiLineItemDelegate(QObject* parent = nullptr) 
+        : QStyledItemDelegate(parent) 
+    {}
+
+    void paint(
+        QPainter* painter,
+        const QStyleOptionViewItem& option,
+        const QModelIndex& index
+    ) const override;
+
+    QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const override {
+        if (index.column() == 0) {
+            // 固定字体尺寸计算
+            const int padding = 5;
+            const int imageSize = 32;
+            
+            QFont titleFont = option.font;
+            titleFont.setPointSize(12);
+            QFont artistFont = titleFont;
+            artistFont.setPointSize(10);
+            
+            const int textHeight = QFontMetrics(titleFont).height() 
+                                 + QFontMetrics(artistFont).height() 
+                                 + 2; // 行间距
+            
+            // 取图片高度和文字高度的较大值
+            const int totalHeight = qMax(imageSize, textHeight) + 2 * padding;
+            
+            return QSize(200, totalHeight); // 适当宽度
+        }
+        return QStyledItemDelegate::sizeHint(option, index);
+    }
+};
 
 /**
  * @brief 音乐树状显示控件
@@ -31,10 +69,13 @@
 class MusicTreeWidget : public QTreeWidget {
     Q_OBJECT
 
+    friend MultiLineItemDelegate;
+
     enum class ItemData : int {
-        NodeType = 0,
-        FilePath = 1,
-        PlayQueue = 2,
+        Title = 0,
+        NodeType = 1,
+        FilePath = 2,
+        PlayQueue = 3,
     };
 
     enum class NodeType : unsigned int {
@@ -86,6 +127,16 @@ public:
     void updateItemNumber(QTreeWidgetItem *parentItem);
 
 protected:
+    void resizeEvent(QResizeEvent *event) override {
+        QTreeWidget::resizeEvent(event); // 调用父类
+
+        int totalWidth = this->width(); // 减去固定列的宽度
+        setColumnWidth(0, totalWidth * 0.5);
+        setColumnWidth(1, totalWidth * 0.25);
+        setColumnWidth(2, totalWidth * 0.15);
+        setColumnWidth(3, totalWidth * 0.1);
+    }
+
     void dragEnterEvent(QDragEnterEvent *event) override {
         if (event->source() == this) {
             event->accept();

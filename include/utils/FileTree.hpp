@@ -233,7 +233,7 @@ public:
     }
 
 protected:
-    Tp _root;
+    mutable Tp _root;
     iterator _it;
     std::size_t _cnt; // 只记录文件节点
 };
