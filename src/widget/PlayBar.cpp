@@ -156,7 +156,7 @@ PlayBar::PlayBar(QWidget* parent)
         );
     });
 
-    // 拖动位置释放 sliderReleased
+    // 拖动条: 拖动位置释放 sliderReleased
     connect(_sliderPlayBar, &QSlider::sliderReleased, this, [this]() {
         MusicCommand::setMusicPos(
             ((double)_sliderPlayBar->sliderPosition() / 1'00'00) * GlobalSingleton::get().music.getLengthInMilliseconds()

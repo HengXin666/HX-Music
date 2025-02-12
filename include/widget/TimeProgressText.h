@@ -54,7 +54,8 @@ protected:
         QPainter painter(this);
         painter.setRenderHint(QPainter::Antialiasing);
 
-        QFont font("Arial", 14);
+        // 黑体
+        QFont font("Boldface", 8);
         painter.setFont(font);
         painter.setPen(Qt::white);
         
@@ -63,8 +64,8 @@ protected:
     }
 
 private:
-    QString _nowTime = "0:00";   // 播放时长
-    QString _totalTime = "0:00"; // 总时长
+    QString _nowTime = "00:00";   // 播放时长
+    QString _totalTime = "00:00"; // 总时长
 };
 
 #endif // !_HX_TIME_PROGRESS_TEXT_H_

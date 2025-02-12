@@ -21,7 +21,6 @@
 #define _HX_PLAY_BAR_H_
 
 #include <QWidget>
-#include <QSlider>
 #include <QLabel>
 #include <QPushButton>
 #include <QComboBox>
@@ -30,6 +29,7 @@
 #include <widget/ScrollText.h>
 #include <widget/VolumeBar.h>
 #include <widget/SvgIconPushButton.h>
+#include <widget/JumpSlider.h>
 
 // 音频操作按钮 (仅设置样式)
 class ActionsPushButton : public SvgIconPushButton {
@@ -68,7 +68,7 @@ public:
 
 private:
     // 进度条
-    QSlider* _sliderPlayBar = new QSlider(Qt::Horizontal, this);
+    JumpSlider* _sliderPlayBar = new JumpSlider(Qt::Horizontal, this);
 
     // 歌曲图片
     QLabel* _imgMusic = new QLabel(this);
