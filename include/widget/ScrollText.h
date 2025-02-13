@@ -61,6 +61,26 @@ public:
     }
 
 protected:
+    /**
+     * @brief 鼠标离开事件
+     * @param event 
+     */
+    void leaveEvent(QEvent* event) override {
+        _isMouseInside = false;
+        openTimer();
+        QLabel::leaveEvent(event);
+    }
+
+    /**
+     * @brief 鼠标进入事件
+     * @param event 
+     */
+    void enterEvent(QEnterEvent* event) override {
+        _isMouseInside = true;
+        closeTimer();
+        QLabel::enterEvent(event);
+    }
+
     void paintEvent(QPaintEvent* event) override;
 
     void timerEvent(QTimerEvent* event) override;
@@ -89,10 +109,11 @@ private:
     unsigned int _gap = 100;            // 间隙
     unsigned int _pauseTime = 0;        // 滚动结束, 停止显示的时间 (单位: 毫秒(ms))
     unsigned int _updateTime = 20;      // 滚动间隔 (单位: 毫秒(ms))
-    enum class TimerState : int {
+    enum class TimerState : u_int16_t {
         Open,
         Close,
     } _timerState = TimerState::Close;  // 定时器状态
+    bool _isMouseInside = false;        // 鼠标是否在控件内部
     int _offset = 0;                    // 偏移量
     int _timerId = 0;                   // 定时器id
     QString _text;                      // 存储文本内容

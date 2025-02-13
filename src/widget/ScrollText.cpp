@@ -49,10 +49,12 @@ void ScrollText::timerEvent(QTimerEvent* event) {
             _offset = 0;
             // 如果存在间隔时间, 则暂停滚动
             if (_pauseTime) {
-                killTimer(_timerId);
-                _timerId = 0;
+                closeTimer();
                 QTimer::singleShot(_pauseTime, this,
                     [this]() {
+                    if (_isMouseInside) {
+                        return;
+                    }
                     _timerId = startTimer(_updateTime);
                 });
             }
