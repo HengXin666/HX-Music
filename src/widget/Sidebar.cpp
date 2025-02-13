@@ -8,6 +8,7 @@
 #include <utils/TupleElementExtractor.hpp>
 #include <widget/DividerWidget.h>
 #include <singleton/GlobalSingleton.hpp>
+#include <views/LyricView.h>
 #include <views/LocalAndDownloadView.h>
 
 Sidebar::Sidebar(QWidget* parent)
@@ -39,7 +40,9 @@ Sidebar::Sidebar(QWidget* parent)
         {new QListWidgetItem {QIcon{
             ":/icons/time.svg"},
             "最近播放"},
-        []{}},
+        []{
+            GlobalSingleton::get().imp.pushView(new LyricView);
+        }},
         {new QListWidgetItem {
             QIcon{":/icons/download.svg"},
             "本地与下载"},
