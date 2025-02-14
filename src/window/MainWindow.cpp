@@ -8,7 +8,7 @@
 #include <widget/MainDisplayBar.h>
 #include <widget/TopBar.h>
 
-MainWindow::MainWindow(QWidget *parent)
+MainWindow::MainWindow(QWidget* parent)
     : QWidget(parent)
 {
     setWindowTitle("HX Music");

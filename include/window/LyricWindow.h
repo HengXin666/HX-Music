@@ -17,16 +17,18 @@
  * You should have received a copy of the GNU General Public License
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef _HX_MAIN_WINDOW_H_
-#define _HX_MAIN_WINDOW_H_
+#ifndef _HX_LYRIC_WINDOW_H_
+#define _HX_LYRIC_WINDOW_H_
 
-#include <QMainWindow>
 #include <QWidget>
 
-class MainWindow : public QWidget {
+class LyricWindow : public QWidget {
     Q_OBJECT
 public:
-    explicit MainWindow(QWidget* parent = nullptr);
+    explicit LyricWindow(QWidget* parent = nullptr);
+
+protected:
+    void mousePressEvent(QMouseEvent* event) override;
 };
 
-#endif // !_HX_MAIN_WINDOW_H_
+#endif // !_HX_LYRIC_WINDOW_H_

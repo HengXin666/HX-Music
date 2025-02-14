@@ -6,6 +6,7 @@
 #include <singleton/GlobalSingleton.hpp>
 #include <singleton/SignalBusSingleton.h>
 #include <cmd/MusicCommand.hpp>
+#include <window/LyricWindow.h>
 
 PlayBar::PlayBar(QWidget* parent)
     : QWidget(parent)
@@ -156,14 +157,25 @@ PlayBar::PlayBar(QWidget* parent)
         if (_sliderPlayBar->isSliderDown()) // 如果是在拖动, 就先不更新位置了
             return;
         _sliderPlayBar->setSliderPosition(
-            ((double)pos / GlobalSingleton::get().music.getLengthInMilliseconds()) * 1'00'00
+            (static_cast<double>(pos) / GlobalSingleton::get().music.getLengthInMilliseconds()) * 1'00'00
         );
     });
 
     // 拖动条: 拖动位置释放 sliderReleased
     connect(_sliderPlayBar, &QSlider::sliderReleased, this, [this]() {
         MusicCommand::setMusicPos(
-            ((double)_sliderPlayBar->sliderPosition() / 1'00'00) * GlobalSingleton::get().music.getLengthInMilliseconds()
+            (static_cast<double>(_sliderPlayBar->sliderPosition()) / 1'00'00) * GlobalSingleton::get().music.getLengthInMilliseconds()
         );
+    });
+    
+    // 显示歌词
+    connect(_btnLyric, &QPushButton::clicked, this, 
+        [this, window =  new LyricWindow]() {
+        if (window->isHidden()) {
+            window->resize(800, 600);
+            window->show();
+        } else {
+            window->hide();
+        }
     });
 }

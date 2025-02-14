@@ -18,3 +18,10 @@ sudo pacman -S taglib
 ```sh
 sudo pacman -S libass
 ```
+
+### 3. Wayland 兼容
+
+```sh
+sudo pacman -S gtk3
+sudo pacman -S gtk-layer-shell
+```

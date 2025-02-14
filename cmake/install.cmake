@@ -58,19 +58,37 @@ target_link_libraries(HX-Music PRIVATE Qt6::Xml)
 # find_package(Qt6 REQUIRED COMPONENTS Concurrent)
 # target_link_libraries(HX-Music PRIVATE Qt6::Concurrent)
 
-# 第三方依赖
+# 第三方依赖 (音频信息解析)
 find_package(TagLib REQUIRED)
 target_link_libraries(HX-Music PRIVATE TagLib)
 
-# 第三方依赖
+# 第三方依赖 (Ass字幕渲染)
 find_package(LibAss REQUIRED)
 target_link_libraries(HX-Music PRIVATE LibAss)
+
+# 第三方依赖 (在Wayland下实现透明、顶置窗口)
+if(NOT WIN32)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(GTK REQUIRED gtk+-3.0)
+    pkg_check_modules(GTK_LAYER_SHELL REQUIRED gtk-layer-shell-0)
+    
+    target_include_directories(HX-Music PRIVATE 
+        ${GTK_INCLUDE_DIRS} 
+        ${GTK_LAYER_SHELL_INCLUDE_DIRS}
+    )
+    target_link_libraries(HX-Music PRIVATE 
+        ${GTK_LIBRARIES} 
+        ${GTK_LAYER_SHELL_LIBRARIES}
+    )
+endif()
+
+
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an
 # explicit, fixed bundle identifier manually though.
 if(${QT_VERSION} VERSION_LESS 6.1.0)
-  set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.hx.music)
+    set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.hx.music)
 endif()
 set_target_properties(HX-Music PROPERTIES
     ${BUNDLE_ID_OPTION}

@@ -34,7 +34,7 @@ LyricView::LyricView(QWidget* parent)
 
     /* musicPlayPosChanged (歌曲播放位置变化) */
     connect(&SignalBusSingleton::get(), &SignalBusSingleton::musicPlayPosChanged, this,
-        [this](qint64 pos){
+        [this](qint64 pos) {
         updateLyric(pos);
     });
 
@@ -51,9 +51,6 @@ void LyricView::paintEvent(QPaintEvent *event) {
     painter.setRenderHint(QPainter::TextAntialiasing);
     painter.setRenderHint(QPainter::SmoothPixmapTransform);
     // painter.setRenderHint(QPainter::HighQualityAntialiasing);
-    painter.setBrush(QColor(0,0,0));
-    painter.drawRect(0,0,this->width(),this->height()); //先画成黑色
-
 
     if (_img.isNull()) {
         return;

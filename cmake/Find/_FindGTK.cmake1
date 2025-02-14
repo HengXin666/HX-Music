@@ -1,0 +1,33 @@
+# 查找 GTK 库
+# 本模块用于查找 GTK 库及其头文件所在目录。
+#
+# GTK_INCLUDE_DIR - 存放 GTK 头文件的目录（例如：gtk/gtk.h）
+# GTK_LIBRARIES   - GTK 库文件
+# GTK_FOUND       - 若找到 GTK 则为 TRUE
+
+find_path(GTK_INCLUDE_DIR
+  NAMES gtk/gtk.h
+  PATHS /usr/include /usr/local/include ${Lib_ROOT}/include
+)
+
+find_library(GTK_LIBRARIES
+  NAMES gtk-3
+  PATHS /usr/lib /usr/local/lib ${Lib_ROOT}/lib
+)
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(GTK DEFAULT_MSG GTK_LIBRARIES GTK_INCLUDE_DIR)
+
+if(GTK_FOUND)
+  if(NOT TARGET GTK)
+    add_library(GTK UNKNOWN IMPORTED)
+  endif()
+  set_target_properties(
+    GTK
+    PROPERTIES
+      INTERFACE_INCLUDE_DIRECTORIES "${GTK_INCLUDE_DIR}"
+      IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+      IMPORTED_LOCATION "${GTK_LIBRARIES}"
+  )
+  mark_as_advanced(GTK_LIBRARIES)
+endif()
