@@ -40,6 +40,15 @@ public:
         , _pqIt(_pq.end())
     {}
 
+    ItOpt now() {
+        if (_pq.empty())
+            return {};
+        if (_pqIt == _pq.end())
+            return *--_pq.end();
+        auto res = _pqIt;
+        return *res;
+    }
+
     /**
      * @brief 歌单列表下一首
      * @return ItOpt 

@@ -1,7 +1,7 @@
 # HX-Music
 
 ## 依赖安装
-
+### 1. taglib
 > [!TIP]
 > 大多数 Linux 发行版都预装了 TagLib
 
@@ -9,4 +9,12 @@
 
 ```sh
 sudo pacman -S taglib
+```
+
+### 2. libass
+
+[[Github] libass](https://github.com/libass/libass)
+
+```sh
+sudo pacman -S libass
 ```

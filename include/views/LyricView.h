@@ -23,6 +23,7 @@
 #include <QWidget>
 
 #include <utils/AssParse.hpp>
+#include <utils/MusicInfo.hpp>
 
 /**
  * @brief 歌词界面
@@ -37,9 +38,19 @@ protected:
 
     void resizeEvent(QResizeEvent* event) override;
 
-    void updateSubtitle(qint64 nowTime);
-
 private:
+    /**
+     * @brief 查找该歌曲的歌词文件, 并且加载
+     * @param it 歌曲迭代器
+     */
+    void findLyricFile(HX::MusicInfo const& info);
+
+    /**
+     * @brief 渲染字幕
+     * @param nowTime 当前时间 (单位: 毫秒(ms))
+     */
+    void updateLyric(qint64 nowTime);
+    
     QImage _img;
     HX::AssParse _assParse;
 };

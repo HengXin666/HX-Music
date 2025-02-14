@@ -54,6 +54,10 @@ target_link_libraries(HX-Music PRIVATE Qt6::Svg)
 find_package(Qt6 REQUIRED COMPONENTS Xml)
 target_link_libraries(HX-Music PRIVATE Qt6::Xml)
 
+# Qt拓展 (并行库)
+# find_package(Qt6 REQUIRED COMPONENTS Concurrent)
+# target_link_libraries(HX-Music PRIVATE Qt6::Concurrent)
+
 # 第三方依赖
 find_package(TagLib REQUIRED)
 target_link_libraries(HX-Music PRIVATE TagLib)

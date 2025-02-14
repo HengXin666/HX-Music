@@ -22,6 +22,8 @@
 
 #include <ass/ass.h>
 
+#include <QByteArray>
+
 namespace HX {
 
 class AssParse {
@@ -61,6 +63,17 @@ public:
             ::ass_free_track(_assTrack);
         }
         _assTrack = ::ass_read_file(_assLibrary, filePath, encoded);
+    }
+
+    /**
+     * @brief 加载内存中已读取的ass文件内容
+     * @param buf 
+     */
+    void readMemory(QByteArray&& buf) {
+        if (_assTrack) {
+            ::ass_free_track(_assTrack);
+        }
+        _assTrack = ::ass_read_memory(_assLibrary, buf.data(), buf.size(), nullptr);
     }
 
     /**

@@ -247,6 +247,10 @@ public:
         return _fileInfo.filePath();
     }
 
+    QFileInfo const& fileInfo() const {
+        return _fileInfo;
+    }
+
 private:
     QFileInfo const& _fileInfo;
     QByteArray _byteArr;

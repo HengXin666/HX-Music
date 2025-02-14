@@ -79,6 +79,10 @@ struct MusicCommand {
         if (GlobalSingleton::get().playQueue.empty())
             return;
         GlobalSingleton::get().musicConfig.isPlay = true;
+        // 不知道为什么, 暂停一段时间后, 重新播放会没有声音...
+        // 但是跳转后又有... 那我只好给你手动跳转一下了
+        // 难道是因为qt层次没有动. 而ff层没有停吗? 这不对吧
+        setMusicPos(GlobalSingleton::get().music.getNowPos());
         GlobalSingleton::get().music.play();
         SignalBusSingleton::get().musicResumed();
     }

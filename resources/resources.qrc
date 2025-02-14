@@ -35,4 +35,7 @@
     <qresource prefix="/logo">
         <file alias="HXMusic_logo.png">logo/HXMusic_logo.png</file>
     </qresource>
+    <qresource prefix="/default">
+        <file alias="default.ass">default/default.ass</file>
+    </qresource>
 </RCC>
