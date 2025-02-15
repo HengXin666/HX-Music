@@ -24,4 +24,5 @@ sudo pacman -S libass
 ```sh
 sudo pacman -S gtk3
 sudo pacman -S gtk-layer-shell
+sudo pacman -S kwindowsystem
 ```

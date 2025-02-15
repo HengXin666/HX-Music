@@ -58,6 +58,13 @@ target_link_libraries(HX-Music PRIVATE Qt6::Xml)
 # find_package(Qt6 REQUIRED COMPONENTS Concurrent)
 # target_link_libraries(HX-Music PRIVATE Qt6::Concurrent)
 
+find_package(Qt6Gui REQUIRED)
+target_include_directories(HX-Music PRIVATE ${Qt6Gui_PRIVATE_INCLUDE_DIRS})
+
+find_package(Wayland REQUIRED)
+target_link_libraries(HX-Music PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets wayland-client)
+
+
 # 第三方依赖 (音频信息解析)
 find_package(TagLib REQUIRED)
 target_link_libraries(HX-Music PRIVATE TagLib)
@@ -80,9 +87,11 @@ if(NOT WIN32)
         ${GTK_LIBRARIES} 
         ${GTK_LAYER_SHELL_LIBRARIES}
     )
+
+    # 查找 KF6WindowSystem
+    find_package(KF6WindowSystem REQUIRED)
+    target_link_libraries(HX-Music PUBLIC KF6::WindowSystem)
 endif()
-
-
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an

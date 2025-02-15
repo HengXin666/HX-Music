@@ -17,23 +17,42 @@
  * You should have received a copy of the GNU General Public License
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef _HX_LYRIC_WINDOW_H_
-#define _HX_LYRIC_WINDOW_H_
+#ifndef _HX_ASS_LYRIC_WIDGET_H_
+#define _HX_ASS_LYRIC_WIDGET_H_
 
 #include <QWidget>
-#include <QWindow>
 
-class LyricWindow : public QWindow {
+#include <utils/AssParse.hpp>
+#include <utils/MusicInfo.hpp>
+
+/**
+ * @brief Ass歌词渲染控件
+ */
+class AssLyricWidget : public QWidget {
     Q_OBJECT
 public:
-    explicit LyricWindow(QWindow* parent = nullptr);
+    explicit AssLyricWidget(QWidget* parent = nullptr);
 
-    QWidget* getMainWidget() {
-        return _mainWidget;
-    }
+protected:
+    void paintEvent(QPaintEvent *event) override;
+
+    void resizeEvent(QResizeEvent* event) override;
 
 private:
-    QWidget* _mainWidget = QWidget::createWindowContainer(this);
+    /**
+     * @brief 查找该歌曲的歌词文件, 并且加载
+     * @param it 歌曲迭代器
+     */
+    void findLyricFile(HX::MusicInfo const& info);
+
+    /**
+     * @brief 渲染字幕
+     * @param nowTime 当前时间 (单位: 毫秒(ms))
+     */
+    void updateLyric(qint64 nowTime);
+    
+    QImage _img;
+    HX::AssParse _assParse;
 };
 
-#endif // !_HX_LYRIC_WINDOW_H_
+#endif // !_HX_ASS_LYRIC_WIDGET_H_

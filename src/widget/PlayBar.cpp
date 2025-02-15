@@ -170,12 +170,13 @@ PlayBar::PlayBar(QWidget* parent)
     
     // 显示歌词
     connect(_btnLyric, &QPushButton::clicked, this, 
-        [this, window =  new LyricWindow]() {
-        if (window->isHidden()) {
-            window->resize(800, 600);
-            window->show();
+        [this, window = new LyricWindow]() mutable {
+        auto* p = window->getMainWidget();
+        if (p->isVisible()) {
+            p->hide();
         } else {
-            window->hide();
+            p->resize(800, 600);
+            p->show();
         }
     });
 }
