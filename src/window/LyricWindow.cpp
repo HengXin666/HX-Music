@@ -30,7 +30,7 @@ LyricWindow::LyricWindow(QWindow* parent)
     
     // QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 
-    _mainWidget->setMinimumSize(800, 600);
+    _mainWidget->setBaseSize(800, 600);
     _mainWidget->setAttribute(Qt::WA_TranslucentBackground);
 
     auto* layout = new QHBoxLayout;

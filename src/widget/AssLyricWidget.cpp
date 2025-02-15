@@ -20,7 +20,9 @@ AssLyricWidget::AssLyricWidget(QWidget* parent)
     : QWidget(parent)
     , _assParse()
 {
-    _assParse.setFrameSize(width(), height());
+    resize(1920, 1080);
+    setMinimumSize(1920 / 6, 1080 / 6);
+    _assParse.setFrameSize(1920, 1080);
 
     if (auto it = GlobalSingleton::get().playQueue.now()) {
         findLyricFile(
@@ -51,6 +53,9 @@ void AssLyricWidget::paintEvent(QPaintEvent *event) {
     painter.setRenderHint(QPainter::TextAntialiasing);
     painter.setRenderHint(QPainter::SmoothPixmapTransform);
     // painter.setRenderHint(QPainter::HighQualityAntialiasing);
+
+    // painter.setBrush(QColor(0,0,0));
+    // painter.drawRect(0,0,this->width(),this->height()); //先画成黑色
 
     if (_img.isNull()) {
         return;

@@ -34,6 +34,7 @@ public:
 protected:
     void mousePressEvent(QMouseEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
+    void wheelEvent(QWheelEvent* event) override;
 private:
     AssLyricWidget* _lyricWidget = new AssLyricWidget(this);
     QPoint _relativePos;    // 相对位置
