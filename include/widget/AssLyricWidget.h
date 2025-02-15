@@ -33,11 +33,24 @@ class AssLyricWidget : public QWidget {
 public:
     explicit AssLyricWidget(QWidget* parent = nullptr);
 
+    /**
+     * @brief 添加字幕偏移量
+     * @param off 偏移量 (单位: 毫秒(ms))
+     */
+    void addOffset(long long off) {
+        _offset += off;
+    }
+
+    /**
+     * @brief 重置字幕偏移量
+     */
+    void resetOffset() {
+        _offset = 0;
+    }
 protected:
     void paintEvent(QPaintEvent *event) override;
 
     void resizeEvent(QResizeEvent* event) override;
-
 private:
     /**
      * @brief 查找该歌曲的歌词文件, 并且加载
@@ -53,6 +66,7 @@ private:
     
     QImage _img;
     HX::AssParse _assParse;
+    long long _offset = 0;  // 字幕偏移量
 };
 
 #endif // !_HX_ASS_LYRIC_WIDGET_H_

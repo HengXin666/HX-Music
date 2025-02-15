@@ -103,7 +103,7 @@ void AssLyricWidget::findLyricFile(HX::MusicInfo const& info) {
 
 void AssLyricWidget::updateLyric(qint64 nowTime) {
     int change;
-    auto* imgList = _assParse.rendererFrame(nowTime, change);
+    auto* imgList = _assParse.rendererFrame(nowTime + _offset, change);
 
     if (!change) {
         return;
