@@ -10,6 +10,7 @@
 #include <window/LyricWindow.h>
 
 #include <QHBoxLayout>
+#include <QApplication>
 
 // #include <KWindowSystem>
 // #include <NETWM>
@@ -26,7 +27,9 @@ LyricWindow::LyricWindow(QWindow* parent)
         // | 
         Qt::WindowStaysOnTopHint    // 顶层
     );
-        
+    
+    // QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+
     _mainWidget->setMinimumSize(800, 600);
     _mainWidget->setAttribute(Qt::WA_TranslucentBackground);
 

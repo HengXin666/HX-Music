@@ -1,10 +1,10 @@
 #include <views/LyricView.h>
 
-#include <widget/AssLyricWidget.h>
-
 #include <QHBoxLayout>
 #include <QVBoxLayout>
+#include <QMouseEvent>
 
+#include <widget/AssLyricWidget.h>
 #include <widget/SvgIconPushButton.h>
 
 LyricView::LyricView(QWidget* parent)
@@ -20,6 +20,8 @@ LyricView::LyricView(QWidget* parent)
         QColor{"red"},
         this
     );
+    btnNegativeOffset->setToolTip("歌词偏移 -0.5s");
+    btnNegativeOffset->setIconSize({32, 32});
     settingHLayout->addWidget(btnNegativeOffset);
 
     // 偏移 +0.5s
@@ -29,40 +31,75 @@ LyricView::LyricView(QWidget* parent)
         QColor{"red"},
         this
     );
-    settingHLayout->addWidget(btnPositiveOffset);
-    settingHLayout->addStretch();
-
-    vLayout->addLayout(settingHLayout);
-    auto* lyricView = new AssLyricWidget(this);
-    vLayout->addWidget(lyricView);
-
-    btnNegativeOffset->setIconSize({32, 32});
-    btnNegativeOffset->setStyleSheet(R"(
-        QPushButton {
-            background: transparent;
-            border: none;
-            border-radius: 12px;
-        }
-    )");
-
+    btnPositiveOffset->setToolTip("歌词偏移 +0.5s");
     btnPositiveOffset->setIconSize({32, 32});
-    btnPositiveOffset->setStyleSheet(R"(
-        QPushButton {
-            background: transparent;
-            border: none;
-            border-radius: 12px;
+    settingHLayout->addWidget(btnPositiveOffset);
+
+    // 移动字幕位置
+    auto* btnMove = new SvgIconPushButton(
+        ":icons/move.svg",
+        QColor{"#990099"},
+        QColor{"red"},
+        this
+    );
+    btnMove->setToolTip("移动字幕位置");
+    btnMove->setIconSize({32, 32});
+    settingHLayout->addWidget(btnMove);
+
+    // 启用/关闭: 移动字幕位置
+    connect(btnMove, &QPushButton::clicked, this,
+        [this, btnMove]{
+        _isMove = !_isMove;
+        if (_isMove) {
+            btnMove->showHoverIcon();
+        } else {
+            btnMove->showOrdinaryIcon();
         }
-    )");
+    });
+
+    settingHLayout->addStretch();
+    vLayout->addLayout(settingHLayout);
+
+    // ass歌词渲染
+    _lyricWidget->setFixedSize(800, 600);
+    // 创建一个垂直间隔项, 占据 _lyricWidget 的空间
+    vLayout->addItem(new QSpacerItem(_lyricWidget->width(), _lyricWidget->height(),
+    QSizePolicy::Expanding, QSizePolicy::Expanding));
+    _lyricWidget->move(0, 0); // _lyricWidget 就不受布局了
 
     // 偏移 -0.5s 槽函数
     connect(btnNegativeOffset, &QPushButton::clicked, this,
-        [this, lyricView](){
-        lyricView->addOffset(-500);
+        [this](){
+        _lyricWidget->addOffset(-500);
     });
 
     // 偏移 +0.5s 槽函数
     connect(btnPositiveOffset, &QPushButton::clicked, this,
-        [this, lyricView](){
-        lyricView->addOffset(500);
+        [this](){
+        _lyricWidget->addOffset(500);
     });
+
+    setStyleSheet(R"(
+        QPushButton {
+            background: transparent;
+            border: none;
+            border-radius: 12px;
+        }
+    )");
+}
+
+void LyricView::mousePressEvent(QMouseEvent* event) {
+    if (_isMove && event->button() == Qt::LeftButton) {
+        auto rect = _lyricWidget->rect();;
+        rect.translate(_lyricWidget->pos());
+        if (rect.contains(event->pos())) {
+            _relativePos = event->globalPosition().toPoint() - _lyricWidget->pos();
+        }
+    }
+}
+
+void LyricView::mouseMoveEvent(QMouseEvent* event) {
+    if (_isMove && (event->buttons() & Qt::LeftButton)) {
+        _lyricWidget->move(event->globalPosition().toPoint() - _relativePos);
+    }
 }

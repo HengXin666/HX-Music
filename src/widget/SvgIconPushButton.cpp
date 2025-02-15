@@ -27,15 +27,15 @@ SvgIconPushButton::SvgIconPushButton(
 {
     // 按下
     connect(this, &QPushButton::pressed, this, [this]{
-        setIcon(_hoverIcon);
+        showHoverIcon();
     });
 
     // 弹起
     connect(this, &QPushButton::released, this, [this]{
-        setIcon(_ordinaryIcon);
+        showOrdinaryIcon();
     });
 
-    setIcon(_ordinaryIcon);
+    showOrdinaryIcon();
 }
 
 SvgIconPushButton* SvgIconPushButton::setOrdinaryIconColor(QColor const& color) {

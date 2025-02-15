@@ -22,8 +22,7 @@
 
 #include <QWidget>
 
-#include <utils/AssParse.hpp>
-#include <utils/MusicInfo.hpp>
+#include <widget/AssLyricWidget.h>
 
 /**
  * @brief 歌词界面
@@ -32,6 +31,13 @@ class LyricView : public QWidget {
     Q_OBJECT
 public:
     explicit LyricView(QWidget* parent = nullptr);
+protected:
+    void mousePressEvent(QMouseEvent* event) override;
+    void mouseMoveEvent(QMouseEvent* event) override;
+private:
+    AssLyricWidget* _lyricWidget = new AssLyricWidget(this);
+    QPoint _relativePos;    // 相对位置
+    bool _isMove{false};    // 正在移动字幕位置
 };
 
 #endif // !_HX_LYRIC_VIEW_H_

@@ -49,7 +49,21 @@ public:
      * @brief 立即修改图标
      */
     void modifyIcon() {
+        showOrdinaryIcon();
+    }
+
+    /**
+     * @brief 显示平常的颜色
+     */
+    void showOrdinaryIcon() {
         setIcon(_ordinaryIcon);
+    }
+
+    /**
+     * @brief 显示按下的颜色
+     */
+    void showHoverIcon() {
+        setIcon(_hoverIcon);
     }
 private:
     QString _svgPath;
