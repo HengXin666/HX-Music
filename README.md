@@ -27,4 +27,12 @@ sudo pacman -S gtk3
 sudo pacman -S gtk-layer-shell
 sudo pacman -S kwindowsystem
 ```
+
+> [!TIP]
+> 由于 Wayland 协议的原因, qt很难做到移动窗口, 草怎么好多都不行...
+>
+> QT你滴什么滴干活?!
+>
+> 再也不相信任何 QT + Wayland 的所谓解决方案了, 纯纯浪费时间.
+
 -->

@@ -69,6 +69,12 @@ target_link_libraries(HX-Music PRIVATE TagLib)
 find_package(LibAss REQUIRED)
 target_link_libraries(HX-Music PRIVATE LibAss)
 
+# find_package(Qt6 REQUIRED COMPONENTS WaylandCompositor WaylandClient)
+# target_link_libraries(HX-Music PRIVATE Qt6::WaylandCompositor Qt6::WaylandClient)
+
+# find_package(Qt6 REQUIRED COMPONENTS DBus)
+# target_link_libraries(HX-Music PRIVATE Qt6::DBus)
+
 # 第三方依赖 (在Wayland下实现透明、顶置窗口 | @tip: 使用QWindow即可!)
 if(FALSE AND NOT WIN32)
     find_package(PkgConfig REQUIRED)

@@ -23,6 +23,8 @@
 #include <QWidget>
 #include <QWindow>
 
+#include <views/LyricView.h>
+
 class LyricWindow : public QWindow {
     Q_OBJECT
 public:
@@ -32,8 +34,14 @@ public:
         return _mainWidget;
     }
 
+protected:
+    void hideEvent(QHideEvent* event) override;
+    void showEvent(QShowEvent* event) override;
+
 private:
     QWidget* _mainWidget = QWidget::createWindowContainer(this);
+    LyricView* _lyricView;
+    QPoint _windowPos;      // 窗口在屏幕上的位置
 };
 
 #endif // !_HX_LYRIC_WINDOW_H_

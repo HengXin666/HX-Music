@@ -10,9 +10,6 @@
 #include <window/LyricWindow.h>
 
 #include <QHBoxLayout>
-#include <QApplication>
-
-#include <views/LyricView.h>
 
 LyricWindow::LyricWindow(QWindow* parent)
     : QWindow(parent)
@@ -23,14 +20,26 @@ LyricWindow::LyricWindow(QWindow* parent)
         Qt::WindowStaysOnTopHint // 顶层
     );
 
-
-    
     _mainWidget->resize(800, 200);
+    // _mainWidget->setAttribute(Qt::WA_Mapped);
     _mainWidget->setAttribute(Qt::WA_TranslucentBackground); // 透明窗口
 
     auto* layout = new QHBoxLayout;
     _mainWidget->setLayout(layout);
 
-    auto* view = new LyricView(_mainWidget);
-    layout->addWidget(view);
+    _lyricView = new LyricView(_mainWidget);
+    layout->addWidget(_lyricView);
+}
+
+void LyricWindow::hideEvent(QHideEvent* event) {
+    _windowPos = _mainWidget->pos();
+}
+
+void LyricWindow::showEvent(QShowEvent* event) {
+    // 窗口显示时恢复之前保存的位置
+    if (!_windowPos.isNull()) {
+        _mainWidget->move(_windowPos);  // 恢复之前记录的位置
+    }
+    QWindow::showEvent(event);
+    _lyricView->showSettingView();
 }

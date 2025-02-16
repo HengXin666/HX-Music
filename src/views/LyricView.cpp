@@ -1,12 +1,13 @@
 #include <views/LyricView.h>
 
+#include <QWindow>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QMouseEvent>
 #include <QWheelEvent>
+#include <QHideEvent>
 
 #include <widget/AssLyricWidget.h>
-#include <widget/SvgIconPushButton.h>
 #include <utils/LayoutOperate.hpp>
 
 LyricView::LyricView(QWidget* parent)
@@ -14,9 +15,6 @@ LyricView::LyricView(QWidget* parent)
 {
     auto* vLayout = new QVBoxLayout(this);
     auto* settingWidget = new QWidget;
-    settingWidget->setStyleSheet(R"(
-        background-color:rgba(0, 0, 0, 0.2);
-    )");
     vLayout->addWidget(settingWidget);
     auto* mainHLayout = new QHBoxLayout(settingWidget);
     mainHLayout->addStretch();
@@ -57,16 +55,16 @@ LyricView::LyricView(QWidget* parent)
     settingHLayout->addWidget(btnLock);
 
     // 取消固定位置
-    auto* btnUnLock = new SvgIconPushButton(
+    _btnUnLock = new SvgIconPushButton(
         ":icons/unlock.svg",
         QColor{"#990099"},
         QColor{"red"},
         this
     );
-    btnUnLock->setToolTip("取消固定窗口");
-    btnUnLock->setIconSize({32, 32});
-    mainHLayout->addWidget(btnUnLock);
-    btnUnLock->setHidden(true); // 默认不可见
+    _btnUnLock->setToolTip("取消固定窗口");
+    _btnUnLock->setIconSize({32, 32});
+    mainHLayout->addWidget(_btnUnLock);
+    _btnUnLock->setHidden(true); // 默认不可见
 
     // 移动字幕位置
     auto* btnMove = new SvgIconPushButton(
@@ -112,37 +110,32 @@ LyricView::LyricView(QWidget* parent)
 
     // 固定窗口
     connect(btnLock, &QPushButton::clicked, this,
-        [this, parent, settingWidget, settingHLayout, btnUnLock]() {
-        parent->setWindowFlags(
-            parent->windowFlags()
+        [this, parent, settingWidget, settingHLayout]() {
+        parent->windowHandle()->setFlags(
+            parent->windowHandle()->flags()
             | Qt::FramelessWindowHint       // 无边框 
             | Qt::WindowTransparentForInput // 鼠标穿透
         );
         // 隐藏操作布局
         HX::LayoutOperate::setHidden(settingHLayout, true);
-        btnUnLock->setHidden(false);
+        _btnUnLock->setHidden(false);
 
-        settingWidget->setStyleSheet("");
-        parent->show();
+        parent->windowHandle()->requestUpdate();
+        parent->windowHandle()->resize(parent->size());
     });
 
     // 取消固定窗口
-    connect(btnUnLock, &QPushButton::clicked, this,
-        [this, parent, settingWidget, settingHLayout, btnUnLock]() {
-        parent->setWindowFlags(
-            parent->windowFlags()
+    connect(_btnUnLock, &QPushButton::clicked, this,
+        [this, parent, settingWidget, settingHLayout]() {
+        parent->windowHandle()->setFlags(
+            parent->windowHandle()->flags()
             & ~Qt::FramelessWindowHint       // 无边框 
             & ~Qt::WindowTransparentForInput // 鼠标穿透
         );
 
         // 显示操作布局
         HX::LayoutOperate::setHidden(settingHLayout, false);
-        btnUnLock->setHidden(true);
-
-        settingWidget->setStyleSheet(R"(
-            background-color:rgba(0, 0, 0, 0.2);
-        )");
-        parent->show();
+        _btnUnLock->setHidden(true);
     });
 
     // 启用/关闭: 移动字幕位置, 并且高亮字幕渲染的矩形范围
@@ -172,6 +165,10 @@ LyricView::LyricView(QWidget* parent)
             border-radius: 12px;
         }
     )");
+}
+
+void LyricView::showSettingView() {
+    _btnUnLock->click();
 }
 
 void LyricView::mousePressEvent(QMouseEvent* event) {
