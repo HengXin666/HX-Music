@@ -35,6 +35,7 @@
         <file alias="unlock.svg">icons/unlock.svg</file>
         <file alias="pin.svg">icons/pin.svg</file>
         <file alias="move.svg">icons/move.svg</file>
+        <file alias="center.svg">icons/center.svg</file>
     </qresource>
     <qresource prefix="/logo">
         <file alias="HXMusic_logo.png">logo/HXMusic_logo.png</file>

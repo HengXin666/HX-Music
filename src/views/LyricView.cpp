@@ -47,6 +47,17 @@ LyricView::LyricView(QWidget* parent)
     btnMove->setIconSize({32, 32});
     settingHLayout->addWidget(btnMove);
 
+    // 字幕水平居中
+    auto* btnCenter = new SvgIconPushButton(
+        ":icons/center.svg",
+        QColor{"#990099"},
+        QColor{"red"},
+        this
+    );
+    btnCenter->setToolTip("字幕水平居中");
+    btnCenter->setIconSize({32, 32});
+    settingHLayout->addWidget(btnCenter);
+
     // 启用/关闭: 移动字幕位置
     connect(btnMove, &QPushButton::clicked, this,
         [this, btnMove]{
@@ -77,6 +88,12 @@ LyricView::LyricView(QWidget* parent)
     connect(btnPositiveOffset, &QPushButton::clicked, this,
         [this](){
         _lyricWidget->addOffset(500);
+    });
+
+    // 字幕水平居中
+    connect(btnCenter, &QPushButton::clicked, this,
+        [this](){
+        _lyricWidget->move((width() - _lyricWidget->width()) / 2 , _lyricWidget->pos().y());
     });
 
     setStyleSheet(R"(
@@ -114,7 +131,7 @@ void LyricView::wheelEvent(QWheelEvent* event) {
         if (event->angleDelta().y() > 0) {
             // 向上滚, 增加大小
             _lyricWidget->resize(
-                _lyricWidget->width() + Add, 
+                _lyricWidget->width() + Add,
                 _lyricWidget->height() + Add
             );
         } else {
