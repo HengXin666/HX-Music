@@ -47,6 +47,17 @@ public:
     void resetOffset() {
         _offset = 0;
     }
+
+    /**
+     * @brief 设置是否处于移动状态
+     * @param isMove 
+     * \true 是, 可以移动: 绘制辅助背景
+     * \false 否, 不可移动: 背景为透明的
+     */
+    void setMoveFlag(bool isMove) {
+        _isMove = isMove;
+    }
+
 protected:
     void paintEvent(QPaintEvent *event) override;
 
@@ -67,6 +78,7 @@ private:
     QImage _img;
     HX::AssParse _assParse;
     long long _offset = 0;  // 字幕偏移量
+    bool _isMove{false};    // 是否处于移动
 };
 
 #endif // !_HX_ASS_LYRIC_WIDGET_H_

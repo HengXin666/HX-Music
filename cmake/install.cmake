@@ -61,10 +61,6 @@ target_link_libraries(HX-Music PRIVATE Qt6::Xml)
 find_package(Qt6Gui REQUIRED)
 target_include_directories(HX-Music PRIVATE ${Qt6Gui_PRIVATE_INCLUDE_DIRS})
 
-find_package(Wayland REQUIRED)
-target_link_libraries(HX-Music PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets wayland-client)
-
-
 # 第三方依赖 (音频信息解析)
 find_package(TagLib REQUIRED)
 target_link_libraries(HX-Music PRIVATE TagLib)
@@ -73,8 +69,8 @@ target_link_libraries(HX-Music PRIVATE TagLib)
 find_package(LibAss REQUIRED)
 target_link_libraries(HX-Music PRIVATE LibAss)
 
-# 第三方依赖 (在Wayland下实现透明、顶置窗口)
-if(NOT WIN32)
+# 第三方依赖 (在Wayland下实现透明、顶置窗口 | @tip: 使用QWindow即可!)
+if(FALSE AND NOT WIN32)
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(GTK REQUIRED gtk+-3.0)
     pkg_check_modules(GTK_LAYER_SHELL REQUIRED gtk-layer-shell-0)

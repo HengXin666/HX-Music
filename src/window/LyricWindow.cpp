@@ -12,9 +12,6 @@
 #include <QHBoxLayout>
 #include <QApplication>
 
-// #include <KWindowSystem>
-// #include <NETWM>
-
 #include <views/LyricView.h>
 
 LyricWindow::LyricWindow(QWindow* parent)
@@ -23,15 +20,13 @@ LyricWindow::LyricWindow(QWindow* parent)
     setTitle("HX Music - Lyric");
 
     _mainWidget->setWindowFlags(
-        // Qt::FramelessWindowHint // 无边框
-        // | 
-        Qt::WindowStaysOnTopHint    // 顶层
+        Qt::WindowStaysOnTopHint // 顶层
     );
-    
-    // QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 
-    _mainWidget->setBaseSize(800, 600);
-    _mainWidget->setAttribute(Qt::WA_TranslucentBackground);
+
+    
+    _mainWidget->resize(800, 200);
+    _mainWidget->setAttribute(Qt::WA_TranslucentBackground); // 透明窗口
 
     auto* layout = new QHBoxLayout;
     _mainWidget->setLayout(layout);

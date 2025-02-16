@@ -19,6 +19,7 @@ sudo pacman -S taglib
 sudo pacman -S libass
 ```
 
+<!-- 无需安装, 发现使用QWindow再套用QWidget就好了 awa?!
 ### 3. Wayland 兼容
 
 ```sh
@@ -26,3 +27,4 @@ sudo pacman -S gtk3
 sudo pacman -S gtk-layer-shell
 sudo pacman -S kwindowsystem
 ```
+-->

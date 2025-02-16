@@ -175,7 +175,6 @@ PlayBar::PlayBar(QWidget* parent)
         if (p->isVisible()) {
             p->hide();
         } else {
-            p->resize(800, 600);
             p->show();
         }
     });

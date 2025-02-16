@@ -54,8 +54,10 @@ void AssLyricWidget::paintEvent(QPaintEvent *event) {
     painter.setRenderHint(QPainter::SmoothPixmapTransform);
     // painter.setRenderHint(QPainter::HighQualityAntialiasing);
 
-    // painter.setBrush(QColor(0,0,0));
-    // painter.drawRect(0,0,this->width(),this->height()); //先画成黑色
+    if (_isMove) {
+        painter.setBrush(QColor(99,0,99, 10));
+        painter.drawRect(0, 0, width(), height()); // 先画成黑色
+    }
 
     if (_img.isNull()) {
         return;
@@ -147,7 +149,7 @@ void AssLyricWidget::updateLyric(qint64 nowTime) {
             uint8_t* srcLine = img->bitmap + y * img->stride;
             QRgb* destLine = reinterpret_cast<QRgb*>(imgData.scanLine(y));
             for (int x = 0; x < img->w; ++x) {
-                uint8_t alpha = 255 - srcLine[x]; // 反转 alpha 值
+                // uint8_t alpha = 255 - srcLine[x]; // 反转 alpha 值
                 destLine[x] = qRgba(r, g, b, srcLine[x]);
             }
         }

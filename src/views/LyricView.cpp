@@ -7,13 +7,22 @@
 
 #include <widget/AssLyricWidget.h>
 #include <widget/SvgIconPushButton.h>
+#include <utils/LayoutOperate.hpp>
 
 LyricView::LyricView(QWidget* parent)
     : QWidget(parent)
 {
-    QVBoxLayout* vLayout = new QVBoxLayout(this);
-    QHBoxLayout* settingHLayout = new QHBoxLayout;
-    settingHLayout->addStretch();
+    auto* vLayout = new QVBoxLayout(this);
+    auto* settingWidget = new QWidget;
+    settingWidget->setStyleSheet(R"(
+        background-color:rgba(0, 0, 0, 0.2);
+    )");
+    vLayout->addWidget(settingWidget);
+    auto* mainHLayout = new QHBoxLayout(settingWidget);
+    mainHLayout->addStretch();
+    auto* settingHLayout = new QHBoxLayout;
+    mainHLayout->addLayout(settingHLayout);
+
     // 偏移 -0.5s
     auto* btnNegativeOffset = new SvgIconPushButton(
         ":icons/back.svg",
@@ -35,6 +44,29 @@ LyricView::LyricView(QWidget* parent)
     btnPositiveOffset->setToolTip("歌词偏移 +0.5s");
     btnPositiveOffset->setIconSize({32, 32});
     settingHLayout->addWidget(btnPositiveOffset);
+
+    // 固定位置
+    auto* btnLock = new SvgIconPushButton(
+        ":icons/lock.svg",
+        QColor{"#990099"},
+        QColor{"red"},
+        this
+    );
+    btnLock->setToolTip("固定歌词悬浮窗口");
+    btnLock->setIconSize({32, 32});
+    settingHLayout->addWidget(btnLock);
+
+    // 取消固定位置
+    auto* btnUnLock = new SvgIconPushButton(
+        ":icons/unlock.svg",
+        QColor{"#990099"},
+        QColor{"red"},
+        this
+    );
+    btnUnLock->setToolTip("取消固定窗口");
+    btnUnLock->setIconSize({32, 32});
+    mainHLayout->addWidget(btnUnLock);
+    btnUnLock->setHidden(true); // 默认不可见
 
     // 移动字幕位置
     auto* btnMove = new SvgIconPushButton(
@@ -58,19 +90,7 @@ LyricView::LyricView(QWidget* parent)
     btnCenter->setIconSize({32, 32});
     settingHLayout->addWidget(btnCenter);
 
-    // 启用/关闭: 移动字幕位置
-    connect(btnMove, &QPushButton::clicked, this,
-        [this, btnMove]{
-        _isMove = !_isMove;
-        if (_isMove) {
-            btnMove->showHoverIcon();
-        } else {
-            btnMove->showOrdinaryIcon();
-        }
-    });
-
-    settingHLayout->addStretch();
-    vLayout->addLayout(settingHLayout);
+    mainHLayout->addStretch();
 
     // ass歌词渲染
     // 创建一个垂直间隔项, 占据 _lyricWidget 的空间
@@ -80,19 +100,68 @@ LyricView::LyricView(QWidget* parent)
 
     // 偏移 -0.5s 槽函数
     connect(btnNegativeOffset, &QPushButton::clicked, this,
-        [this](){
+        [this]() {
         _lyricWidget->addOffset(-500);
     });
 
     // 偏移 +0.5s 槽函数
     connect(btnPositiveOffset, &QPushButton::clicked, this,
-        [this](){
+        [this]() {
         _lyricWidget->addOffset(500);
+    });
+
+    // 固定窗口
+    connect(btnLock, &QPushButton::clicked, this,
+        [this, parent, settingWidget, settingHLayout, btnUnLock]() {
+        parent->setWindowFlags(
+            parent->windowFlags()
+            | Qt::FramelessWindowHint       // 无边框 
+            | Qt::WindowTransparentForInput // 鼠标穿透
+        );
+        // 隐藏操作布局
+        HX::LayoutOperate::setHidden(settingHLayout, true);
+        btnUnLock->setHidden(false);
+
+        settingWidget->setStyleSheet("");
+        parent->show();
+    });
+
+    // 取消固定窗口
+    connect(btnUnLock, &QPushButton::clicked, this,
+        [this, parent, settingWidget, settingHLayout, btnUnLock]() {
+        parent->setWindowFlags(
+            parent->windowFlags()
+            & ~Qt::FramelessWindowHint       // 无边框 
+            & ~Qt::WindowTransparentForInput // 鼠标穿透
+        );
+
+        // 显示操作布局
+        HX::LayoutOperate::setHidden(settingHLayout, false);
+        btnUnLock->setHidden(true);
+
+        settingWidget->setStyleSheet(R"(
+            background-color:rgba(0, 0, 0, 0.2);
+        )");
+        parent->show();
+    });
+
+    // 启用/关闭: 移动字幕位置, 并且高亮字幕渲染的矩形范围
+    connect(btnMove, &QPushButton::clicked, this,
+        [this, btnMove] {
+        _isMove = !_isMove;
+        if (_isMove) {
+            btnMove->showHoverIcon();
+            _lyricWidget->setMoveFlag(true);
+        } else {
+            btnMove->showOrdinaryIcon();
+            _lyricWidget->setMoveFlag(false);
+        }
+        update();
     });
 
     // 字幕水平居中
     connect(btnCenter, &QPushButton::clicked, this,
-        [this](){
+        [this]() {
         _lyricWidget->move((width() - _lyricWidget->width()) / 2 , _lyricWidget->pos().y());
     });
 
