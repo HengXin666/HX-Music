@@ -401,6 +401,28 @@ void MusicTreeWidget::dropEvent(QDropEvent *event) {
                 : delIt->getData();
             qDebug() << "move: " << path;
 
+            if (path == "") {
+                qDebug() << "=== 可把我牛逼坏了 === {";
+
+                qDebug() << dataVariant;
+
+                qDebug() << draggedItem;
+                qDebug() << draggedItem->parent();
+                qDebug() << parentItem->indexOfChild(draggedItem);
+
+                qDebug() << parentItem;
+                for (int i = 0; i < parentItem->childCount(); ++i) {
+                    qDebug() << "|---" << i
+                        << parentItem->child(i)
+                        << parentItem->child(i)->data(
+                            static_cast<int>(ItemData::Title),
+                            Qt::DisplayRole
+                        );
+                }
+
+                qDebug() << "} // === 可把我牛逼坏了 === FUCK YOU :(";
+            }
+
             GlobalSingleton::get().playQueue.setNull();
             // 2. 生成插入到新位置
             QVariant v{};
@@ -409,17 +431,17 @@ void MusicTreeWidget::dropEvent(QDropEvent *event) {
             QTreeWidget::dropEvent(event);
 
             // 插入的新位置
-            auto* newItem = itemAt(event->position().toPoint());
+            auto* newItem = draggedItem;
             if (newItem) {
-                if (dropIndicatorPosition() == QAbstractItemView::BelowItem) {
-                    // 修正 newItem 是插入后的元素指针: *newItem == *draggedItem
-                    int index = std::min(
-                        parentItem->indexOfChild(newItem) + 1,
-                        parentItem->childCount() - 1
-                    );
-                    newItem = parentItem->child(index);
-                    qDebug() << "index 修正!";
-                }
+                // if (dropIndicatorPosition() == QAbstractItemView::BelowItem) {
+                //     // 修正 newItem 是插入后的元素指针: *newItem == *draggedItem
+                //     int index = std::min(
+                //         insertRow + 1, // parentItem->indexOfChild(newItem)
+                //         parentItem->childCount() - 1
+                //     );
+                //     newItem = parentItem->child(index);
+                //     qDebug() << "index 修正!";
+                // }
                 if (getNodeType(newItem) == NodeType::Folder) {
                     // 文件夹就是尾插
                     qDebug() << "文件夹就是尾插";
@@ -488,6 +510,10 @@ void MusicTreeWidget::dropEvent(QDropEvent *event) {
                         static_cast<int>(ItemData::PlayQueue),
                         Qt::UserRole
                     ).value<HX::PlayQueue::iterator>()->getData();
+
+                    qDebug() << "parentItem" << parentItem;
+                    qDebug() << "draggedItem: " << draggedItem;
+                    qDebug() << "newItem: " << newItem;
                 }
             } else {
                 // 根目录尾插
