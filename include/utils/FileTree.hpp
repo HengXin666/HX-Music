@@ -25,6 +25,8 @@
 #include <optional>
 #include <type_traits>
 
+#include <QDebug>
+
 namespace HX {
 
 template <typename T>
@@ -45,7 +47,9 @@ public:
     explicit FileTreeNode(U&& u)
         : _parentIt()
         , _data(std::forward<U>(u))
-    {}
+    {
+        qDebug() << "FileTreeNode(List&& u): " << std::is_same_v<List, U>;
+    }
 
     template <typename U, 
         typename = std::enable_if_t<
@@ -153,6 +157,37 @@ public:
         return res;
     }
 
+    template <typename U, 
+        typename = std::enable_if_t<std::is_same_v<U, Tp>>>
+    iterator insert(std::optional<iterator> parentIt, int idx, U&& data) {
+        auto& list = parentIt 
+            ? (*parentIt)->getList() 
+            : _root.getList();
+        data._parentIt = parentIt;
+        auto res = list.emplace(
+            std::next(list.begin(), idx),
+            std::forward<U>(data)
+        );
+        // 如果播放队列没有歌曲, 那么更新一下; 前提是: 添加的不是文件夹
+        if (_it == _root.getList().end() && !res->isList()) {
+            _it = res;
+        }
+        // 记录非文件夹节点的数量
+        _cnt += !res->isList();
+        return res;
+    }
+
+    void erase(std::optional<iterator> parentIt, iterator delIt) {
+        auto& list = parentIt 
+            ? (*parentIt)->getList() 
+            : _root.getList();
+        if (_it == delIt) {
+            _it = _root.getList().end();
+        }
+        _cnt -= !delIt->isList();
+        list.erase(delIt);
+    }
+
     bool empty() const noexcept {
         return _root.getList().empty();
     }
@@ -163,6 +198,10 @@ public:
      */
     void setNowIt(iterator it) {
         _it = it;
+    }
+
+    iterator getNowIt() {
+        return _it;
     }
 
     std::optional<iterator> next() {
@@ -230,6 +269,13 @@ public:
             return prev();
         }
         return _it;
+    }
+
+    /**
+     * @brief 设置当前播放歌曲为无效 (如果播放, 则会从头开始播放)
+     */
+    void setNull() {
+        _it = _root.getList().end();
     }
 
 protected:

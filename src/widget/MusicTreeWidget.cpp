@@ -157,13 +157,21 @@ MusicTreeWidget::MusicTreeWidget(QWidget* parent)
     // 展开节点
     connect(this, &QTreeWidget::itemExpanded, this, 
         [this](QTreeWidgetItem *item) {
-        item->setData(static_cast<int>(ItemData::Title), Qt::DecorationRole, QPixmap{":/icons/folder-open.svg"});
+        item->setData(
+            static_cast<int>(ItemData::Title),
+            Qt::DecorationRole,
+            QPixmap{":/icons/folder-open.svg"}
+        );
     });
 
     // 关闭节点
     connect(this, &QTreeWidget::itemCollapsed, this, 
         [this](QTreeWidgetItem *item) {
-        item->setData(static_cast<int>(ItemData::Title), Qt::DecorationRole, QPixmap{":/icons/folder-close.svg"});
+        item->setData(
+            static_cast<int>(ItemData::Title),
+            Qt::DecorationRole,
+            QPixmap{":/icons/folder-close.svg"}
+        );
     });
 
     // 在构造函数中设置上下文菜单策略并连接信号
@@ -195,11 +203,11 @@ MusicTreeWidget::MusicTreeWidget(QWidget* parent)
 }
 
 bool MusicTreeWidget::addFileItem(
-    const QFileInfo &fileInfo, 
+    const QFileInfo& fileInfo, 
     int index, 
-    QTreeWidgetItem *parentItem
+    QTreeWidgetItem* parentItem
 ) {
-    QTreeWidgetItem *item = new QTreeWidgetItem;
+    QTreeWidgetItem* item = new QTreeWidgetItem;
     if (HX::MusicInfo::isNotSupport(fileInfo)) {
         return false;
     }
@@ -242,7 +250,8 @@ bool MusicTreeWidget::addFileItem(
                     static_cast<int>(ItemData::PlayQueue),
                     Qt::UserRole
                 ).value<HX::PlayQueue::iterator>()}
-            : HX::PlayQueue::ItOpt{}, 
+            : HX::PlayQueue::ItOpt{},
+        index,
         HX::PlayQueue::Node{fileInfo.canonicalFilePath()}
     ));
     item->setData(
@@ -261,7 +270,11 @@ bool MusicTreeWidget::addFileItem(
     return true;
 }
 
-void MusicTreeWidget::addFolderItem(const QFileInfo &fileInfo, int index, QTreeWidgetItem* parentItem)  {
+void MusicTreeWidget::addFolderItem(
+    const QFileInfo& fileInfo,
+    int index,
+    QTreeWidgetItem* parentItem
+)  {
     namespace fs = std::filesystem;
 
     // 1. 新建一个目录元素
@@ -283,7 +296,8 @@ void MusicTreeWidget::addFolderItem(const QFileInfo &fileInfo, int index, QTreeW
                     static_cast<int>(ItemData::PlayQueue),
                     Qt::UserRole
                 ).value<HX::PlayQueue::iterator>()}
-            : HX::PlayQueue::ItOpt{}, 
+            : HX::PlayQueue::ItOpt{},
+        index,
         HX::PlayQueue::Node{HX::PlayQueue::List{}}
     ));
     item->setData(
@@ -322,7 +336,11 @@ void MusicTreeWidget::updateItemNumber(QTreeWidgetItem *parentItem) {
         for (int i = 0; i < topLevelItemCount(); ++i) {
             auto* child = topLevelItem(i);
             if (getNodeType(child) == NodeType::File) {
-                child->setData(static_cast<int>(ItemData::Title), Qt::UserRole, ++fileCnt);
+                child->setData(
+                    static_cast<int>(ItemData::Title),
+                    Qt::UserRole, 
+                    ++fileCnt
+                );
             }
         }
         return;
@@ -330,7 +348,226 @@ void MusicTreeWidget::updateItemNumber(QTreeWidgetItem *parentItem) {
     for (int i = 0; i < parentItem->childCount(); ++i) {
         auto* child = parentItem->child(i);
         if (getNodeType(child) == NodeType::File) {
-            child->setData(static_cast<int>(ItemData::Title), Qt::UserRole, ++fileCnt);
+            child->setData(
+                static_cast<int>(ItemData::Title),
+                Qt::UserRole,
+                ++fileCnt
+            );
         }
+    }
+}
+
+void MusicTreeWidget::dropEvent(QDropEvent *event) {
+    // 内部拖拽交由默认实现处理
+    if (event->source() == this) {
+        // 目标位置
+        auto [parentItem, insertRow] = determineDropPosition(event);
+
+        // 保证不能是 往普通文件中插入
+        if (QTreeWidgetItem* targetItem = itemAt(event->position().toPoint()); 
+            (parentItem 
+            && insertRow < parentItem->childCount()
+            && getNodeType(parentItem->child(insertRow)) == NodeType::File
+            && dropIndicatorPosition() == QAbstractItemView::OnItem)
+            || 
+            (targetItem // 特别处理`QAbstractItemView::OnViewport`情况, 也就是往树而不是文件项
+            && getNodeType(targetItem) == NodeType::File
+            && dropIndicatorPosition() == QAbstractItemView::OnViewport)
+        ) {
+            return;
+        }
+
+        // 记录拖动元素的原始父节点
+        QList<QTreeWidgetItem*> selectedItemList = selectedItems(); // 被选中的所有项
+        QTreeWidgetItem* oldParent = nullptr;
+        if (!selectedItemList.isEmpty()) {
+            QTreeWidgetItem* draggedItem = selectedItemList.first();
+            oldParent = draggedItem->parent();
+            // 1. 把原位置的元素删除
+            auto dataVariant = draggedItem->data(
+                static_cast<int>(ItemData::PlayQueue),
+                Qt::UserRole
+            );
+            
+            if (!dataVariant.isValid() || dataVariant.isNull()) {
+                qWarning() << "draggedItem 中的 PlayQueue 数据无效!";
+                return;
+            }
+
+            auto delIt = dataVariant.value<HX::PlayQueue::iterator>();
+
+            QString path = delIt->isList() 
+                ? "" 
+                : delIt->getData();
+            qDebug() << "move: " << path;
+
+            GlobalSingleton::get().playQueue.setNull();
+            // 2. 生成插入到新位置
+            QVariant v{};
+            
+            // 默认实现处理内部拖拽
+            QTreeWidget::dropEvent(event);
+
+            // 插入的新位置
+            auto* newItem = itemAt(event->position().toPoint());
+            if (newItem) {
+                if (dropIndicatorPosition() == QAbstractItemView::BelowItem) {
+                    // 修正 newItem 是插入后的元素指针: *newItem == *draggedItem
+                    int index = std::min(
+                        parentItem->indexOfChild(newItem) + 1,
+                        parentItem->childCount() - 1
+                    );
+                    newItem = parentItem->child(index);
+                    qDebug() << "index 修正!";
+                }
+                if (getNodeType(newItem) == NodeType::Folder) {
+                    // 文件夹就是尾插
+                    qDebug() << "文件夹就是尾插";
+                    if (delIt->isList()) {
+                        v.setValue(GlobalSingleton::get().playQueue.insert(
+                            HX::PlayQueue::ItOpt{parentItem->data(
+                                static_cast<int>(ItemData::PlayQueue),
+                                Qt::UserRole
+                            ).value<HX::PlayQueue::iterator>()},
+                            HX::PlayQueue::Node{std::move(delIt->getList())}
+                        ));
+                    } else {
+                        v.setValue(GlobalSingleton::get().playQueue.insert(
+                            HX::PlayQueue::ItOpt{parentItem->data(
+                                static_cast<int>(ItemData::PlayQueue),
+                                Qt::UserRole
+                            ).value<HX::PlayQueue::iterator>()},
+                            HX::PlayQueue::Node{std::move(delIt->getData())}
+                        ));
+                    }
+                    parentItem->child(parentItem->childCount() - 1)->setData(
+                        static_cast<int>(ItemData::PlayQueue),
+                        Qt::UserRole,
+                        v
+                    );
+                } else {
+                    // 不是文件夹, 那小心点插
+                    qDebug() << "不是文件夹, 那小心点插";
+                    // qDebug() << "原本: " << newItem->data(
+                    //     static_cast<int>(ItemData::PlayQueue),
+                    //     Qt::UserRole
+                    // ).value<HX::PlayQueue::iterator>()->getData();
+                    if (delIt->isList()) {
+                        if (delIt->getList() == GlobalSingleton::get().playQueue.getRootList())
+                            qDebug() << "NB!!!";
+                        v.setValue(GlobalSingleton::get().playQueue.insert(
+                            parentItem && getNodeType(parentItem) == NodeType::Folder
+                                ? HX::PlayQueue::ItOpt{parentItem->data(
+                                    static_cast<int>(ItemData::PlayQueue),
+                                    Qt::UserRole
+                                ).value<HX::PlayQueue::iterator>()}
+                                : HX::PlayQueue::ItOpt{},
+                            insertRow,
+                            HX::PlayQueue::Node{std::move(delIt->getList())}
+                        ));
+                    } else {
+                        v.setValue(GlobalSingleton::get().playQueue.insert(
+                            parentItem && getNodeType(parentItem) == NodeType::Folder
+                                ? HX::PlayQueue::ItOpt{parentItem->data(
+                                    static_cast<int>(ItemData::PlayQueue),
+                                    Qt::UserRole
+                                ).value<HX::PlayQueue::iterator>()}
+                                : HX::PlayQueue::ItOpt{},
+                            insertRow,
+                            HX::PlayQueue::Node{std::move(path)}
+                        ));
+                    }
+                    qDebug() << "期望更新为: "
+                        << v.value<HX::PlayQueue::iterator>()->getData();
+                    newItem->setData(
+                        static_cast<int>(ItemData::PlayQueue),
+                        Qt::UserRole,
+                        v
+                    );
+                    qDebug() << "实际更新为: " << newItem->data(
+                        static_cast<int>(ItemData::PlayQueue),
+                        Qt::UserRole
+                    ).value<HX::PlayQueue::iterator>()->getData();
+                }
+            } else {
+                // 根目录尾插
+                qDebug() << "根目录尾插";
+                if (delIt->isList()) {
+                    v.setValue(GlobalSingleton::get().playQueue.insert(
+                        {},
+                        HX::PlayQueue::Node{std::move(delIt->getList())}
+                    ));
+                } else {
+                    v.setValue(GlobalSingleton::get().playQueue.insert(
+                        {},
+                        HX::PlayQueue::Node{std::move(delIt->getData())}
+                    ));
+                }
+                parentItem->child(parentItem->childCount() - 1)->setData(
+                    static_cast<int>(ItemData::PlayQueue),
+                    Qt::UserRole,
+                    v
+                );
+            }
+
+            if (!oldParent) {
+                GlobalSingleton::get().playQueue.erase(
+                    {}, 
+                    delIt
+                );
+                oldParent = invisibleRootItem();
+            } else {
+                GlobalSingleton::get().playQueue.erase(
+                    oldParent->data(
+                        static_cast<int>(ItemData::PlayQueue),
+                        Qt::UserRole
+                    ).value<HX::PlayQueue::iterator>(), 
+                    delIt
+                );
+            }
+        }
+
+        updateItemNumber(parentItem);
+        
+        // 如果原父节点与目标父节点不同, 则也更新原父节点编号
+        if (oldParent != parentItem) {
+            updateItemNumber(oldParent);
+        }
+
+        {
+            // debug
+            qDebug() << "{";
+            auto it = GlobalSingleton::get().playQueue.getNowIt();
+            for (auto jt = *GlobalSingleton::get().playQueue.next(); 
+            jt != it; 
+            jt = *GlobalSingleton::get().playQueue.next()) {
+                qDebug() << '\t' << jt->getData();
+            }
+            qDebug() << "} // debug";
+        }
+    } else if (auto* mimeData = event->mimeData(); 
+        mimeData->hasUrls()
+    ) {
+        auto [parentItem, insertRow] = determineDropPosition(event);
+
+        // 遍历所有拖入的 URL, 依次插入到计算好的位置
+        for (const QUrl &url : mimeData->urls()) {
+            QString localPath = url.toLocalFile();
+            if (!localPath.isEmpty()) {
+                QFileInfo fileInfo(localPath);
+                if (fileInfo.exists()) {
+                    if (fileInfo.isDir()) {
+                        addFolderItem(fileInfo, insertRow, parentItem);
+                    } else if (fileInfo.isFile()) {
+                        addFileItem(fileInfo, insertRow, parentItem);
+                    }
+                    ++insertRow;
+                }
+            }
+        }
+        updateItemNumber(parentItem);
+        event->acceptProposedAction();
+    } else {
+        QTreeWidget::dropEvent(event);
     }
 }

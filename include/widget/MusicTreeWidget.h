@@ -94,6 +94,11 @@ class MusicTreeWidget : public QTreeWidget {
         Folder
     };
 
+    /**
+     * @brief 设置节点项类型
+     * @param item 
+     * @param type 
+     */
     void setNodeType(QTreeWidgetItem *item, NodeType type) {
         item->setFlags(
             item->flags() 
@@ -101,12 +106,24 @@ class MusicTreeWidget : public QTreeWidget {
             | Qt::ItemIsSelectable 
             | Qt::ItemIsEnabled
         );
-        item->setData(static_cast<int>(ItemData::NodeType), Qt::UserRole, static_cast<unsigned int>(type));
+        item->setData(
+            static_cast<int>(ItemData::NodeType),
+            Qt::UserRole,
+            static_cast<unsigned int>(type)
+        );
     }
     
+    /**
+     * @brief 获取节点项的类型
+     * @param item 
+     * @return NodeType 
+     */
     NodeType getNodeType(QTreeWidgetItem *item) {
         return static_cast<NodeType>(
-            item->data(static_cast<int>(ItemData::NodeType), Qt::UserRole).toUInt()
+            item->data(
+                static_cast<int>(ItemData::NodeType),
+                Qt::UserRole
+            ).toUInt()
         );
     }
 
@@ -141,7 +158,7 @@ protected:
     void resizeEvent(QResizeEvent *event) override {
         QTreeWidget::resizeEvent(event); // 调用父类
 
-        int totalWidth = this->width(); // 减去固定列的宽度
+        int totalWidth = width(); // 减去固定列的宽度
         setColumnWidth(0, totalWidth * 0.5);
         setColumnWidth(1, totalWidth * 0.25);
         setColumnWidth(2, totalWidth * 0.15);
@@ -171,72 +188,7 @@ protected:
         QTreeWidget::dragMoveEvent(event);
     }
 
-    void dropEvent(QDropEvent *event) override {
-        // 内部拖拽交由默认实现处理
-        if (event->source() == this) {
-            // 目标位置
-            auto [parentItem, insertRow] = determineDropPosition(event);
-
-            // 保证不能是 往普通文件中插入
-            if (QTreeWidgetItem* targetItem = itemAt(event->position().toPoint()); 
-                (parentItem 
-                && insertRow < parentItem->childCount()
-                && getNodeType(parentItem->child(insertRow)) == NodeType::File
-                && dropIndicatorPosition() == QAbstractItemView::OnItem)
-                || 
-                (targetItem // 特别处理`QAbstractItemView::OnViewport`情况, 也就是往树而不是文件项
-                && getNodeType(targetItem) == NodeType::File
-                && dropIndicatorPosition() == QAbstractItemView::OnViewport)
-            ) {
-                return;
-            }
-
-            // 记录拖动元素的原始父节点
-            QList<QTreeWidgetItem*> selectedItemList = selectedItems(); // 被选中的所有项
-            QTreeWidgetItem *oldParent = nullptr;
-            if (!selectedItemList.isEmpty()) {
-                QTreeWidgetItem *draggedItem = selectedItemList.first();
-                oldParent = draggedItem->parent();
-                if (!oldParent) {
-                    oldParent = invisibleRootItem();
-                }
-            }
-
-            // 默认实现处理内部拖拽
-            QTreeWidget::dropEvent(event);
-            
-            updateItemNumber(parentItem);
-            
-            // 如果原父节点与目标父节点不同, 则也更新原父节点编号
-            if (oldParent != parentItem) {
-                updateItemNumber(oldParent);
-            }
-        } else if (auto* mimeData = event->mimeData(); 
-            mimeData->hasUrls()
-        ) {
-            auto [parentItem, insertRow] = determineDropPosition(event);
-
-            // 遍历所有拖入的 URL, 依次插入到计算好的位置
-            for (const QUrl &url : mimeData->urls()) {
-                QString localPath = url.toLocalFile();
-                if (!localPath.isEmpty()) {
-                    QFileInfo fileInfo(localPath);
-                    if (fileInfo.exists()) {
-                        if (fileInfo.isDir()) {
-                            addFolderItem(fileInfo, insertRow, parentItem);
-                        } else if (fileInfo.isFile()) {
-                            addFileItem(fileInfo, insertRow, parentItem);
-                        }
-                        ++insertRow;
-                    }
-                }
-            }
-            updateItemNumber(parentItem);
-            event->acceptProposedAction();
-        } else {
-            QTreeWidget::dropEvent(event);
-        }
-    }
+    void dropEvent(QDropEvent *event) override;
 
 private:
     /**

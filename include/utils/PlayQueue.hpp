@@ -24,6 +24,7 @@
 
 #include <QString>
 #include <QVariant>
+#include <QTreeWidgetItem>
 
 #include <utils/FileTree.hpp>
 
@@ -39,6 +40,10 @@ public:
         , _pq()
         , _pqIt(_pq.end())
     {}
+
+    auto getRootList() {
+        return _root.getList();
+    }
 
     ItOpt now() {
         if (_pq.empty())

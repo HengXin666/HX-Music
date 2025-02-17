@@ -58,9 +58,6 @@ target_link_libraries(HX-Music PRIVATE Qt6::Xml)
 # find_package(Qt6 REQUIRED COMPONENTS Concurrent)
 # target_link_libraries(HX-Music PRIVATE Qt6::Concurrent)
 
-find_package(Qt6Gui REQUIRED)
-target_include_directories(HX-Music PRIVATE ${Qt6Gui_PRIVATE_INCLUDE_DIRS})
-
 # 第三方依赖 (音频信息解析)
 find_package(TagLib REQUIRED)
 target_link_libraries(HX-Music PRIVATE TagLib)
