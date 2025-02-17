@@ -38,14 +38,20 @@ public:
      */
     void showSettingView();
 protected:
+    // 重载左键点击事件
     void mousePressEvent(QMouseEvent* event) override;
+
+    // 重载鼠标移动事件
     void mouseMoveEvent(QMouseEvent* event) override;
+
+    // 重载滚轮事件
     void wheelEvent(QWheelEvent* event) override;
 private:
     AssLyricWidget* _lyricWidget = new AssLyricWidget(this);
-    QPoint _relativePos;    // 相对位置
-    SvgIconPushButton* _btnUnLock;
+    QPoint _relativePos;            // 相对位置
+    SvgIconPushButton* _btnUnLock;  // 解锁按钮
     bool _isMove{false};    // 正在移动字幕位置
+    bool _isLock{false};    // 是否上锁
 };
 
 #endif // !_HX_LYRIC_VIEW_H_

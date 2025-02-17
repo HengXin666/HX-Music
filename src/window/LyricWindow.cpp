@@ -14,14 +14,18 @@
 LyricWindow::LyricWindow(QWindow* parent)
     : QWindow(parent)
 {
-    setTitle("HX Music - Lyric");
+    // 为什么设置标题栏也会不能使用顶层?
+    // _mainWidget->setWindowTitle("HX Music - Lyric");
 
     _mainWidget->setWindowFlags(
         Qt::WindowStaysOnTopHint // 顶层
     );
 
+    _mainWidget->setContentsMargins(0, 0, 0, 0);
+
     _mainWidget->resize(800, 200);
     // _mainWidget->setAttribute(Qt::WA_Mapped);
+    // _mainWidget->setAttribute(Qt::WA_TransparentForMouseEvents); // 保证窗口本身不会阻止鼠标事件传播
     _mainWidget->setAttribute(Qt::WA_TranslucentBackground); // 透明窗口
 
     auto* layout = new QHBoxLayout;

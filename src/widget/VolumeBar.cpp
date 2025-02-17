@@ -64,7 +64,7 @@ VolumeBar::VolumeBar(QWidget* parent)
     layout->addWidget(_btn);
     setLayout(layout);
 
-    // 设置 _slider 为相对布局： 相对于 _btn 的上方, 并且不参与碰撞(类似于在窗口顶层)
+    // 设置 _slider 为相对布局: 相对于 _btn 的上方, 并且不参与碰撞(类似于在窗口顶层)
     connect(_btn, &QPushButton::clicked, this, [this]() {
         if (_slider->isVisible()) {
             _slider->hide();

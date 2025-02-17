@@ -3,6 +3,7 @@
 #include <QWindow>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
+#include <QEvent>
 #include <QMouseEvent>
 #include <QWheelEvent>
 #include <QHideEvent>
@@ -118,10 +119,17 @@ LyricView::LyricView(QWidget* parent)
         );
         // 隐藏操作布局
         HX::LayoutOperate::setHidden(settingHLayout, true);
-        _btnUnLock->setHidden(false);
 
+        // 设置窗口内容区域的边距
+        // @todo 此处是硬编码了, 目前 Wayland 合适
+        // 用于平衡有边窗口到无边窗口的位移, 能力/精力有限 fuck you Wayland!
+        // 怎么这么多不行? 如果真希望可以, 那只能搞一个支持鼠标事件的无边窗口了!! so is todo bro!!
+        parent->setContentsMargins(
+            QMargins(4,24,4,4)
+        );
+
+        _isLock = true;
         parent->windowHandle()->requestUpdate();
-        parent->windowHandle()->resize(parent->size());
     });
 
     // 取消固定窗口
@@ -136,6 +144,12 @@ LyricView::LyricView(QWidget* parent)
         // 显示操作布局
         HX::LayoutOperate::setHidden(settingHLayout, false);
         _btnUnLock->setHidden(true);
+
+        parent->setContentsMargins(
+            QMargins(0,0,0,0)
+        );
+
+        _isLock = false;
     });
 
     // 启用/关闭: 移动字幕位置, 并且高亮字幕渲染的矩形范围
@@ -189,23 +203,20 @@ void LyricView::mouseMoveEvent(QMouseEvent* event) {
 
 void LyricView::wheelEvent(QWheelEvent* event) {
     if (_isMove) {
-        constexpr int Add = 10; // 滚动增量 (@todo 后期可以尝试配置到设置? 没必要吧)
-        // 获取滚轮的增量值
-        // 判断滚轮的方向: 
-        // 如果是向上滚动, delta > 0
-        // 向下滚动, delta < 0
+        constexpr double ScaleFactor = 1.05;  // 5% 的缩放增量
+
+        int newWidth, newHeight;
         if (event->angleDelta().y() > 0) {
-            // 向上滚, 增加大小
-            _lyricWidget->resize(
-                _lyricWidget->width() + Add,
-                _lyricWidget->height() + Add
-            );
+            // 放大
+            newWidth = _lyricWidget->width() * ScaleFactor;
         } else {
-            // 向下滚, 减小大小
-            _lyricWidget->resize(
-                _lyricWidget->width() - Add,
-                _lyricWidget->height() - Add
-            );
+            // 缩小
+            newWidth = _lyricWidget->width() / ScaleFactor;
         }
+
+        // 根据 16:9 比例计算新高度
+        newHeight = newWidth * 9 / 16;
+
+        _lyricWidget->resize(newWidth, newHeight);
     }
 }
