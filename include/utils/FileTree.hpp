@@ -25,8 +25,6 @@
 #include <optional>
 #include <type_traits>
 
-#include <QDebug>
-
 namespace HX {
 
 template <typename T>
@@ -47,9 +45,7 @@ public:
     explicit FileTreeNode(U&& u)
         : _parentIt()
         , _data(std::forward<U>(u))
-    {
-        qDebug() << "FileTreeNode(List&& u): " << std::is_same_v<List, U>;
-    }
+    {}
 
     template <typename U, 
         typename = std::enable_if_t<
@@ -125,6 +121,7 @@ public:
 private:
     std::optional<iterator> _parentIt;
     std::variant<T, List> _data;
+    std::size_t _cnt = 0;
 };
 
 template <typename T>
@@ -152,13 +149,18 @@ public:
             auto& chList = res->getList();
             for (auto& cIt : chList) {
                 cIt._parentIt = res;
+                data._cnt += cIt._cnt;
             }
-        } else if (_it == _root.getList().end()) {
+            // 记录非文件夹节点的数量
+            _cnt += data._cnt;
+        } else {
             // 如果播放队列没有歌曲, 那么更新一下; 前提是: 添加的不是文件夹
-            _it = res;
+            if (_it == _root.getList().end()) {
+                _it = res;
+            }
+            data._cnt = 1;
+            ++_cnt;
         }
-        // 记录非文件夹节点的数量
-        _cnt += !res->isList();
         return res;
     }
 
@@ -178,13 +180,17 @@ public:
             auto& chList = res->getList();
             for (auto& cIt : chList) {
                 cIt._parentIt = res;
+                data._cnt += cIt._cnt;
             }
-        } else if (_it == _root.getList().end()) {
+            _cnt += data._cnt;
+        } else {
             // 如果播放队列没有歌曲, 那么更新一下; 前提是: 添加的不是文件夹
-            _it = res;
+            if (_it == _root.getList().end()) {
+                _it = res;
+            }
+            data._cnt = 1;
+            ++_cnt;
         }
-        // 记录非文件夹节点的数量
-        _cnt += !res->isList();
         return res;
     }
 
@@ -195,7 +201,11 @@ public:
         if (_it == delIt) {
             _it = _root.getList().end();
         }
-        _cnt -= !delIt->isList();
+        if (delIt->isList()) {
+            _cnt -= delIt->_cnt;
+        } else {
+            --_cnt;
+        }
         list.erase(delIt);
     }
 
@@ -209,10 +219,6 @@ public:
      */
     void setNowIt(iterator it) {
         _it = it;
-    }
-
-    iterator getNowIt() {
-        return _it;
     }
 
     std::optional<iterator> next() {
