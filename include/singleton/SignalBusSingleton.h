@@ -80,6 +80,12 @@ Q_SIGNALS:
      * @param pos 当前播放位置 (单位: 毫秒(ms))
      */
     void musicPlayPosChanged(qint64 pos);
+
+    /**
+     * @brief 歌词界面是否上锁信号
+     * @param isLock true: 上锁
+     */
+    void lyricViewLockChanged(bool isLock);
 };
 
 #endif // !_HX_SIGNAL_BUS_SINGLETON_H_

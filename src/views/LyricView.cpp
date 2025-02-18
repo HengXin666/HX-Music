@@ -8,6 +8,7 @@
 #include <QWheelEvent>
 #include <QHideEvent>
 
+#include <singleton/SignalBusSingleton.h>
 #include <widget/AssLyricWidget.h>
 #include <utils/LayoutOperate.hpp>
 
@@ -128,7 +129,7 @@ LyricView::LyricView(QWidget* parent)
             QMargins(4,24,4,4)
         );
 
-        _isLock = true;
+        SignalBusSingleton::get().lyricViewLockChanged(_isLock = true);
         parent->windowHandle()->requestUpdate();
     });
 
@@ -149,7 +150,7 @@ LyricView::LyricView(QWidget* parent)
             QMargins(0,0,0,0)
         );
 
-        _isLock = false;
+        SignalBusSingleton::get().lyricViewLockChanged(_isLock = false);
     });
 
     // 启用/关闭: 移动字幕位置, 并且高亮字幕渲染的矩形范围

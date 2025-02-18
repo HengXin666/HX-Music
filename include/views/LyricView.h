@@ -37,6 +37,10 @@ public:
      * @brief 显示歌词操作栏
      */
     void showSettingView();
+
+    bool isLock() const {
+        return _isLock;
+    }
 protected:
     // 重载左键点击事件
     void mousePressEvent(QMouseEvent* event) override;

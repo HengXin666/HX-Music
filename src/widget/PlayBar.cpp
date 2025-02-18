@@ -173,9 +173,23 @@ PlayBar::PlayBar(QWidget* parent)
         [this, window = new LyricWindow]() mutable {
         auto* p = window->getMainWidget();
         if (p->isVisible()) {
-            p->hide();
+            if (window->isLock()) {
+                window->showSettingView();
+            } else {
+                p->hide();
+            }
         } else {
             p->show();
+        }
+    });
+
+    /* 更新[歌词]文本 (根据是否上锁) */
+    connect(&SignalBusSingleton::get(), &SignalBusSingleton::lyricViewLockChanged, this,
+        [this](bool isLock) {
+        if (isLock) {
+            _btnLyric->setText("解锁");
+        } else {
+            _btnLyric->setText("歌词");
         }
     });
 }

@@ -34,6 +34,14 @@ public:
         return _mainWidget;
     }
 
+    bool isLock() const {
+        return _lyricView->isLock();
+    }
+
+    void showSettingView() {
+        _lyricView->showSettingView();
+    }
+
 protected:
     void hideEvent(QHideEvent* event) override;
     void showEvent(QShowEvent* event) override;
