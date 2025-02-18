@@ -383,158 +383,49 @@ void MusicTreeWidget::dropEvent(QDropEvent *event) {
         if (!selectedItemList.isEmpty()) {
             QTreeWidgetItem* draggedItem = selectedItemList.first();
             oldParent = draggedItem->parent();
+
             // 1. 把原位置的元素删除
-            auto dataVariant = draggedItem->data(
+            auto delIt = draggedItem->data(
                 static_cast<int>(ItemData::PlayQueue),
                 Qt::UserRole
-            );
-            
-            if (!dataVariant.isValid() || dataVariant.isNull()) {
-                qWarning() << "draggedItem 中的 PlayQueue 数据无效!";
-                return;
-            }
+            ).value<HX::PlayQueue::iterator>();
 
-            auto delIt = dataVariant.value<HX::PlayQueue::iterator>();
-
-            QString path = delIt->isList() 
-                ? "" 
-                : delIt->getData();
-            qDebug() << "move: " << path;
-
-            if (path == "") {
-                qDebug() << "=== 可把我牛逼坏了 === {";
-
-                qDebug() << dataVariant;
-
-                qDebug() << draggedItem;
-                qDebug() << draggedItem->parent();
-                qDebug() << parentItem->indexOfChild(draggedItem);
-
-                qDebug() << parentItem;
-                for (int i = 0; i < parentItem->childCount(); ++i) {
-                    qDebug() << "|---" << i
-                        << parentItem->child(i)
-                        << parentItem->child(i)->data(
-                            static_cast<int>(ItemData::Title),
-                            Qt::DisplayRole
-                        );
-                }
-
-                qDebug() << "} // === 可把我牛逼坏了 === FUCK YOU :(";
-            }
-
-            GlobalSingleton::get().playQueue.setNull();
             // 2. 生成插入到新位置
             QVariant v{};
             
             // 默认实现处理内部拖拽
             QTreeWidget::dropEvent(event);
 
-            // 插入的新位置
-            auto* newItem = draggedItem;
-            if (newItem) {
-                // if (dropIndicatorPosition() == QAbstractItemView::BelowItem) {
-                //     // 修正 newItem 是插入后的元素指针: *newItem == *draggedItem
-                //     int index = std::min(
-                //         insertRow + 1, // parentItem->indexOfChild(newItem)
-                //         parentItem->childCount() - 1
-                //     );
-                //     newItem = parentItem->child(index);
-                //     qDebug() << "index 修正!";
-                // }
-                if (getNodeType(newItem) == NodeType::Folder) {
-                    // 文件夹就是尾插
-                    qDebug() << "文件夹就是尾插";
-                    if (delIt->isList()) {
-                        v.setValue(GlobalSingleton::get().playQueue.insert(
-                            HX::PlayQueue::ItOpt{parentItem->data(
-                                static_cast<int>(ItemData::PlayQueue),
-                                Qt::UserRole
-                            ).value<HX::PlayQueue::iterator>()},
-                            HX::PlayQueue::Node{std::move(delIt->getList())}
-                        ));
-                    } else {
-                        v.setValue(GlobalSingleton::get().playQueue.insert(
-                            HX::PlayQueue::ItOpt{parentItem->data(
-                                static_cast<int>(ItemData::PlayQueue),
-                                Qt::UserRole
-                            ).value<HX::PlayQueue::iterator>()},
-                            HX::PlayQueue::Node{std::move(delIt->getData())}
-                        ));
-                    }
-                    parentItem->child(parentItem->childCount() - 1)->setData(
-                        static_cast<int>(ItemData::PlayQueue),
-                        Qt::UserRole,
-                        v
-                    );
-                } else {
-                    // 不是文件夹, 那小心点插
-                    qDebug() << "不是文件夹, 那小心点插";
-                    // qDebug() << "原本: " << newItem->data(
-                    //     static_cast<int>(ItemData::PlayQueue),
-                    //     Qt::UserRole
-                    // ).value<HX::PlayQueue::iterator>()->getData();
-                    if (delIt->isList()) {
-                        if (delIt->getList() == GlobalSingleton::get().playQueue.getRootList())
-                            qDebug() << "NB!!!";
-                        v.setValue(GlobalSingleton::get().playQueue.insert(
-                            parentItem && getNodeType(parentItem) == NodeType::Folder
-                                ? HX::PlayQueue::ItOpt{parentItem->data(
-                                    static_cast<int>(ItemData::PlayQueue),
-                                    Qt::UserRole
-                                ).value<HX::PlayQueue::iterator>()}
-                                : HX::PlayQueue::ItOpt{},
-                            insertRow,
-                            HX::PlayQueue::Node{std::move(delIt->getList())}
-                        ));
-                    } else {
-                        v.setValue(GlobalSingleton::get().playQueue.insert(
-                            parentItem && getNodeType(parentItem) == NodeType::Folder
-                                ? HX::PlayQueue::ItOpt{parentItem->data(
-                                    static_cast<int>(ItemData::PlayQueue),
-                                    Qt::UserRole
-                                ).value<HX::PlayQueue::iterator>()}
-                                : HX::PlayQueue::ItOpt{},
-                            insertRow,
-                            HX::PlayQueue::Node{std::move(path)}
-                        ));
-                    }
-                    qDebug() << "期望更新为: "
-                        << v.value<HX::PlayQueue::iterator>()->getData();
-                    newItem->setData(
-                        static_cast<int>(ItemData::PlayQueue),
-                        Qt::UserRole,
-                        v
-                    );
-                    qDebug() << "实际更新为: " << newItem->data(
-                        static_cast<int>(ItemData::PlayQueue),
-                        Qt::UserRole
-                    ).value<HX::PlayQueue::iterator>()->getData();
-
-                    qDebug() << "parentItem" << parentItem;
-                    qDebug() << "draggedItem: " << draggedItem;
-                    qDebug() << "newItem: " << newItem;
-                }
+            if (delIt->isList()) {
+                v.setValue(GlobalSingleton::get().playQueue.insert(
+                    parentItem && getNodeType(parentItem) == NodeType::Folder
+                        ? HX::PlayQueue::ItOpt{parentItem->data(
+                            static_cast<int>(ItemData::PlayQueue),
+                            Qt::UserRole
+                        ).value<HX::PlayQueue::iterator>()}
+                        : HX::PlayQueue::ItOpt{},
+                    insertRow,
+                    HX::PlayQueue::Node{std::move(delIt->getList())}
+                ));
             } else {
-                // 根目录尾插
-                qDebug() << "根目录尾插";
-                if (delIt->isList()) {
-                    v.setValue(GlobalSingleton::get().playQueue.insert(
-                        {},
-                        HX::PlayQueue::Node{std::move(delIt->getList())}
-                    ));
-                } else {
-                    v.setValue(GlobalSingleton::get().playQueue.insert(
-                        {},
-                        HX::PlayQueue::Node{std::move(delIt->getData())}
-                    ));
-                }
-                parentItem->child(parentItem->childCount() - 1)->setData(
-                    static_cast<int>(ItemData::PlayQueue),
-                    Qt::UserRole,
-                    v
-                );
+                GlobalSingleton::get().playQueue.setNull();
+                v.setValue(GlobalSingleton::get().playQueue.insert(
+                    parentItem && getNodeType(parentItem) == NodeType::Folder
+                        ? HX::PlayQueue::ItOpt{parentItem->data(
+                            static_cast<int>(ItemData::PlayQueue),
+                            Qt::UserRole
+                        ).value<HX::PlayQueue::iterator>()}
+                        : HX::PlayQueue::ItOpt{},
+                    insertRow,
+                    HX::PlayQueue::Node{std::move(delIt->getData())}
+                ));
             }
+
+            draggedItem->setData(
+                static_cast<int>(ItemData::PlayQueue),
+                Qt::UserRole,
+                v
+            );
 
             if (!oldParent) {
                 GlobalSingleton::get().playQueue.erase(
@@ -558,18 +449,6 @@ void MusicTreeWidget::dropEvent(QDropEvent *event) {
         // 如果原父节点与目标父节点不同, 则也更新原父节点编号
         if (oldParent != parentItem) {
             updateItemNumber(oldParent);
-        }
-
-        {
-            // debug
-            qDebug() << "{";
-            auto it = GlobalSingleton::get().playQueue.getNowIt();
-            for (auto jt = *GlobalSingleton::get().playQueue.next(); 
-            jt != it; 
-            jt = *GlobalSingleton::get().playQueue.next()) {
-                qDebug() << '\t' << jt->getData();
-            }
-            qDebug() << "} // debug";
         }
     } else if (auto* mimeData = event->mimeData(); 
         mimeData->hasUrls()

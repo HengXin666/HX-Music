@@ -148,9 +148,14 @@ public:
         data._parentIt = parentIt;
         list.emplace_back(std::forward<U>(data));
         auto res = --list.end();
-        // 如果播放队列没有歌曲, 那么更新一下; 前提是: 添加的不是文件夹
-        if (_it == _root.getList().end() && !res->isList()) {
-            _it = *_root.begin();
+        if (res->isList()) {
+            auto& chList = res->getList();
+            for (auto& cIt : chList) {
+                cIt._parentIt = res;
+            }
+        } else if (_it == _root.getList().end()) {
+            // 如果播放队列没有歌曲, 那么更新一下; 前提是: 添加的不是文件夹
+            _it = res;
         }
         // 记录非文件夹节点的数量
         _cnt += !res->isList();
@@ -168,8 +173,14 @@ public:
             std::next(list.begin(), idx),
             std::forward<U>(data)
         );
-        // 如果播放队列没有歌曲, 那么更新一下; 前提是: 添加的不是文件夹
-        if (_it == _root.getList().end() && !res->isList()) {
+        if (res->isList()) {
+            // 注意, 如果是列表, 那么他们的一层列表项的父节点是需要更新的
+            auto& chList = res->getList();
+            for (auto& cIt : chList) {
+                cIt._parentIt = res;
+            }
+        } else if (_it == _root.getList().end()) {
+            // 如果播放队列没有歌曲, 那么更新一下; 前提是: 添加的不是文件夹
             _it = res;
         }
         // 记录非文件夹节点的数量

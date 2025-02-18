@@ -41,10 +41,6 @@ public:
         , _pqIt(_pq.end())
     {}
 
-    auto getRootList() {
-        return _root.getList();
-    }
-
     ItOpt now() {
         if (_pq.empty())
             return {};
