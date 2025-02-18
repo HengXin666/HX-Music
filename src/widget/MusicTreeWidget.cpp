@@ -2,6 +2,9 @@
 
 #include <QMenu>
 #include <QHeaderView>
+#include <QDragEnterEvent>
+#include <QMimeData>
+#include <QPainter>
 
 #include <taglib/fileref.h>
 #include <taglib/tag.h>
@@ -10,6 +13,29 @@
 #include <singleton/GlobalSingleton.hpp>
 #include <utils/MusicInfo.hpp>
 #include <cmd/MusicCommand.hpp>
+
+QSize MultiLineItemDelegate::sizeHint(
+    const QStyleOptionViewItem& option, 
+    const QModelIndex& index
+) const {
+    if (index.column() == 0) {
+        // 固定字体尺寸计算
+        QFont titleFont = option.font;
+        titleFont.setPointSize(TitleFontSize);
+        QFont artistFont = titleFont;
+        artistFont.setPointSize(ArtistFontSize);
+        
+        const int textHeight = QFontMetrics(titleFont).height() 
+                             + QFontMetrics(artistFont).height() 
+                             + 2; // 行间距
+        
+        // 取图片高度和文字高度的较大值
+        const int totalHeight = qMax(ImageSize, textHeight) + 2 * Padding;
+        
+        return QSize(200, totalHeight); // 适当宽度
+    }
+    return QStyledItemDelegate::sizeHint(option, index);
+}
 
 void MultiLineItemDelegate::paint(
     QPainter* painter,
@@ -357,7 +383,40 @@ void MusicTreeWidget::updateItemNumber(QTreeWidgetItem *parentItem) {
     }
 }
 
-void MusicTreeWidget::dropEvent(QDropEvent *event) {
+void MusicTreeWidget::resizeEvent(QResizeEvent* event) {
+    QTreeWidget::resizeEvent(event); // 调用父类
+
+    int totalWidth = width(); // 减去固定列的宽度
+    setColumnWidth(0, totalWidth * 0.5);
+    setColumnWidth(1, totalWidth * 0.25);
+    setColumnWidth(2, totalWidth * 0.15);
+    setColumnWidth(3, totalWidth * 0.1);
+}
+
+void MusicTreeWidget::dragEnterEvent(QDragEnterEvent* event)  {
+    if (event->source() == this) {
+        event->accept();
+        return;
+    } else if (event->mimeData()->hasUrls()) {
+        event->acceptProposedAction();
+    } else {
+        event->ignore();
+    }
+    QTreeWidget::dragEnterEvent(event);
+}
+
+void MusicTreeWidget::dragMoveEvent(QDragMoveEvent* event) {
+    if (event->source() == this) {
+        event->accept();
+    } else if (event->mimeData()->hasUrls()) {
+        event->acceptProposedAction();
+    } else {
+        event->ignore();
+    }
+    QTreeWidget::dragMoveEvent(event);
+}
+
+void MusicTreeWidget::dropEvent(QDropEvent* event) {
     // 内部拖拽交由默认实现处理
     if (event->source() == this) {
         // 目标位置
@@ -475,4 +534,46 @@ void MusicTreeWidget::dropEvent(QDropEvent *event) {
     } else {
         QTreeWidget::dropEvent(event);
     }
+}
+
+std::pair<QTreeWidgetItem*, int> MusicTreeWidget::determineDropPosition(
+    QDropEvent* event
+) {
+    QTreeWidgetItem* targetItem = itemAt(event->position().toPoint());
+    QAbstractItemView::DropIndicatorPosition indicatorPos = dropIndicatorPosition();
+    QTreeWidgetItem* parentItem = nullptr;
+    int insertRow = 0;
+
+    // 如果在空白区域, 直接插入到根节点的末尾
+    if (!targetItem) {
+        parentItem = invisibleRootItem();
+        insertRow = parentItem->childCount();
+    } else {
+        // 如果拖放指示器不在目标项上, 而是在其上方或下方, 则需要计算目标插入位置
+        if (indicatorPos == QAbstractItemView::AboveItem
+            || indicatorPos == QAbstractItemView::BelowItem) {
+            parentItem = targetItem->parent();
+            if (!parentItem) {
+                parentItem = invisibleRootItem();
+            }
+            insertRow = parentItem->indexOfChild(targetItem);
+            if (indicatorPos == QAbstractItemView::BelowItem) {
+                ++insertRow; // 下方则在目标项后插入
+            }
+        } else {
+            // 当指示器位于目标项正中, 且目标项是文件夹时, 将作为子项插入
+            if (getNodeType(targetItem) == NodeType::Folder) {
+                parentItem = targetItem;
+                insertRow = targetItem->childCount();
+            } else {
+                // 否则仍以目标项所在父项为准
+                parentItem = targetItem->parent();
+                if (!parentItem) {
+                    parentItem = invisibleRootItem();
+                }
+                insertRow = parentItem->indexOfChild(targetItem);
+            }
+        }
+    }
+    return {parentItem, insertRow};
 }

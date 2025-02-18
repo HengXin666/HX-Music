@@ -1,5 +1,15 @@
 # HX-Music
 
+## 环境要求
+
+- QT 6.8 (开发环境)
+
+- 窗口系统 Wayland (开发环境)
+
+- KDE Plasma 6.3.0 (开发环境)
+
+- Arch Linux 内核 6.13.2 (开发环境)
+
 ## 依赖安装
 ### 1. taglib
 > [!TIP]
@@ -34,5 +44,11 @@ sudo pacman -S kwindowsystem
 > QT你滴什么滴干活?!
 >
 > 再也不相信任何 QT + Wayland 的所谓解决方案了, 纯纯浪费时间.
+
+可以使用xcb, 这样可以move, 但是! 之前某些为了 Wayland 设计的东西就需要重构了, 因此 fuck you 了您嘞
+
+```cpp
+qputenv("QT_QPA_PLATFORM", "xcb");
+```
 
 -->
