@@ -8,6 +8,8 @@
 #include <singleton/SignalBusSingleton.h>
 #include <singleton/GlobalSingleton.hpp>
 
+#include <QTime>
+
 QByteArray readQrcFile(const QString& qrcPath) {
     QFile file(qrcPath);
     if (!file.open(QIODevice::ReadOnly)) {
@@ -115,7 +117,7 @@ void AssLyricWidget::updateLyric(qint64 nowTime) {
     if (!change) {
         return;
     }
-
+    
     if (!imgList) {
         if (!_img.isNull()) {
             // 清屏
@@ -124,7 +126,7 @@ void AssLyricWidget::updateLyric(qint64 nowTime) {
         }
         return;
     }
-
+ 
     // 计算所有字幕图像的包围区域
     int width = 0, height = 0;
     for (ASS_Image* img = imgList; img; img = img->next) {
