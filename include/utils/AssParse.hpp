@@ -23,7 +23,6 @@
 #include <ass/ass.h>
 
 #include <QByteArray>
-#include <QDebug>
 
 namespace HX {
 
@@ -64,23 +63,6 @@ public:
             ::ass_free_track(_assTrack);
         }
         _assTrack = ::ass_read_file(_assLibrary, filePath, encoded);
-        ::ass_set_check_readorder(_assTrack, 1);
-        int minStartTime = INT_MAX;
-        for (int i = 0; i < std::min(10, _assTrack->n_events); i++) {
-            ASS_Event& event = _assTrack->events[i];
-            qDebug() << "Event " << i << " Start:" << event.Start << "ms"
-                    << " End:" << (event.Start + event.Duration) << "ms" << event.Text;
-            if (event.Start < minStartTime) {
-                minStartTime = event.Start;
-            }
-        }
-        qDebug() << "First subtitle start time (ms):" << minStartTime;
-        // _assTrack->Timer = 0;
-        qDebug() << "ASS Track Timer:" << _assTrack->Timer;
-        qDebug() << "Events before parsing:" << _assTrack->n_events;
-        // ass_process_data(_assTrack, assData, assSize);
-        // qDebug() << "Events after parsing:" << _assTrack->n_events;
-
     }
 
     /**
@@ -115,7 +97,7 @@ public:
             ::ass_free_track(_assTrack);
         }
         if (_assRenderer) {
-            ::ass_renderer_done(_assRenderer);   
+            ::ass_renderer_done(_assRenderer);
         }
         if (_assLibrary) {
             ::ass_library_done(_assLibrary);
