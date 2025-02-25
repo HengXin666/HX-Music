@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.16)
 
+# 启用自动查找 vcpkg 依赖
+set(CMAKE_TOOLCHAIN_FILE "D:/MyApp/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
+
 project(HX-Music
     VERSION 0.0.1
     DESCRIPTION "HX-Music"
@@ -13,7 +16,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 if(WIN32)
-  set(LIB_ROOT "${PROJECT_SOURCE_DIR}/lib")
+  set(LIB_ROOT "D:/MyApp/vcpkg/installed/x64-windows")
 endif()
 
 # 加载依赖

@@ -20,6 +20,8 @@
 #ifndef _HX_SCROLL_TEXT_H_
 #define _HX_SCROLL_TEXT_H_
 
+#include <cstdint>
+
 #include <QLabel>
 
 /**

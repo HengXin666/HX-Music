@@ -59,12 +59,18 @@ target_link_libraries(HX-Music PRIVATE Qt6::Xml)
 # target_link_libraries(HX-Music PRIVATE Qt6::Concurrent)
 
 # 第三方依赖 (音频信息解析)
-find_package(TagLib REQUIRED)
-target_link_libraries(HX-Music PRIVATE TagLib)
+# find_package(TagLib REQUIRED)
+find_package(taglib CONFIG REQUIRED)  # 必须小写"taglib"
+target_link_libraries(HX-Music
+    PRIVATE
+    # TagLib::tag     # 主C++库
+    # TagLib::tag_c   # C绑定库（如果需要）
+    TagLib::TagLib  # 如果有此别名也可使用
+)
 
 # 第三方依赖 (Ass字幕渲染)
-find_package(LibAss REQUIRED)
-target_link_libraries(HX-Music PRIVATE LibAss)
+find_package(libass REQUIRED)
+target_link_libraries(HX-Music PRIVATE libass::libass)
 
 # find_package(Qt6 REQUIRED COMPONENTS WaylandCompositor WaylandClient)
 # target_link_libraries(HX-Music PRIVATE Qt6::WaylandCompositor Qt6::WaylandClient)

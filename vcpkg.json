@@ -1,0 +1,8 @@
+{
+    "name": "hx-music",
+    "version": "0.0.1",
+    "dependencies": [
+      "libass",
+      "taglib"
+    ]
+  }
