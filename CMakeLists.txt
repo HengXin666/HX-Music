@@ -16,7 +16,8 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 if(WIN32)
-  set(LIB_ROOT "D:/MyApp/vcpkg/installed/x64-windows")
+    # 请定义 vcpkg 的路径
+    set(LIB_ROOT "D:/MyApp/vcpkg/installed/x64-windows")
 endif()
 
 # 加载依赖

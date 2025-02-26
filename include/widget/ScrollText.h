@@ -111,7 +111,7 @@ private:
     unsigned int _gap = 100;            // 间隙
     unsigned int _pauseTime = 0;        // 滚动结束, 停止显示的时间 (单位: 毫秒(ms))
     unsigned int _updateTime = 20;      // 滚动间隔 (单位: 毫秒(ms))
-    enum class TimerState : u_int16_t {
+    enum class TimerState : uint16_t {
         Open,
         Close,
     } _timerState = TimerState::Close;  // 定时器状态

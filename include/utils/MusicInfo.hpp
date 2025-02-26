@@ -20,8 +20,6 @@
 #ifndef _HX_MUSIC_INFO_H_
 #define _HX_MUSIC_INFO_H_
 
-#include <optional>
-
 #include <taglib/fileref.h>
 #include <taglib/tag.h>
 #include <taglib/audioproperties.h>
@@ -45,6 +43,8 @@
 #include <QTime>
 #include <QFileInfo>
 #include <QPixmap>
+#include <QString>
+#include <QSet>
 
 #include <utils/FileInfo.hpp>
 
@@ -55,7 +55,7 @@ namespace internal {
 /**
  * @brief 支持的文件类型
  */
-inline static const QSet<QString> extensionSet {
+inline const QSet<QString> extensionSet {
     "mp3",
     "wav",
     "flac",

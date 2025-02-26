@@ -63,14 +63,26 @@ target_link_libraries(HX-Music PRIVATE Qt6::Xml)
 find_package(taglib CONFIG REQUIRED)  # 必须小写"taglib"
 target_link_libraries(HX-Music
     PRIVATE
-    # TagLib::tag     # 主C++库
-    # TagLib::tag_c   # C绑定库（如果需要）
-    TagLib::TagLib  # 如果有此别名也可使用
+    TagLib::TagLib
 )
 
 # 第三方依赖 (Ass字幕渲染)
-find_package(libass REQUIRED)
-target_link_libraries(HX-Music PRIVATE libass::libass)
+if (WIN32)
+    # 添加头文件路径
+    include_directories(
+        "${LIB_ROOT}/include"
+    )
+
+    # 链接库文件
+    target_link_libraries(HX-Music PRIVATE
+        "${LIB_ROOT}/debug/lib/ass.lib"
+    )
+else()
+    find_package(libass CONFIG REQUIRED)  # 使用CONFIG模式
+    target_link_libraries(HX-Music PRIVATE
+        LibAss::LibAss
+    )
+endif()
 
 # find_package(Qt6 REQUIRED COMPONENTS WaylandCompositor WaylandClient)
 # target_link_libraries(HX-Music PRIVATE Qt6::WaylandCompositor Qt6::WaylandClient)
