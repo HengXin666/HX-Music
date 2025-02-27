@@ -42,12 +42,16 @@ public:
         _lyricView->showSettingView();
     }
 
+    virtual ~LyricWindow() noexcept {
+        delete _mainWidget;
+    }
+
 protected:
     void hideEvent(QHideEvent* event) override;
     void showEvent(QShowEvent* event) override;
 
 private:
-    QWidget* _mainWidget = QWidget::createWindowContainer(this);
+    QWidget* _mainWidget;
     LyricView* _lyricView;
     QPoint _windowPos;      // 窗口在屏幕上的位置
 };
