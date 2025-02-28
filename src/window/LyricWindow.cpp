@@ -10,12 +10,23 @@
 #include <window/LyricWindow.h>
 
 #include <QHBoxLayout>
+#include <QGuiApplication>
 
 LyricWindow::LyricWindow(QWindow* parent)
     : QWindow(parent)
 {
     // 为什么设置标题栏也会不能使用顶层?
-    // _mainWidget->setWindowTitle("HX Music - Lyric");
+    if (QGuiApplication::platformName() == "wayland") {
+       _mainWidget = QWidget::createWindowContainer(this);
+    } else {
+        _mainWidget = new QWidget();
+        _mainWidget->setWindowTitle("HX Music - Lyric");
+        _mainWidget->setWindowFlags(
+            _mainWidget->windowFlags()
+            | Qt::FramelessWindowHint       // 无边框
+            | Qt::WindowTransparentForInput // 鼠标穿透
+        );
+    }
 
     _mainWidget->setWindowFlags(
         Qt::WindowStaysOnTopHint // 顶层

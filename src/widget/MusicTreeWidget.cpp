@@ -238,16 +238,13 @@ bool MusicTreeWidget::addFileItem(
         return false;
     }
 
-    QByteArray fileName = QFile::encodeName(fileInfo.canonicalFilePath());
-    TagLib::FileRef musicFile{fileName.constData()};
-
     HX::MusicInfo musicInfo{fileInfo};
     item->setData(
         static_cast<int>(ItemData::Title),
         Qt::DisplayRole,
         QString{"%1\n%2"}
-            .arg(musicInfo.getTitle())
-            .arg(musicInfo.getArtist())
+            .arg(musicInfo.getTitle(),
+                 musicInfo.getArtist())
     );
 
     item->setText(1, musicInfo.getAlbum());
