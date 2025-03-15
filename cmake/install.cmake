@@ -62,13 +62,47 @@ target_link_libraries(HX-Music PRIVATE Qt6::Core5Compat)
 # find_package(Qt6 REQUIRED COMPONENTS Concurrent)
 # target_link_libraries(HX-Music PRIVATE Qt6::Concurrent)
 
+if (WIN32)
+    # 解决路径问题, 确保 windeployqt.exe 存在
+    set(QT_BIN_DIR "${CMAKE_PREFIX_PATH}/bin")
+    if(NOT EXISTS "${QT_BIN_DIR}/windeployqt.exe")
+        message(FATAL_ERROR "Error: windeployqt.exe not found in ${QT_BIN_DIR}")
+    endif()
+
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/Debug")
+        add_custom_command(TARGET HX-Music POST_BUILD
+            COMMAND "${QT_BIN_DIR}/windeployqt.exe" --debug "$<TARGET_FILE:HX-Music>"
+            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/Debug"
+        )
+    elseif (CMAKE_BUILD_TYPE STREQUAL "Release")
+        file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/Release")
+        add_custom_command(TARGET HX-Music POST_BUILD
+            COMMAND "${QT_BIN_DIR}/windeployqt.exe" --release "$<TARGET_FILE:HX-Music>"
+            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/Release"
+        )
+    endif()
+endif()
+
 # 第三方依赖 (音频信息解析)
-# find_package(TagLib REQUIRED)
-find_package(taglib CONFIG REQUIRED)  # 必须小写"taglib"
-target_link_libraries(HX-Music
-    PRIVATE
-    TagLib::TagLib
-)
+if (WIN32)
+    # 添加头文件路径
+    include_directories(
+        "${LIB_ROOT}/include"
+    )
+
+    # 链接库文件
+    target_link_libraries(HX-Music PRIVATE
+        "${LIB_ROOT}/debug/lib/tag.lib"
+        "${LIB_ROOT}/debug/lib/tag_c.lib"
+    )
+else()
+    find_package(taglib CONFIG REQUIRED)  # 必须小写"taglib"
+    target_link_libraries(HX-Music
+        PRIVATE
+        TagLib::TagLib
+    )
+endif()
 
 # 第三方依赖 (Ass字幕渲染)
 if (WIN32)

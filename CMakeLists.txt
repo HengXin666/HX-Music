@@ -1,8 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
 
-# 启用自动查找 vcpkg 依赖
-set(CMAKE_TOOLCHAIN_FILE "D:/MyApp/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
-
 project(HX-Music
     VERSION 0.0.1
     DESCRIPTION "HX-Music"
@@ -15,19 +12,19 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-if(WIN32)
-    # 请定义 vcpkg 的路径
-    set(LIB_ROOT "D:/MyApp/vcpkg/installed/x64-windows")
-    add_definitions(-D_MBCS)
-    remove_definitions(-D_UNICODE -DUNICODE)
+set(CMAKE_BUILD_TYPE "Debug")
+if (CMAKE_BUILD_TYPE STREQUAL "Release")
+    message("=-=-=-=-=-=-=当前是 [Release] 模式=-=-=-=-=-=-=")
+else()
+    message("=-=-=-=-=-=-=当前是 [DEBUG] 模式=-=-=-=-=-=-=")
 endif()
 
-if (MSVC)
-    # MSVC编译器使用/utf-8选项
-    add_compile_options(/utf-8)
-else()
-    # GCC/Clang设置输入和执行字符集为UTF-8
-    add_compile_options(-finput-charset=UTF-8 -fexec-charset=UTF-8)
+if(WIN32)
+    # Qt编译器路径设置
+    set(CMAKE_PREFIX_PATH "D:/MyApp/Qt/6.8.2/msvc2022_64")
+
+    # vcpkg下载的包的路径
+    set(LIB_ROOT "D:/MyApp/vcpkg/installed/x64-windows")
 endif()
 
 # 加载依赖
