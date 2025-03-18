@@ -88,7 +88,7 @@ void AssLyricWidget::findLyricFile(HX::MusicInfo const& info) {
     std::filesystem::path lyricFilePath = musicPath.parent_path() / (songName + ".ass");
     qDebug() << "查找: " << lyricFilePath.c_str();
     if (std::filesystem::exists(lyricFilePath)) {
-        qInfo() << "[HX]: 找到歌词文件: " << lyricFilePath.c_str();
+        qInfo() << "[HX]: 找到歌词文件: " << lyricFilePath.string().c_str();
 #if WIN32
         _assParse.readFile(lyricFilePath.string().c_str());
 #else
