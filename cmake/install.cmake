@@ -10,53 +10,33 @@ file(GLOB_RECURSE qrc_files CONFIGURE_DEPENDS
 
 include_directories(include)
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Gui)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Gui)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
 
-if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
-    qt_add_executable(HX-Music
-        MANUAL_FINALIZATION
-        ${src_files}
-        ${qrc_files}
-    )
-# Define target properties for Android with Qt 6 as:
-#    set_property(TARGET HX-Music APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
-#                 ${CMAKE_CURRENT_SOURCE_DIR}/android)
-# For more information, see https://doc.qt.io/qt-6/qt-add-executable.html#target-creation
-else()
-    if(ANDROID)
-        add_library(HX-Music SHARED
-            ${src_files}
-        )
-# Define properties for Android with Qt 5 after find_package() calls as:
-#    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
-    else()
-        add_executable(HX-Music
-            ${src_files}
-        )
-    endif()
-endif()
+qt_add_executable(HX-Music
+    ${src_files}
+    ${qrc_files}
+)
 
 target_link_libraries(HX-Music
-    PRIVATE Qt${QT_VERSION_MAJOR}::Widgets
-    PRIVATE Qt${QT_VERSION_MAJOR}::Gui
+    PRIVATE Qt::Widgets
+    PRIVATE Qt::Gui
 )
 
 # Qt拓展 (音频播放)
 find_package(Qt6 REQUIRED COMPONENTS Multimedia)
-target_link_libraries(HX-Music PRIVATE Qt6::Multimedia)
+target_link_libraries(HX-Music PRIVATE Qt::Multimedia)
 
 # Qt拓展 (SVG)
 find_package(Qt6 REQUIRED COMPONENTS Svg)
-target_link_libraries(HX-Music PRIVATE Qt6::Svg)
+target_link_libraries(HX-Music PRIVATE Qt::Svg)
 
 # Qt拓展 (XML)
 find_package(Qt6 REQUIRED COMPONENTS Xml)
-target_link_libraries(HX-Music PRIVATE Qt6::Xml)
+target_link_libraries(HX-Music PRIVATE Qt::Xml)
 
 # Qt拓展 (编码)
 find_package(Qt6 REQUIRED COMPONENTS Core5Compat)
-target_link_libraries(HX-Music PRIVATE Qt6::Core5Compat)
+target_link_libraries(HX-Music PRIVATE Qt::Core5Compat)
 
 # Qt拓展 (并行库)
 # find_package(Qt6 REQUIRED COMPONENTS Concurrent)
@@ -148,12 +128,6 @@ if(FALSE AND NOT WIN32)
     target_link_libraries(HX-Music PUBLIC KF6::WindowSystem)
 endif()
 
-# Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
-# If you are developing for iOS or macOS you should consider setting an
-# explicit, fixed bundle identifier manually though.
-if(${QT_VERSION} VERSION_LESS 6.1.0)
-    set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.hx.music)
-endif()
 set_target_properties(HX-Music PROPERTIES
     ${BUNDLE_ID_OPTION}
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
@@ -168,7 +142,3 @@ install(TARGETS HX-Music
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
-
-if(QT_VERSION_MAJOR EQUAL 6)
-    qt_finalize_executable(HX-Music)
-endif()
