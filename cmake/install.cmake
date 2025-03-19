@@ -44,13 +44,13 @@ target_link_libraries(HX-Music PRIVATE Qt::Core5Compat)
 
 if (WIN32)
     # 解决路径问题, 确保 windeployqt.exe 存在
-    set(QT_BIN_DIR "${CMAKE_PREFIX_PATH}/bin")
+    set(QT_BIN_DIR "${QT_COMPILER_PATH}/bin")
     if(NOT EXISTS "${QT_BIN_DIR}/windeployqt.exe")
         message(FATAL_ERROR "Error: windeployqt.exe not found in ${QT_BIN_DIR}")
     endif()
 
     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/Debug")
+        file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/Debug")
         add_custom_command(TARGET HX-Music POST_BUILD
             COMMAND "${QT_BIN_DIR}/windeployqt.exe" --debug "$<TARGET_FILE:HX-Music>"
             WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/Debug"

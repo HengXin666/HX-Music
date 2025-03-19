@@ -21,7 +21,7 @@ endif()
 
 if(WIN32)
     # Qt编译器路径设置
-    set(CMAKE_PREFIX_PATH "D:/MyApp/Qt/6.8.2/msvc2022_64")
+    set(QT_COMPILER_PATH "D:/MyApp/Qt/6.8.2/msvc2022_64")
 
     # vcpkg下载的包的路径
     set(LIB_ROOT "D:/MyApp/vcpkg/installed/x64-windows")
