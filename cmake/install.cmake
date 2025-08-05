@@ -35,7 +35,6 @@ qt_add_qml_module(HX-Music
     VERSION 1.0
     QML_FILES
         resources/qml/Main.qml
-        resources/qml/FloatingLyrics.qml
 )
 
 # Qt拓展 (音频播放)
@@ -43,16 +42,16 @@ find_package(Qt6 REQUIRED COMPONENTS Multimedia)
 target_link_libraries(HX-Music PRIVATE Qt::Multimedia)
 
 # Qt拓展 (SVG)
-find_package(Qt6 REQUIRED COMPONENTS Svg)
-target_link_libraries(HX-Music PRIVATE Qt::Svg)
+# find_package(Qt6 REQUIRED COMPONENTS Svg)
+# target_link_libraries(HX-Music PRIVATE Qt::Svg)
 
 # Qt拓展 (XML)
-find_package(Qt6 REQUIRED COMPONENTS Xml)
-target_link_libraries(HX-Music PRIVATE Qt::Xml)
+# find_package(Qt6 REQUIRED COMPONENTS Xml)
+# target_link_libraries(HX-Music PRIVATE Qt::Xml)
 
 # Qt拓展 (编码)
-find_package(Qt6 REQUIRED COMPONENTS Core5Compat)
-target_link_libraries(HX-Music PRIVATE Qt::Core5Compat)
+# find_package(Qt6 REQUIRED COMPONENTS Core5Compat)
+# target_link_libraries(HX-Music PRIVATE Qt::Core5Compat)
 
 # Qt拓展 (并行库)
 # find_package(Qt6 REQUIRED COMPONENTS Concurrent)
