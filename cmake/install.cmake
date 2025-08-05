@@ -35,6 +35,7 @@ qt_add_qml_module(HX-Music
     VERSION 1.0
     QML_FILES
         resources/qml/Main.qml
+        resources/qml/FloatingLyricsWindow.qml
 )
 
 # Qt拓展 (音频播放)
