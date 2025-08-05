@@ -21,9 +21,6 @@
 #define _HX_GLOBAL_SINGLETON_H_
 
 #include <config/ConfigManager.hpp>
-#include <views/InterfaceManagementProxy.h>
-#include <utils/MusicPlayer.h>
-#include <utils/PlayQueue.hpp>
 
 /**
  * @brief 全局单例
@@ -38,17 +35,8 @@ struct GlobalSingleton {
         return s;
     }
 
-    /// @brief 界面管理代理类
-    InterfaceManagementProxy imp{};
-
-    /// @brief 音频播放实例
-    HX::MusicPlayer music{};
-
     /// @brief 音频配置
     MusicConfig musicConfig{};
-
-    /// @brief 播放队列
-    HX::PlayQueue playQueue{};
 private:
     explicit GlobalSingleton() {
         ConfigManager config;

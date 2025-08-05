@@ -10,16 +10,32 @@ file(GLOB_RECURSE qrc_files CONFIGURE_DEPENDS
 
 include_directories(include)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Qml Quick)
 
 qt_add_executable(HX-Music
     ${src_files}
     ${qrc_files}
 )
 
+target_compile_features(HX-Music PUBLIC cxx_std_20)
+
 target_link_libraries(HX-Music
+    PRIVATE Qt::Core
     PRIVATE Qt::Widgets
     PRIVATE Qt::Gui
+    PRIVATE Qt::Qml
+    PRIVATE Qt::Quick
+)
+
+set(QT_QML_GENERATE_QMLLS_INI ON)
+
+# 添加 QML 文件所在目录作为资源路径
+qt_add_qml_module(HX-Music
+    URI HX.Music # QML 中 import 的名字
+    VERSION 1.0
+    QML_FILES
+        resources/qml/Main.qml
+        resources/qml/FloatingLyrics.qml
 )
 
 # Qt拓展 (音频播放)
@@ -96,10 +112,8 @@ if (WIN32)
         "${LIB_ROOT}/debug/lib/ass.lib"
     )
 else()
-    find_package(libass CONFIG REQUIRED)  # 使用CONFIG模式
-    target_link_libraries(HX-Music PRIVATE
-        LibAss::LibAss
-    )
+    find_package(LibAss REQUIRED)
+    target_link_libraries(HX-Music PRIVATE LibAss)
 endif()
 
 # find_package(Qt6 REQUIRED COMPONENTS WaylandCompositor WaylandClient)
@@ -107,26 +121,6 @@ endif()
 
 # find_package(Qt6 REQUIRED COMPONENTS DBus)
 # target_link_libraries(HX-Music PRIVATE Qt6::DBus)
-
-# 第三方依赖 (在Wayland下实现透明、顶置窗口 | @tip: 使用QWindow即可!)
-if(FALSE AND NOT WIN32)
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(GTK REQUIRED gtk+-3.0)
-    pkg_check_modules(GTK_LAYER_SHELL REQUIRED gtk-layer-shell-0)
-    
-    target_include_directories(HX-Music PRIVATE 
-        ${GTK_INCLUDE_DIRS} 
-        ${GTK_LAYER_SHELL_INCLUDE_DIRS}
-    )
-    target_link_libraries(HX-Music PRIVATE 
-        ${GTK_LIBRARIES} 
-        ${GTK_LAYER_SHELL_LIBRARIES}
-    )
-
-    # 查找 KF6WindowSystem
-    find_package(KF6WindowSystem REQUIRED)
-    target_link_libraries(HX-Music PUBLIC KF6::WindowSystem)
-endif()
 
 set_target_properties(HX-Music PROPERTIES
     ${BUNDLE_ID_OPTION}
