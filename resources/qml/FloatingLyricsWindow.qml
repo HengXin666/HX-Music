@@ -1,44 +1,99 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Layouts
 import QtQuick.Window
+import HX.Music
 
 Window {
     id: floatWin
-    title: "歌词浮窗[Wayland置顶]"
-    width: 500
-    height: 180
+    width: 800
+    height: 200
+    visible: true
+    title: "HX.Music 歌词浮窗 [Wayland置顶]"
 
-    flags: Qt.FramelessWindowHint       // 无边框
-         | Qt.WindowStaysOnTopHint      // 窗口顶置
-         | Qt.Tool                      // 表述为浮动窗口
-         | Qt.WindowDoesNotAcceptFocus  // 窗口不接受焦点
-         | Qt.WindowTransparentForInput // 鼠标穿透
+    // 是否锁定
+    property bool locked: false
 
-    transientParent: null
-    color: "transparent" // 窗口透明
+    // 是否显示控制栏(包括鼠标悬浮后显示的解锁按钮)
+    property bool showControls: !locked
+
+    // 外部接口: 锁/解锁控制
+    function lock() {
+        locked = true
+    }
+    function unlock() {
+        locked = false
+    }
+
+    // C++侧: 歌词控制器
+    LyricController {
+        id: lyricController
+    }
+
+    flags: Qt.FramelessWindowHint
+         | Qt.WindowStaysOnTopHint
+         | Qt.Tool
+         | (locked ? Qt.WindowDoesNotAcceptFocus | Qt.WindowTransparentForInput : Qt.NoItemFlags)
+
+    color: "transparent"
 
     Rectangle {
         anchors.fill: parent
-        color: "#222222cc" // 半透明背景
-        radius: 6
-        border.color: "#888"
-        border.width: 1
+        color: "#3f000000"
+    }
 
-        // 模拟歌词
-        Text {
-            anchors.centerIn: parent
-            text: "ASS 歌词占位"
-            font.pixelSize: 20
-            color: "white"
+    Image {
+        id: lyricImage
+        anchors.fill: parent
+        fillMode: Image.PreserveAspectFit
+        smooth: true
+        cache: false
+        source: ""
+    }
+
+    RowLayout {
+        id: controlBar
+        visible: floatWin.showControls
+        spacing: 10
+        anchors {
+            bottom: parent.bottom
+            horizontalCenter: parent.horizontalCenter
+            margins: 12
         }
 
-        // 模拟“关闭”按钮
         Button {
-            text: "关闭"
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-            anchors.margins: 10
-            onClicked: floatWin.visibility = "Hidden"
+            Image {
+                anchors.fill: parent
+                source: "qrc:/icons/previous.svg"
+            }
+            onClicked: lyricController.prev()
         }
+        Button {
+            Image {
+                anchors.fill: parent
+                source: "qrc:/icons/pause.svg"
+            }
+            onClicked: lyricController.togglePause()
+        }
+        Button {
+            Image {
+                anchors.fill: parent
+                source: "qrc:/icons/next.svg"
+            }
+            onClicked: lyricController.next()
+        }
+        Button {
+            Image {
+                anchors.fill: parent
+                source: "qrc:/icons/lock.svg"
+            }
+            onClicked: floatWin.lock()
+        }
+    }
+
+    Component.onCompleted: {
+        lyricController.updateLyriced.connect(() => {
+            lyricImage.source = `image://musicLyric?f=${Date.now()}`;
+        });
     }
 }

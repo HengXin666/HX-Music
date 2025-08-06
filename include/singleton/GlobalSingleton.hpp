@@ -21,6 +21,10 @@
 #define _HX_GLOBAL_SINGLETON_H_
 
 #include <config/ConfigManager.hpp>
+#include <utils/MusicPlayer.h>
+#include <utils/PlayQueue.hpp>
+
+namespace HX {
 
 /**
  * @brief 全局单例
@@ -37,6 +41,12 @@ struct GlobalSingleton {
 
     /// @brief 音频配置
     MusicConfig musicConfig{};
+
+    /// @brief 音频播放实例
+    MusicPlayer music{};
+
+    /// @brief 播放队列
+    PlayQueue playQueue{};
 private:
     explicit GlobalSingleton() {
         ConfigManager config;
@@ -50,5 +60,7 @@ private:
 
     GlobalSingleton& operator=(GlobalSingleton&&) = delete;
 };
+
+} // namespace HX
 
 #endif // !_HX_GLOBAL_SINGLETON_H_

@@ -26,6 +26,8 @@
 #include <config/MusicConfig.hpp>
 #include <utils/MusicInfo.hpp>
 
+namespace HX {
+
 /**
  * @brief 信号总线单例
  */
@@ -87,5 +89,7 @@ Q_SIGNALS:
      */
     void lyricViewLockChanged(bool isLock);
 };
+
+} // namespace HX
 
 #endif // !_HX_SIGNAL_BUS_SINGLETON_H_
