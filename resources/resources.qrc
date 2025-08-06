@@ -43,4 +43,12 @@
     <qresource prefix="/default">
         <file alias="default.ass">default/default.ass</file>
     </qresource>
+    <qresource prefix="/qml">
+        <file alias="Main.qml">qml/Main.qml</file>
+        <file alias="data.qml">qml/data/LyricsState.qml</file>
+        <file alias="LyricsButton.qml">qml/widget/LyricsButton.qml</file>
+        <file alias="PlaybackBar.qml">qml/widget/PlaybackBar.qml</file>
+        <file alias="SideBar.qml">qml/widget/SideBar.qml</file>
+        <file alias="LyricsWindow.qml">qml/window/LyricsWindow.qml</file>
+    </qresource>
 </RCC>

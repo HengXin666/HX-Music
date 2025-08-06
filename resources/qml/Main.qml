@@ -2,6 +2,8 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Window
+import "./widget"
+import "./data"
 
 ApplicationWindow {
     id: mainWin
@@ -9,6 +11,14 @@ ApplicationWindow {
     height: 480
     visible: true
     title: "HX.Music"
+
+    // === 全局状态 ===
+    property var lyricsState: LyricsState{} // @todo 析构没有销毁
+
+    onClosing: {
+        lyricsState.del();
+        Qt.quit(); // 强制退出应用
+    }
 
     ColumnLayout {
         anchors.fill: parent
@@ -38,6 +48,7 @@ ApplicationWindow {
 
         // 音乐播放操作条
         PlaybackBar {
+            itemHeight: 72
             Layout.fillWidth: true
         }
     }

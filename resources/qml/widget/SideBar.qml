@@ -1,8 +1,8 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Controls.Material
 import QtQuick.Layouts
 import QtQuick.Window
-import QtQuick.Controls.Material
 
 Item {
     id: root
@@ -30,10 +30,15 @@ Item {
 
             delegate: Item {
                 id: tabItem
+                required property var model
                 width: parent.width
                 height: 50
 
                 Rectangle {
+                    required property var root
+                    required property int index
+                    id: rect
+
                     anchors.fill: parent
                     color: root.currentIndex === index ? Material.primary : "transparent"
                     radius: 6
@@ -42,15 +47,15 @@ Item {
                         anchors.fill: parent
                         hoverEnabled: true
                         onClicked: {
-                            root.currentIndex = index
-                            root.tabClicked(index)
+                            rect.root.currentIndex = rect.index
+                            rect.root.tabClicked(rect.index)
                         }
                         cursorShape: Qt.PointingHandCursor
 
                         Rectangle {
                             anchors.fill: parent
                             color: hovered ? "#eeeeee33" : "transparent"
-                            visible: !root.currentIndex === index
+                            visible: !rect.root.currentIndex === rect.index
                         }
                     }
 
@@ -60,14 +65,14 @@ Item {
                         spacing: 12
 
                         Label {
-                            text: model.icon
+                            text: tabItem.model.icon
                             font.pixelSize: 20
                         }
 
                         Label {
-                            text: model.label
+                            text: tabItem.model.label
                             font.pixelSize: 16
-                            color: root.currentIndex === index ? "white" : "#444"
+                            color: rect.root.currentIndex === rect.index ? "white" : "#444"
                         }
                     }
                 }

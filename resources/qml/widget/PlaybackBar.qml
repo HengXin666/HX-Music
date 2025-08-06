@@ -1,7 +1,8 @@
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Window
 import QtQuick.Controls.Material
+import QtQuick.Layouts
+import QtQuick.Window
 
 Item {
     id: root
@@ -10,35 +11,35 @@ Item {
     height: itemHeight
 
     Rectangle {
-        anchors.fill: parent
-        color: "#7b990099"
-    }
-
-    Item {
         id: container
         anchors.fill: parent
+        color: "#7b990099"
 
+        // 靠左
         Text {
-            id: leftText
-            text: "靠左的"
+            id: leftLayout
             anchors.left: container.left
             anchors.leftMargin: 10
             anchors.verticalCenter: container.verticalCenter
         }
 
-        Text {
-            id: centerText
-            text: "居中的"
+        // 居中
+        RowLayout {
+            id: centerLayout
             anchors.horizontalCenter: container.horizontalCenter
             anchors.verticalCenter: container.verticalCenter
         }
 
-        Text {
-            id: rightText
-            text: "靠右的"
+        // 靠右
+        RowLayout {
+            id: rightLayout
             anchors.right: container.right
             anchors.rightMargin: 10
             anchors.verticalCenter: container.verticalCenter
+
+            LyricsButton {
+                text: "歌词"
+            }
         }
     }
 }

@@ -1,0 +1,51 @@
+import QtQuick
+
+QtObject {
+    id: lyricsState
+
+    property var componentLyrics: null    // 存储 Component
+    property var windowLyrics: null       // 存储 实际创建的 Window 实例
+
+    function switchWindow() {
+        if (windowLyrics === null) {
+            if (componentLyrics === null) {
+                componentLyrics = Qt.createComponent("qrc:/qml/LyricsWindow.qml");
+            }
+            // 加载
+            if (componentLyrics.status === Component.Ready) {
+                windowLyrics = componentLyrics.createObject(); // 指定父对象, 方便生命周期结束顺便带走子对象
+                if (windowLyrics !== null) {
+                    windowLyrics.show();
+                } else {
+                    console.error("创建窗口失败");
+                }
+            } else {
+                console.error("组件加载失败:", componentLyrics.errorString());
+            }
+        } else {
+            // 切换窗口显示/隐藏
+            if (windowLyrics.visible) {
+                windowLyrics.hide();
+            } else {
+                windowLyrics.unlock();
+                windowLyrics.show();
+            }
+        }
+    }
+
+    function del() {
+        if (windowLyrics !== null) {
+            if (typeof windowLyrics.destroy === "function") {
+                windowLyrics.destroy();
+            }
+            windowLyrics = null;
+        }
+
+        if (componentLyrics !== null) {
+            if (typeof componentLyrics.destroy === "function") {
+                componentLyrics.destroy();
+            }
+            componentLyrics = null;
+        }
+    }
+}
