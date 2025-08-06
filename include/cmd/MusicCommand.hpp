@@ -30,7 +30,7 @@ namespace HX {
  */
 struct MusicCommand {
     /**
-     * @brief 选择音乐, 此时是已知需要播放的音乐的, 因此会添加到播放队列
+     * @brief 选择音乐(双击), 此时是已知需要播放的音乐的, 因此会添加到播放队列
      * @param it 
      */
     static void selectMusic(PlayQueue::Type it) {
@@ -98,19 +98,17 @@ struct MusicCommand {
      */
     static void nextMusic() {
         switch (GlobalSingleton::get().musicConfig.playMode) {
-        case PlayMode::ListLoop:    // 列表循环
-        case PlayMode::SinglePlay:  // 单曲播放
-        case PlayMode::SingleLoop:  // 单曲循环
+        case PlayMode::RandomPlay:  // 随机播放
             if (auto it = GlobalSingleton::get().playQueue.next()) {
                 switchMusic(*it);
                 SignalBusSingleton::get().musicResumed();
+                break;
             }
-            break;
-        case PlayMode::RandomPlay:  // 随机播放
-            if (auto it = GlobalSingleton::get().playQueue.randomNext()) {
-                switchMusic(*it);
-                SignalBusSingleton::get().musicResumed();
-            }
+        [[fallthrough]];
+        case PlayMode::ListLoop:    // 列表循环
+        case PlayMode::SinglePlay:  // 单曲播放
+        case PlayMode::SingleLoop:  // 单曲循环
+            // 从 SongListModel 中得
             break;
         case PlayMode::PlayModeCnt: // !保留!
             break;
@@ -122,19 +120,17 @@ struct MusicCommand {
      */
     static void prevMusic() {
         switch (GlobalSingleton::get().musicConfig.playMode) {
-        case PlayMode::ListLoop:    // 列表循环
-        case PlayMode::SinglePlay:  // 单曲播放
-        case PlayMode::SingleLoop:  // 单曲循环
+        case PlayMode::RandomPlay:  // 随机播放
             if (auto it = GlobalSingleton::get().playQueue.prev()) {
                 switchMusic(*it);
                 SignalBusSingleton::get().musicResumed();
+                break;
             }
-            break;
-        case PlayMode::RandomPlay:  // 随机播放
-            if (auto it = GlobalSingleton::get().playQueue.randomPrev()) {
-                switchMusic(*it);
-                SignalBusSingleton::get().musicResumed();
-            }
+        [[fallthrough]];
+        case PlayMode::ListLoop:    // 列表循环
+        case PlayMode::SinglePlay:  // 单曲播放
+        case PlayMode::SingleLoop:  // 单曲循环
+            // 应该从 SongListModel 中变
             break;
         case PlayMode::PlayModeCnt: // !保留!
             break;

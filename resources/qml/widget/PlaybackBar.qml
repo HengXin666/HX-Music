@@ -28,6 +28,10 @@ Item {
             id: centerLayout
             anchors.horizontalCenter: container.horizontalCenter
             anchors.verticalCenter: container.verticalCenter
+
+            MusicProgressBar {
+                
+            }
         }
 
         // 靠右

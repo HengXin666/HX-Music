@@ -12,6 +12,9 @@
 # clangl
 .cache/**
 
+# QML
+.qmlls.ini
+
 # User-specific stuff
 .idea/**/workspace.xml
 .idea/**/tasks.xml

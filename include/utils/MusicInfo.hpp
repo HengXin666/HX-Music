@@ -76,7 +76,8 @@ inline const QSet<QString> extensionSet {
 
 } // namespace internal
 
-class MusicInfo {
+class MusicInfo : public QObject {
+    Q_OBJECT
 public:
     explicit MusicInfo(QFileInfo const& fileInfo)
         : _fileInfo(fileInfo)
@@ -258,5 +259,8 @@ private:
 };
 
 } // namespace HX
+
+// 反射, 以便在 qml 中使用
+Q_DECLARE_METATYPE(HX::MusicInfo)
 
 #endif // !_HX_MUSIC_INFO_H_

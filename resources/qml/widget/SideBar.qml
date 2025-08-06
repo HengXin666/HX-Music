@@ -13,7 +13,7 @@ Item {
     height: parent.height
 
     property int currentIndex: 0
-
+    
     signal tabClicked(int index);
 
     ColumnLayout {

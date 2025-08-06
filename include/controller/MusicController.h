@@ -22,6 +22,10 @@
 
 #include <QObject>
 
+#include <cmd/MusicCommand.hpp>
+
+#include <QDebug>
+
 namespace HX {
 
 /**
@@ -36,7 +40,62 @@ namespace HX {
 class MusicController : public QObject {
     Q_OBJECT
 public:
-    
+    Q_INVOKABLE void prev() {
+        qDebug() << "上一首";
+        MusicCommand::prevMusic();
+    }
+    Q_INVOKABLE void next() {
+        qDebug() << "下一首";
+        MusicCommand::nextMusic();
+    }
+
+    /**
+     * @brief 播放/暂停
+     */
+    Q_INVOKABLE void togglePause() { 
+        GlobalSingleton::get().musicConfig.isPlay
+            ? MusicCommand::pause()
+            : MusicCommand::resume();
+    }
+
+    /**
+     * @brief 修改播放模式
+     */
+    Q_INVOKABLE void setPlayMode(PlayMode mode) {
+        MusicCommand::setPlayMode(mode);
+    }
+
+    /**
+     * @brief 获取当前播放的位置(单位: 毫秒(ms))
+     * @return qint64 
+     */
+    Q_INVOKABLE qint64 getNowPos() const {
+        return GlobalSingleton::get().music.getNowPos();
+    }
+
+    /**
+     * @brief 获取当前音频的总毫秒数
+     * @return qint64 
+     */
+    Q_INVOKABLE qint64 getLengthInMilliseconds() const {
+        return GlobalSingleton::get().music.getLengthInMilliseconds();
+    }
+
+    /**
+     * @brief 设置音量大小
+     * @param volume 0.00f ~ 1.00f (百分比)
+     */
+    Q_INVOKABLE void setVolume(float volume) {
+        MusicCommand::setVolume(volume);
+    }
+
+    /**
+     * @brief 跳转到指定时间
+     * @param position 单位: 毫秒(ms)
+     */
+    Q_INVOKABLE void setPosition(qint64 position) {
+        MusicCommand::setMusicPos(position);
+    }
 };
 
 } // namespace HX

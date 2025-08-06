@@ -20,8 +20,6 @@
 #ifndef _HX_PLAY_QUEUE_H_
 #define _HX_PLAY_QUEUE_H_
 
-#include <random>
-
 #include <QString>
 #include <QVariant>
 #include <QTreeWidgetItem>
@@ -36,7 +34,7 @@ public:
     using Type = QString;
     using TypeOpt = typename std::optional<Type>;
 
-    explicit PlayQueue()
+    PlayQueue()
         : _pq{}
         , _it{_pq.end()}
     {}
@@ -67,45 +65,19 @@ public:
     }
 
     /**
-     * @brief 从队列中, 获取上一首音乐
-     * @return ItOpt 
-     */
-    TypeOpt randomPrev() {
-        return {}; // @todo
-    }
-
-    /**
-     * @brief 随机下一首音乐
-     * @return ItOpt 
-     */
-    TypeOpt randomNext() {
-        if (_pq.empty())
-            return {};
-        return random();
-    }
-
-    /**
      * @brief 添加音乐进入队列尾部
      * @param it 
      */
     void push(Type const& uri) {
         _it = _pq.emplace(_pq.end(), uri);
+        if (_pq.size() > 16)
+            _pq.pop_front();
     }
 
     bool empty() const noexcept {
         return _pq.empty();
     }
-
 private:
-    TypeOpt random() {
-        std::mt19937 rng{std::random_device{}()};
-        std::size_t nextCnt = std::uniform_int_distribution<std::size_t>{1, _pq.size()}(rng);
-        for (std::size_t i = 0; i < nextCnt; ++i) {
-            itNext();
-        }
-        return *_it;
-    }
-
     void itNext() noexcept {
         if (++_it == _pq.end())
             _it = _pq.begin();

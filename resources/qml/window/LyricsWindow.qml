@@ -30,6 +30,10 @@ Window {
         id: lyricController
     }
 
+    MusicController {
+        id: musicController
+    }
+
     flags: Qt.FramelessWindowHint
          | Qt.WindowStaysOnTopHint
          | Qt.Tool
@@ -67,21 +71,21 @@ Window {
                 anchors.fill: parent
                 source: "qrc:/icons/previous.svg"
             }
-            onClicked: lyricController.prev()
+            onClicked: musicController.prev()
         }
         Button {
             Image {
                 anchors.fill: parent
                 source: "qrc:/icons/pause.svg"
             }
-            onClicked: lyricController.togglePause()
+            onClicked: musicController.togglePause()
         }
         Button {
             Image {
                 anchors.fill: parent
                 source: "qrc:/icons/next.svg"
             }
-            onClicked: lyricController.next()
+            onClicked: musicController.next()
         }
         Button {
             Image {

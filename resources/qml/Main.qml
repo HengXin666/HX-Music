@@ -13,7 +13,7 @@ ApplicationWindow {
     title: "HX.Music"
 
     // === 全局状态 ===
-    property var lyricsState: LyricsState{} // @todo 析构没有销毁
+    property var lyricsState: LyricsState{}
 
     onClosing: {
         lyricsState.del();

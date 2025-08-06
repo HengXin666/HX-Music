@@ -82,7 +82,7 @@ public:
     /**
      * @brief 获取当前播放的位置(单位: 毫秒(ms))
      */
-    qint64 getNowPos() {
+    qint64 getNowPos() const {
         return _player.position();
     }
 
@@ -90,7 +90,7 @@ public:
      * @brief 获取当前音频的总毫秒数
      * @return qint64 
      */
-    qint64 getLengthInMilliseconds() {
+    qint64 getLengthInMilliseconds() const {
         return _lengthInMilliseconds;
     }
 

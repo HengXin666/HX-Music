@@ -34,9 +34,10 @@ namespace HX {
 class SignalBusSingleton : public QObject {
     Q_OBJECT
 
-    explicit SignalBusSingleton() noexcept {}
     SignalBusSingleton& operator=(SignalBusSingleton&&) = delete;
-
+    SignalBusSingleton(QObject* parent = nullptr) 
+        : QObject{parent} 
+    {}
 public:
     /**
      * @brief `线程安全`获取信号总线单例

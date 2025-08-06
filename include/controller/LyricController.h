@@ -121,7 +121,8 @@ public:
         if (!imgList) {
             if (!_lastImage.isNull()) {
                 // 清屏
-                _lastImage = {};
+                _lastImage = {1, 1, QImage::Format_ARGB32};
+                _lastImage.fill(Qt::transparent);
                 emit updateLyriced();
             }
             return;
@@ -161,16 +162,6 @@ public:
 
         _lastImage = std::move(result);
         emit updateLyriced(); // 发送渲染完成信号
-    }
-
-    Q_INVOKABLE void prev() {
-        qDebug() << "上一首";
-    }
-    Q_INVOKABLE void next() {
-        qDebug() << "下一首";
-    }
-    Q_INVOKABLE void togglePause() { 
-        /* 播放/暂停 */
     }
 
     // QML 调用

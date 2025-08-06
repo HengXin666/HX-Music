@@ -34,11 +34,16 @@ qt_add_qml_module(HX-Music
     URI HX.Music # QML 中 import 的名字
     VERSION 1.0
     QML_FILES
+        # 主界面
         resources/qml/Main.qml
+        # 窗口
         resources/qml/window/LyricsWindow.qml
+        # 控件
         resources/qml/widget/PlaybackBar.qml
         resources/qml/widget/SideBar.qml
+        resources/qml/widget/MusicProgressBar.qml
         resources/qml/widget/LyricsButton.qml
+        # 全局状态数据
         resources/qml/data/LyricsState.qml
 )
 
