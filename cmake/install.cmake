@@ -36,9 +36,8 @@ qt_add_qml_module(HX-Music
     QML_FILES
         resources/qml/Main.qml
         resources/qml/FloatingLyricsWindow.qml
-    SOURCES
-        include/controller/LyricController.h
-    CLASS_NAME HX::LyricController
+        resources/qml/PlaybackBar.qml
+        resources/qml/SideBar.qml
 )
 
 # Qt拓展 (音频播放)

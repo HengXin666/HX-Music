@@ -39,7 +39,7 @@ struct GlobalSingleton {
         return s;
     }
 
-    /// @brief 音频配置
+    /// @brief 音频配置 (播放状态)
     MusicConfig musicConfig{};
 
     /// @brief 音频播放实例

@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Layouts
 import QtQuick.Window
 
 ApplicationWindow {
@@ -9,38 +10,35 @@ ApplicationWindow {
     visible: true
     title: "HX.Music"
 
-    property var componentLyrics: null    // 存储 Component
-    property var windowLyrics: null       // 存储 实际创建的 Window 实例
-
-    Button {
-        text: "歌词浮窗"
-        anchors.centerIn: parent
-
-        onClicked: {
-            if (mainWin.windowLyrics === null) {
-                if (mainWin.componentLyrics === null) {
-                    mainWin.componentLyrics = Qt.createComponent("FloatingLyricsWindow.qml");
-                }
-                // 加载
-                if (mainWin.componentLyrics.status === Component.Ready) {
-                    mainWin.windowLyrics = mainWin.componentLyrics.createObject(mainWin); // 指定父对象, 方便生命周期结束顺便带走子对象
-                    if (mainWin.windowLyrics !== null) {
-                        mainWin.windowLyrics.show();
-                    } else {
-                        console.error("创建窗口失败");
-                    }
-                } else {
-                    console.error("组件加载失败:", mainWin.componentLyrics.errorString());
-                }
-            } else {
-                // 切换窗口显示/隐藏
-                if (mainWin.windowLyrics.visible) {
-                    mainWin.windowLyrics.hide();
-                } else {
-                    mainWin.windowLyrics.unlock();
-                    mainWin.windowLyrics.show();
+    ColumnLayout {
+        anchors.fill: parent
+        // 多个标签页面
+        RowLayout {
+            SideBar {
+                itemWidth: 100
+                Layout.preferredWidth: 100
+                Layout.fillHeight: true
+                onTabClicked: (index) => {
+                    console.log("点击了标签页:", index);
+                    stackView.currentIndex = index;
                 }
             }
+
+            StackLayout {
+                id: stackView
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+
+                Rectangle { color: "#f5f5f5" }
+                Rectangle { color: "#d0eaff" }
+                Rectangle { color: "#cdeccd" }
+                Rectangle { color: "#ffe0b2" }
+            }
+        }
+
+        // 音乐播放操作条
+        PlaybackBar {
+            Layout.fillWidth: true
         }
     }
 }

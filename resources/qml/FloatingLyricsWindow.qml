@@ -38,6 +38,7 @@ Window {
     color: "transparent"
 
     Rectangle {
+        visible: floatWin.showControls
         anchors.fill: parent
         color: "#3f000000"
     }
@@ -92,6 +93,7 @@ Window {
     }
 
     Component.onCompleted: {
+        // 更新歌词
         lyricController.updateLyriced.connect(() => {
             lyricImage.source = `image://musicLyric?f=${Date.now()}`;
         });

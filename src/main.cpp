@@ -28,6 +28,7 @@ int main(int argc, char* argv[]) {
         "SignalBusSingleton"
     );
 
+    // 歌词渲染与管理
     cp->setContextProperty("LyricController", lyricController);
     qmlRegisterType<HX::LyricController>(
         "HX.Music", // 导入时候的名称 (import Xxx) (注意得是大写开头)
@@ -42,7 +43,7 @@ int main(int argc, char* argv[]) {
     engine.loadFromModule("HX.Music", "Main");
 
     // test
-    HX::MusicCommand::switchMusic("/run/media/loli/アニメ専門/音乐/いとうかなこ - ファティマ .mp3");
-    HX::MusicCommand::resume();
+    // HX::MusicCommand::switchMusic("/run/media/loli/アニメ専門/音乐/いとうかなこ - ファティマ .mp3");
+    // HX::MusicCommand::resume();
     return app.exec();
 }
