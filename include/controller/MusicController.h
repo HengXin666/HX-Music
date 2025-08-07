@@ -118,9 +118,19 @@ public:
         MusicCommand::setMusicPos(position);
     }
 
+    /**
+     * @brief 获取播放状态
+     * @return true 正在播放
+     * @return false 已暂停
+     */
     bool getPlaying() const noexcept {
         return GlobalSingleton::get().musicConfig.isPlay;
     }
+
+    /**
+     * @brief 设置播放状态
+     * @param val 
+     */
     void setPlaying(bool val) noexcept {
         GlobalSingleton::get().musicConfig.isPlay = val;
         emit playingChanged(val);

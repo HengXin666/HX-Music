@@ -33,19 +33,28 @@ Item {
                 Layout.alignment: Qt.AlignVCenter
 
                 // 封面
-                MusicActionButton {
-                    url: "qrc:/icons/audio.svg"
+                Item {
+                    Layout.preferredWidth: 60
+                    Layout.preferredHeight: 60
+                    MusicActionButton {
+                        anchors.fill: parent
+                        url: "qrc:/icons/audio.svg"
+                    }
                 }
 
                 ColumnLayout {
                     Layout.alignment: Qt.AlignVCenter
 
                     // 滚动文本: 歌曲名 - 歌手... (可点击)
-                    Text {
-                        text: "xxx - yyy、zzz"
+                    LoopingScrollingText {
                         Layout.fillWidth: true
-                        color: "#c2c2c2"
-                        elide: Text.ElideRight
+                        itemData: [
+                            { text: "__xxx__", onClick: function() { console.log("点击xxx") } },
+                            { text: "-", onClick: function() { console.log("点击2") } },
+                            { text: "__yyy__", onClick: function() { console.log("点击yyy") } },
+                            { text: "、", onClick: function() { console.log("点击4") } },
+                            { text: "__zzz__", onClick: function() { console.log("点击zzz") } },
+                        ]
                     }
 
                     // 操作按钮
