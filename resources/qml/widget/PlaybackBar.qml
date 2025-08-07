@@ -19,7 +19,7 @@ Item {
     Rectangle {
         id: container
         anchors.fill: parent
-        color: "#7b990099"
+        color: "#3f000000"
 
         // 靠左
         Text {
@@ -44,9 +44,8 @@ Item {
                     onClicked: musicController.prev()
                 }
                 MusicActionButton {
-                    url: musicController.isPlaying ? "qrc:/icons/pause.svg"
-                                                   : "qrc:/icons/play.svg"
-                    onClicked: musicController.togglePause();
+                    url: musicController.isPlaying ? "qrc:/icons/pause.svg" : "qrc:/icons/play.svg"
+                    onClicked: musicController.togglePause()
                 }
                 MusicActionButton {
                     url: "qrc:/icons/next.svg"
@@ -56,14 +55,50 @@ Item {
 
             // 播放条
             RowLayout {
-                Text {
-                    text: "00:00"
-                }
-                MusicProgressBar {
+                id: musicProgressBarLayout
+                function formatTime(seconds: int): string {
+                    seconds = Math.max(0, Math.floor(seconds)); // 保证非负整数
 
+                    const hrs = Math.floor(seconds / 3600);
+                    const mins = Math.floor((seconds % 3600) / 60);
+                    const secs = seconds % 60;
+
+                    function pad(num) {
+                        return num < 10 ? "0" + num : "" + num;
+                    }
+
+                    if (hrs > 0) {
+                        return pad(hrs) + ":" + pad(mins) + ":" + pad(secs);
+                    } else {
+                        return pad(mins) + ":" + pad(secs);
+                    }
                 }
+
                 Text {
-                    text: "66:66"
+                    id: musicNowPosText
+                    text: "--:--"
+                    color: "#c2c2c2"
+                    Connections {
+                        target: SignalBusSingleton
+                        // 绑定信号: 播放位置变化
+                        function onMusicPlayPosChanged(pos: int) {
+                            musicNowPosText.text = musicProgressBarLayout.formatTime(pos / 1000);
+                        }
+                    }
+                }
+                MusicProgressBar {}
+                Text {
+                    id: musicLengthText
+                    text: "--:--"
+                    color: "#c2c2c2"
+                    Connections {
+                        target: SignalBusSingleton
+                        // 绑定信号: 更新歌曲
+                        function onNewSongLoaded(_) {
+                            musicLengthText.text = musicProgressBarLayout.formatTime(
+                                musicController.getLengthInMilliseconds() / 1000);
+                        }
+                    }
                 }
             }
         }
@@ -77,7 +112,7 @@ Item {
 
             Button {
                 text: "歌词"
-                onClicked: lyricsState.switchWindow();
+                onClicked: lyricsState.switchWindow()
             }
         }
     }
