@@ -52,10 +52,14 @@ public:
     /**
      * @brief 播放/暂停
      */
-    Q_INVOKABLE void togglePause() { 
-        GlobalSingleton::get().musicConfig.isPlay
+    Q_INVOKABLE void togglePause() {
+        _isPlaying
+            ? qDebug() << "暂停了..."
+            : qDebug() << "播放!";
+        _isPlaying
             ? MusicCommand::pause()
             : MusicCommand::resume();
+        setPlaying(!_isPlaying);
     }
 
     /**
@@ -96,6 +100,25 @@ public:
     Q_INVOKABLE void setPosition(qint64 position) {
         MusicCommand::setMusicPos(position);
     }
+
+    bool getPlaying() const noexcept {
+        return _isPlaying = GlobalSingleton::get().musicConfig.isPlay;
+    }
+    void setPlaying(bool val) noexcept {
+        _isPlaying = GlobalSingleton::get().musicConfig.isPlay = val;
+        emit playingChanged(val);
+    }
+Q_SIGNALS:
+    void playingChanged(bool isPlaying);
+
+private:
+    mutable bool _isPlaying = GlobalSingleton::get().musicConfig.isPlay; // 是否正在播放音乐
+    Q_PROPERTY(
+        bool isPlaying 
+        READ getPlaying 
+        WRITE setPlaying 
+        NOTIFY playingChanged
+    );
 };
 
 } // namespace HX

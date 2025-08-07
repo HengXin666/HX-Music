@@ -76,7 +76,8 @@ Window {
         Button {
             Image {
                 anchors.fill: parent
-                source: "qrc:/icons/pause.svg"
+                source: musicController.isPlaying ? "qrc:/icons/pause.svg"
+                                                  : "qrc:/icons/play.svg"
             }
             onClicked: musicController.togglePause()
         }

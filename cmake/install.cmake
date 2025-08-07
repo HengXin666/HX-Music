@@ -42,7 +42,8 @@ qt_add_qml_module(HX-Music
         resources/qml/widget/PlaybackBar.qml
         resources/qml/widget/SideBar.qml
         resources/qml/widget/MusicProgressBar.qml
-        resources/qml/widget/LyricsButton.qml
+        # 内部控件组件
+        resources/qml/widget/internal/MusicActionButton.qml
         # 全局状态数据
         resources/qml/data/LyricsState.qml
 )
@@ -52,12 +53,12 @@ find_package(Qt6 REQUIRED COMPONENTS Multimedia)
 target_link_libraries(HX-Music PRIVATE Qt::Multimedia)
 
 # Qt拓展 (SVG)
-# find_package(Qt6 REQUIRED COMPONENTS Svg)
-# target_link_libraries(HX-Music PRIVATE Qt::Svg)
+find_package(Qt6 REQUIRED COMPONENTS Svg)
+target_link_libraries(HX-Music PRIVATE Qt::Svg)
 
 # Qt拓展 (XML)
-# find_package(Qt6 REQUIRED COMPONENTS Xml)
-# target_link_libraries(HX-Music PRIVATE Qt::Xml)
+find_package(Qt6 REQUIRED COMPONENTS Xml)
+target_link_libraries(HX-Music PRIVATE Qt::Xml)
 
 # Qt拓展 (编码)
 # find_package(Qt6 REQUIRED COMPONENTS Core5Compat)

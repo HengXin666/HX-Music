@@ -7,7 +7,6 @@ import HX.Music
 */
 Slider {
     id: root
-    anchors.centerIn: parent
 
     width: parent.width - 20
 

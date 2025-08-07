@@ -7,6 +7,7 @@
 #include <controller/LyricController.h>
 #include <controller/MusicController.h>
 #include <cmd/MusicCommand.hpp>
+#include <utils/SvgPars.hpp>
 
 int main(int argc, char* argv[]) {
     QGuiApplication app(argc, argv);
@@ -44,12 +45,15 @@ int main(int argc, char* argv[]) {
 
     // 注册img链接: image://musicLyric
     engine.addImageProvider("musicLyric", lyricController); // 内部会释放!
+    
+    // 注册img链接: image://svgColored
+    engine.addImageProvider("svgColored", new HX::QmlSvgPars); // 内部会释放!
 
     // 应该使用 _ 和 [0-9a-Z], 不能使用`-`
     engine.loadFromModule("HX.Music", "Main");
 
     // test
-    HX::MusicCommand::switchMusic("/run/media/loli/アニメ専門/音乐/いとうかなこ - ファティマ .mp3");
-    HX::MusicCommand::resume();
+    // HX::MusicCommand::switchMusic("/run/media/loli/アニメ専門/音乐/いとうかなこ - ファティマ .mp3");
+    // HX::MusicCommand::resume();
     return app.exec();
 }

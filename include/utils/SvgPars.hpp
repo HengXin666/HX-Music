@@ -26,6 +26,10 @@
 #include <QPixmap>
 #include <QPainter>
 #include <QIcon>
+#include <QQuickImageProvider>
+#include <QUrlQuery>
+
+#include <QDebug>
 
 namespace HX {
 
@@ -105,6 +109,44 @@ public:
     }
 private:
     QDomDocument _doc;
+};
+
+class QmlSvgPars : public QQuickImageProvider {
+    Q_OBJECT
+public:
+    QmlSvgPars()
+        : QQuickImageProvider{QQuickImageProvider::Image}
+    {}
+
+    // QML 调用
+    QImage requestImage(
+        [[maybe_unused]] QString const& id,
+        [[maybe_unused]] QSize* size,
+        [[maybe_unused]] QSize const& requestedSize
+    ) override {
+        // 解析 id: "qrc:/icons/next.svg?color=#ff0000"
+        const QStringList parts = id.split("?");
+        QString path = parts[0];         // qrc:/icons/next.svg
+        if (path.startsWith("qrc")) [[likely]] {
+            path = path.remove(0, 3); // :/icons/next.svg
+        }
+        QString color = "#000000";
+        if (parts.size() == 2) [[likely]] {
+            const QUrlQuery query(parts[1]);
+            color = query.queryItemValue("color");
+        }
+        auto img = SvgPars{path}
+            .replaceTagAndAttributeAndVal(
+                "path",
+                "fill",
+                color)
+            .makePixmap()
+            .toImage();
+        if (size) {
+            *size = img.size();
+        }
+        return img;
+    }
 };
 
 } // namespace HX

@@ -30,13 +30,10 @@ Item {
 
             delegate: Item {
                 id: tabItem
-                required property var model
                 width: parent.width
                 height: 50
 
                 Rectangle {
-                    required property var root
-                    required property int index
                     id: rect
 
                     anchors.fill: parent
@@ -47,15 +44,15 @@ Item {
                         anchors.fill: parent
                         hoverEnabled: true
                         onClicked: {
-                            rect.root.currentIndex = rect.index
-                            rect.root.tabClicked(rect.index)
+                            root.currentIndex = index
+                            root.tabClicked(index)
                         }
                         cursorShape: Qt.PointingHandCursor
 
                         Rectangle {
                             anchors.fill: parent
                             color: hovered ? "#eeeeee33" : "transparent"
-                            visible: !rect.root.currentIndex === rect.index
+                            visible: !root.currentIndex === index
                         }
                     }
 
@@ -65,14 +62,14 @@ Item {
                         spacing: 12
 
                         Label {
-                            text: tabItem.model.icon
+                            text: model.icon
                             font.pixelSize: 20
                         }
 
                         Label {
-                            text: tabItem.model.label
+                            text: model.label
                             font.pixelSize: 16
-                            color: rect.root.currentIndex === rect.index ? "white" : "#444"
+                            color: root.currentIndex === index ? "white" : "#444"
                         }
                     }
                 }
