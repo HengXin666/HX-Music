@@ -2,13 +2,15 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Window
+import HX.Music
 import "./widget"
 import "./data"
 
 ApplicationWindow {
     id: mainWin
-    width: 640
-    height: 480
+    minimumWidth: 640
+    minimumHeight: 480
+
     visible: true
     title: "HX.Music"
 
@@ -39,7 +41,11 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
 
-                Rectangle { color: "#f5f5f5" }
+                Rectangle {
+                    MusicListView {
+                        anchors.fill: parent
+                    }
+                }
                 Rectangle { color: "#d0eaff" }
                 Rectangle { color: "#cdeccd" }
                 Rectangle { color: "#ffe0b2" }

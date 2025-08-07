@@ -13,7 +13,7 @@ Item {
         id: musicController
     }
 
-    property real volumeLevel: musicController.volume
+    property real volumeLevel
 
     width: 32
     height: 32
@@ -26,7 +26,10 @@ Item {
             : root.volumeLevel > 0
                 ? "qrc:/icons/volume_low.svg"
                 : "qrc:/icons/volume_off.svg"
-        onClicked: popup.open()
+    
+        onClicked: {
+            popup.open();
+        }
     }
 
     Popup {
@@ -83,5 +86,9 @@ Item {
 
     onVolumeLevelChanged: {
         musicController.volume = volumeLevel;
+    }
+
+    Component.onCompleted: {
+        volumeLevel = musicController.volume;
     }
 }

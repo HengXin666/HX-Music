@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Material
@@ -32,28 +33,24 @@ Item {
                 id: tabItem
                 width: parent.width
                 height: 50
+                required property int index
+                required property var model
 
                 Rectangle {
                     id: rect
-
                     anchors.fill: parent
-                    color: root.currentIndex === index ? Material.primary : "transparent"
+                    color: root.currentIndex === tabItem.index ? Material.primary : "transparent"
                     radius: 6
 
                     MouseArea {
+                        id: mouseArea
                         anchors.fill: parent
                         hoverEnabled: true
                         onClicked: {
-                            root.currentIndex = index
-                            root.tabClicked(index)
+                            root.currentIndex = tabItem.index;
+                            root.tabClicked(tabItem.index);
                         }
                         cursorShape: Qt.PointingHandCursor
-
-                        Rectangle {
-                            anchors.fill: parent
-                            color: hovered ? "#eeeeee33" : "transparent"
-                            visible: !root.currentIndex === index
-                        }
                     }
 
                     RowLayout {
@@ -62,14 +59,14 @@ Item {
                         spacing: 12
 
                         Label {
-                            text: model.icon
+                            text: tabItem.model.icon
                             font.pixelSize: 20
                         }
 
                         Label {
-                            text: model.label
+                            text: tabItem.model.label
                             font.pixelSize: 16
-                            color: root.currentIndex === index ? "white" : "#444"
+                            color: root.currentIndex === tabItem.index ? "white" : "#444"
                         }
                     }
                 }

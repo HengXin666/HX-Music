@@ -9,6 +9,7 @@
 #include <cmd/MusicCommand.hpp>
 #include <config/MusicConfig.hpp>
 #include <utils/SvgPars.hpp>
+#include <model/MusicListModel.hpp>
 
 int main(int argc, char* argv[]) {
     QGuiApplication app(argc, argv);
@@ -51,6 +52,15 @@ int main(int argc, char* argv[]) {
         "HX.Music", // 导入时候的名称 (import Xxx) (注意得是大写开头)
         1, 0,                       // 主版本号 与 次版本号
         "MusicController"           // qml中使用的组件名称 (注意得是大写开头)
+    );
+
+    // 注册 歌曲列表视图 到 qml
+    HX::MusicListModel musicListModel;
+    cp->setContextProperty("MusicListModel", &musicListModel);
+    qmlRegisterType<HX::MusicListModel>(
+        "HX.Music",
+        1, 0,
+        "MusicListModel"
     );
 
     // 注册img链接: image://musicLyric

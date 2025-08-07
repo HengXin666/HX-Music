@@ -108,6 +108,7 @@ Item {
                 RowLayout {
                     id: musicProgressBarLayout
                     Layout.fillWidth: true
+                    Layout.preferredWidth: 400
                     Layout.alignment: Qt.AlignHCenter
                     function formatTime(seconds: int): string {
                         seconds = Math.max(0, Math.floor(seconds)); // 保证非负整数

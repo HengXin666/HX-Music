@@ -17,6 +17,8 @@ qt_add_executable(HX-Music
     ${qrc_files}
 )
 
+target_include_directories(HX-Music PRIVATE libs/HXLibs/include)
+
 target_compile_features(HX-Music PUBLIC cxx_std_20)
 
 target_link_libraries(HX-Music
@@ -45,6 +47,7 @@ qt_add_qml_module(HX-Music
         resources/qml/widget/VolumeButton.qml
         resources/qml/widget/PlayModeButton.qml
         resources/qml/widget/LoopingScrollingText.qml
+        resources/qml/widget/MusicListView.qml
         # 内部控件组件
         resources/qml/widget/internal/MusicActionButton.qml
         # 全局状态数据
