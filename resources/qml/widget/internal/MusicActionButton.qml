@@ -4,8 +4,8 @@ import QtQuick.Controls
 Button {
     id: btn
     property string url: ""
-    property string defaultColor: "#a92285" // 默认颜色
-    property string pressedColor: "#990099" // 点击时颜色
+    property string defaultColor: "#990099" // 默认颜色
+    property string pressedColor: "#FF00CC" // 点击时颜色
     property string hoveredColor: "gold" // 悬停颜色
     
     width: 64

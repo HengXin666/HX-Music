@@ -21,17 +21,24 @@
 #define _HX_MUSIC_CONFIG_H_
 
 #include <QString>
+#include <QObject>
 
-/**
- * @brief 播放模式
- */
-enum class PlayMode {
-    ListLoop = 0,   // 列表循环
-    RandomPlay,     // 随机播放
-    SinglePlay,     // 单曲播放
-    SingleLoop,     // 单曲循环
-    PlayModeCnt,    // !保留字段! 用于计算长度
+namespace HX {
+
+class PlayModeWrapper {
+    Q_GADGET
+
+public:
+    enum class PlayMode {
+        ListLoop = 0,   // 列表循环
+        RandomPlay,     // 随机播放
+        SingleLoop,     // 单曲循环
+        PlayModeCnt     // !保留字段!
+    };
+    Q_ENUM(PlayMode)
 };
+
+using PlayMode = PlayModeWrapper::PlayMode;
 
 /**
  * @brief 音乐配置
@@ -42,5 +49,7 @@ struct MusicConfig {
     qint64 position;    // 播放位置
     bool isPlay{false}; // 是正在播放
 };
+
+} // namespace HX
 
 #endif // !_HX_MUSIC_CONFIG_H_

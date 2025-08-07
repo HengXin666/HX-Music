@@ -53,13 +53,20 @@ public:
      * @brief 播放/暂停
      */
     Q_INVOKABLE void togglePause() {
-        _isPlaying
+        GlobalSingleton::get().musicConfig.isPlay
             ? qDebug() << "暂停了..."
             : qDebug() << "播放!";
-        _isPlaying
+        GlobalSingleton::get().musicConfig.isPlay
             ? MusicCommand::pause()
             : MusicCommand::resume();
-        setPlaying(!_isPlaying);
+        setPlaying(!GlobalSingleton::get().musicConfig.isPlay);
+    }
+
+    /**
+     * @brief 修改播放模式
+     */
+    Q_INVOKABLE PlayMode getPlayMode() const {
+        return GlobalSingleton::get().musicConfig.playMode;
     }
 
     /**
@@ -67,6 +74,7 @@ public:
      */
     Q_INVOKABLE void setPlayMode(PlayMode mode) {
         MusicCommand::setPlayMode(mode);
+        emit playModeChanged(mode);
     }
 
     /**
@@ -86,11 +94,20 @@ public:
     }
 
     /**
+     * @brief 获取音量大小
+     * @return 0.00f ~ 1.00f (百分比) 
+     */
+    Q_INVOKABLE float getVolume() const {
+        return GlobalSingleton::get().musicConfig.volume;
+    }
+
+    /**
      * @brief 设置音量大小
      * @param volume 0.00f ~ 1.00f (百分比)
      */
     Q_INVOKABLE void setVolume(float volume) {
         MusicCommand::setVolume(volume);
+        emit volumeChanged(volume);
     }
 
     /**
@@ -102,22 +119,35 @@ public:
     }
 
     bool getPlaying() const noexcept {
-        return _isPlaying = GlobalSingleton::get().musicConfig.isPlay;
+        return GlobalSingleton::get().musicConfig.isPlay;
     }
     void setPlaying(bool val) noexcept {
-        _isPlaying = GlobalSingleton::get().musicConfig.isPlay = val;
+        GlobalSingleton::get().musicConfig.isPlay = val;
         emit playingChanged(val);
     }
 Q_SIGNALS:
     void playingChanged(bool isPlaying);
+    void volumeChanged(float volume);
+    void playModeChanged(PlayMode mode);
 
 private:
-    mutable bool _isPlaying = GlobalSingleton::get().musicConfig.isPlay; // 是否正在播放音乐
     Q_PROPERTY(
         bool isPlaying 
         READ getPlaying 
         WRITE setPlaying 
         NOTIFY playingChanged
+    );
+    Q_PROPERTY(
+        float volume 
+        READ getVolume 
+        WRITE setVolume 
+        NOTIFY volumeChanged
+    );
+    Q_PROPERTY(
+        PlayMode playMode 
+        READ getPlayMode
+        WRITE setPlayMode 
+        NOTIFY playModeChanged
     );
 };
 

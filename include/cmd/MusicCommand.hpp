@@ -106,7 +106,6 @@ struct MusicCommand {
             }
         [[fallthrough]];
         case PlayMode::ListLoop:    // 列表循环
-        case PlayMode::SinglePlay:  // 单曲播放
         case PlayMode::SingleLoop:  // 单曲循环
             // 从 SongListModel 中得
             break;
@@ -128,7 +127,6 @@ struct MusicCommand {
             }
         [[fallthrough]];
         case PlayMode::ListLoop:    // 列表循环
-        case PlayMode::SinglePlay:  // 单曲播放
         case PlayMode::SingleLoop:  // 单曲循环
             // 应该从 SongListModel 中变
             break;

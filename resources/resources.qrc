@@ -36,6 +36,10 @@
         <file alias="pin.svg">icons/pin.svg</file>
         <file alias="move.svg">icons/move.svg</file>
         <file alias="center.svg">icons/center.svg</file>
+        <file alias="playmode_list_loop.svg">icons/playmode_list_loop.svg</file>
+        <file alias="playmode_random_play.svg">icons/playmode_random_play.svg</file>
+        <file alias="playmode_single_loop.svg">icons/playmode_single_loop.svg</file>
+        <file alias="lyrics.svg">icons/lyrics.svg</file>
     </qresource>
     <qresource prefix="/logo">
         <file alias="HXMusic_logo.png">logo/HXMusic_logo.png</file>

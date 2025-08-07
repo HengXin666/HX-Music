@@ -7,6 +7,7 @@
 #include <controller/LyricController.h>
 #include <controller/MusicController.h>
 #include <cmd/MusicCommand.hpp>
+#include <config/MusicConfig.hpp>
 #include <utils/SvgPars.hpp>
 
 int main(int argc, char* argv[]) {
@@ -21,6 +22,15 @@ int main(int argc, char* argv[]) {
         Qt::QueuedConnection
     );
 
+    // 注册枚举
+    qmlRegisterUncreatableMetaObject(
+        HX::PlayModeWrapper::staticMetaObject,
+        "HX.Music", // QML import 名称
+        1, 0,
+        "PlayMode", // QML 中使用名
+        "PlayMode 是一个枚举类型, 不可实例化"
+    );
+    
     QQmlContext* cp = engine.rootContext();
     // 信号总线
     cp->setContextProperty("SignalBusSingleton", &HX::SignalBusSingleton::get());

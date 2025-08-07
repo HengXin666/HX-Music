@@ -24,9 +24,6 @@ HX::MusicPlayer::MusicPlayer()
         case PlayMode::RandomPlay:  // 随机播放
             MusicCommand::nextMusic();
             break;
-        case PlayMode::SinglePlay:  // 单曲播放
-            MusicCommand::pause();
-            break;
         case PlayMode::SingleLoop:  // 单曲循环
             MusicCommand::resume();
             break;

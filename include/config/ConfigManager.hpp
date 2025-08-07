@@ -24,6 +24,8 @@
 
 #include <config/MusicConfig.hpp>
 
+namespace HX {
+
 /**
  * @brief 配置文件管理器
  */
@@ -50,5 +52,7 @@ public:
 private:
     QSettings _settings; // qt保证其析构会调用`sync()`
 };
+
+} // namespace HX
 
 #endif // !_HX_CONFIG_MANAGER_H_
