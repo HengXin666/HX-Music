@@ -22,6 +22,7 @@
 
 #include <QAbstractListModel>
 #include <utils/MusicInfo.hpp>
+#include <singleton/ImagePool.h>
 
 namespace HX {
 
@@ -33,13 +34,15 @@ class MusicListModel : public QAbstractListModel {
         ArtistRole,
         AlbumRole,
         DurationRole,
+        UrlRole,
     };
 
     struct MusicInfoData {
-        QString title;
-        QString artist;
-        QString album;
-        QString duration;
+        QString title;    // 歌名
+        QString artist;   // 歌手
+        QString album;    // 专辑
+        QString duration; // 时长 (单位: 秒(s))
+        QString url;      // path && img.url && imgPool-id && 配置文件歌曲路径
     };
 public:
     explicit MusicListModel(QObject* parent = nullptr)
@@ -61,6 +64,7 @@ public:
         case ArtistRole: return music.artist;
         case AlbumRole: return music.album;
         case DurationRole: return music.duration;
+        case UrlRole: return music.url;
         default: return {};
         }
     }
@@ -71,27 +75,33 @@ public:
             { ArtistRole, "artist" },
             { AlbumRole, "album" },
             { DurationRole, "duration" },
+            { UrlRole, "url" },
         };
     }
 
     Q_INVOKABLE void addFromPath(QString const& path) {
         MusicInfo musicInfo{QFileInfo{path}};
-        qDebug() << "添加:" << musicInfo.getTitle();
         addMusic(
             musicInfo.getTitle(),
             musicInfo.getArtist(),
             musicInfo.getAlbum(),
-            QString{"%1"}.arg(musicInfo.getLengthInSeconds())
+            QString{"%1"}.arg(musicInfo.getLengthInSeconds()),
+            path
         );
-        qDebug() << "添加完成:" << musicInfo.getArtist();
-        for (auto& _ : _musicArr)
-            qDebug() << _.artist;
+        if (auto img = musicInfo.getAlbumArtAdvanced()) {
+            ImagePoll::get()->add(path, img->toImage());
+        }
     }
 
-    Q_INVOKABLE void addMusic(const QString& title, const QString& artist,
-                              const QString& album, const QString& duration) {
+    Q_INVOKABLE void addMusic(
+        const QString& title,
+        const QString& artist,
+        const QString& album,
+        const QString& duration,
+        const QString& url
+    ) {
         emit beginInsertRows({}, _musicArr.size(), _musicArr.size());
-        _musicArr.append({ title, artist, album, duration });
+        _musicArr.append({title, artist, album, duration, url});
         emit endInsertRows();
     }
 

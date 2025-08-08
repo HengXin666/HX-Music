@@ -4,6 +4,7 @@
 
 #include <singleton/SignalBusSingleton.h>
 #include <singleton/GlobalSingleton.hpp>
+#include <singleton/ImagePool.h>
 #include <controller/LyricController.h>
 #include <controller/MusicController.h>
 #include <cmd/MusicCommand.hpp>
@@ -68,6 +69,9 @@ int main(int argc, char* argv[]) {
     
     // 注册img链接: image://svgColored
     engine.addImageProvider("svgColored", new HX::QmlSvgPars); // 内部会释放!
+
+    // 注册img链接: image://imgPool
+    engine.addImageProvider("imgPool", HX::ImagePoll::get()); // 内部会释放!
 
     // 应该使用 _ 和 [0-9a-Z], 不能使用`-`
     engine.loadFromModule("HX.Music", "Main");

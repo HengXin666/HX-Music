@@ -104,7 +104,7 @@ Item {
                             color: "#0a7d92"
                             Image {
                                 anchors.fill: parent
-                                // source: delegateRoot.model.cover
+                                source: `image://imgPool/${delegateRoot.model.url}`
                                 fillMode: Image.PreserveAspectCrop
                             }
                         }
