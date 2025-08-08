@@ -15,7 +15,9 @@ ApplicationWindow {
     title: "HX.Music"
 
     // === 全局状态 ===
-    property var lyricsState: LyricsState{}
+    property var lyricsState: LyricsState{} // 歌词悬浮窗口状态控制
+    property var theme: ThemeData{}         // 全局主题配置
+    property var musicController: MusicController {} // 音乐控制
 
     onClosing: {
         lyricsState.del();

@@ -48,10 +48,13 @@ qt_add_qml_module(HX-Music
         resources/qml/widget/PlayModeButton.qml
         resources/qml/widget/LoopingScrollingText.qml
         resources/qml/widget/MusicListView.qml
+        resources/qml/widget/PlayStatusButton.qml
         # 内部控件组件
         resources/qml/widget/internal/MusicActionButton.qml
+        resources/qml/widget/internal/AudioVisualizerBars.qml
         # 全局状态数据
         resources/qml/data/LyricsState.qml
+        resources/qml/data/ThemeData.qml
 )
 
 # Qt拓展 (音频播放)

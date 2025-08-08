@@ -59,7 +59,16 @@ public:
         GlobalSingleton::get().musicConfig.isPlay
             ? MusicCommand::pause()
             : MusicCommand::resume();
-        setPlaying(!GlobalSingleton::get().musicConfig.isPlay);
+        emit playingChanged(GlobalSingleton::get().musicConfig.isPlay);
+    }
+
+    /**
+     * @brief 播放音乐
+     * @param path 音乐路径
+     */
+    Q_INVOKABLE void playMusic(QString const& path) {
+        MusicCommand::switchMusic(path);
+        emit playingChanged(true);
     }
 
     /**

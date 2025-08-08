@@ -30,10 +30,6 @@ Window {
         id: lyricController
     }
 
-    MusicController {
-        id: musicController
-    }
-
     flags: Qt.FramelessWindowHint
          | Qt.WindowStaysOnTopHint
          | Qt.Tool

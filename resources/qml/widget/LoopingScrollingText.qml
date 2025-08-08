@@ -8,17 +8,22 @@ Item {
     width: 400
     height: 40
 
-    property var itemData: []  // 用户数据 {text, onClick}
-    property real scrollSpeed: 50  // 像素/秒
-    property bool hovered: false
-    property real contentWidth: mainView.implicitWidth  // 实际内容宽度
+    property var itemData: []       // 用户数据 {text, onClick}
+    property real scrollSpeed: 50   // 像素/秒
     property real spacingWidth: 75  // 间隔宽度
+    property bool isRunging: true   // 外界控制是否移动 (移动开关)
 
+    property bool _hovered: false
+    property real _contentWidth: mainView.implicitWidth  // 实际内容宽度
     // 计算是否需要滚动（内容超出容器宽度时才滚动）
-    property bool needScrolling: contentWidth > width
+    property bool _needScrolling: isRunging && _contentWidth > width
 
     // 默认委托（可被外部覆盖）
     default property alias contentDelegate: repeater.delegate
+
+    // 轻量委托
+    property color textColor: "#f6f6f6"
+    property int fontPixelSize: 16
 
     // 背景容器
     Rectangle {
@@ -29,8 +34,8 @@ Item {
         MouseArea {
             anchors.fill: parent
             hoverEnabled: true
-            onEntered: root.hovered = true
-            onExited: root.hovered = false
+            onEntered: root._hovered = true
+            onExited: root._hovered = false
         }
 
         // 滚动视图
@@ -73,8 +78,8 @@ Item {
                             Text {
                                 id: textItem
                                 text: mainViewItem.modelData.text || ""
-                                color: "#f6f6f6"
-                                font.pixelSize: 16
+                                color: root.textColor
+                                font.pixelSize: root.fontPixelSize
                                 anchors.verticalCenter: parent.verticalCenter
                             }
                         }
@@ -90,7 +95,7 @@ Item {
                             id: copyViewItem
                             required property var modelData
 
-                            visible: root.needScrolling
+                            visible: root._needScrolling
                             width: textItem02.implicitWidth
                             height: root.height
                             hoverEnabled: true
@@ -106,10 +111,10 @@ Item {
                             // 文本显示
                             Text {
                                 id: textItem02
-                                visible: root.needScrolling
+                                visible: root._needScrolling
                                 text: copyViewItem.modelData.text || ""
-                                color: "#f6f6f6"
-                                font.pixelSize: 16
+                                color: root.textColor
+                                font.pixelSize: root.fontPixelSize
                                 anchors.verticalCenter: parent.verticalCenter
                             }
                         }
@@ -124,7 +129,7 @@ Item {
                 property: "contentX"
                 loops: Animation.Infinite
                 from: 0
-                to: root.contentWidth + root.spacingWidth
+                to: root._contentWidth + root.spacingWidth
                 duration: (to / root.scrollSpeed) * 1000
                 running: false
             }
@@ -135,14 +140,14 @@ Item {
                 anchors.fill: parent
                 hoverEnabled: true
                 onEntered: {
-                    root.hovered = true;
+                    root._hovered = true;
                     if (scrollAnimation.running) {
                         scrollAnimation.pause();
                     }
                 }
                 onExited: {
-                    root.hovered = false;
-                    if (root.needScrolling) {
+                    root._hovered = false;
+                    if (root._needScrolling) {
                         // 如果之前是暂停状态, 那么继续
                         if (scrollAnimation.paused) {
                             scrollAnimation.resume();
@@ -154,19 +159,19 @@ Item {
                 }
             }
         }
-    }
 
-    onWidthChanged: {
-        scrollAnimation.stop();
-        flickable.contentX = 0;
+        onWidthChanged: {
+            scrollAnimation.stop();
+            flickable.contentX = 0;
 
-        // 更新动画参数
-        scrollAnimation.from = 0;
-        scrollAnimation.to = root.contentWidth + root.spacingWidth;
-        scrollAnimation.duration = (scrollAnimation.to / root.scrollSpeed) * 1000;
+            // 更新动画参数
+            scrollAnimation.from = 0;
+            scrollAnimation.to = root._contentWidth + root.spacingWidth;
+            scrollAnimation.duration = (scrollAnimation.to / root.scrollSpeed) * 1000;
 
-        if (root.needScrolling && !root.hovered) {
-            scrollAnimation.start();
+            if (root._needScrolling && !root._hovered) {
+                scrollAnimation.start();
+            }
         }
     }
 

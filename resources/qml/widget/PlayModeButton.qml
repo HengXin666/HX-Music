@@ -12,10 +12,6 @@ Item {
     width: 32
     height: 32
 
-    MusicController {
-        id: musicController
-    }
-
     MusicActionButton {
         id: btn
         anchors.fill: parent

@@ -12,10 +12,6 @@ Item {
     property int itemHeight: 100
     height: itemHeight
 
-    MusicController {
-        id: musicController
-    }
-
     Rectangle {
         id: container
         anchors.fill: parent

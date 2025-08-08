@@ -34,19 +34,34 @@ Item {
         model: musicListModel
         anchors.fill: parent
         clip: true
+        highlight: Rectangle { // 高亮选中的项
+            color: "lightsteelblue"
+            radius: 5
+        }
+
         delegate: Item {
             id: delegateRoot
             required property int index
             required property var model
+
+            // 是否选中
+            property bool isSelected: listView.currentIndex == delegateRoot.index
+            
             width: listView.width
             height: 60
 
             MouseArea {
+                id: mouseArea
+                property bool _hovered: false // 是否悬浮
                 anchors.fill: parent
                 onDoubleClicked: {
+                    listView.currentIndex = delegateRoot.index;
                     console.log("播放:", delegateRoot.index);
-                    // MusicPlayer.play(delegateRoot.index) // 调用播放
+                    musicController.playMusic(delegateRoot.model.url);
                 }
+                hoverEnabled: true
+                onEntered: _hovered = true;
+                onExited: _hovered = false;
             }
 
             RowLayout {
@@ -54,13 +69,17 @@ Item {
                 anchors.margins: 5
                 spacing: 10
 
-                // 序号
-                Text {
-                    text: (delegateRoot.index + 1).toString()
-                    font.pixelSize: 16
-                    horizontalAlignment: Text.AlignHCenter
+                // 编号图标
+                PlayStatusButton {
                     Layout.preferredWidth: 40
-                    Layout.alignment: Qt.AlignVCenter
+                    Layout.alignment: Qt.AlignCenter
+                    text: (delegateRoot.index + 1).toString()
+                    isSelected: delegateRoot.isSelected
+                    isHovered: mouseArea._hovered
+                    path: delegateRoot.model.url
+                    onSwitchThisMusic: {
+                        listView.currentIndex = delegateRoot.index;
+                    }
                 }
 
                 // 封面 + 标题 + 歌手(靠左, 自适应宽度)
@@ -118,7 +137,7 @@ Item {
                     }
                 }
 
-                // 专辑(靠左, 自适应宽度)
+                // 专辑(靠左, 自适应宽度) listView.currentIndex = delegateRoot.index
                 Text {
                     id: albumColumn
                     text: delegateRoot.model.album.length > 16
@@ -144,6 +163,10 @@ Item {
                     Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
                 }
             }
+        }
+
+        Component.onCompleted: {
+            listView.currentIndex = -1;
         }
     }
 

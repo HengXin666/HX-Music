@@ -9,10 +9,6 @@ import "./internal"
 Item {
     id: root
 
-    MusicController {
-        id: musicController
-    }
-
     property real volumeLevel
 
     width: 32

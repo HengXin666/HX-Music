@@ -30,22 +30,14 @@ namespace HX {
  */
 struct MusicCommand {
     /**
-     * @brief 选择音乐(双击), 此时是已知需要播放的音乐的, 因此会添加到播放队列
-     * @param it 
-     */
-    static void selectMusic(PlayQueue::Type it) {
-        GlobalSingleton::get().playQueue.push(it);
-        switchMusic(it);
-    }
-
-    /**
      * @brief 切换音乐, 并且播放
      * @param it 
      */
-    static void switchMusic(PlayQueue::Type it) {
-        GlobalSingleton::get().playQueue.push(it);
-        auto fileInfo = QFileInfo{it};
+    static void switchMusic(PlayQueue::Type path) {
+        GlobalSingleton::get().playQueue.push(path);
+        auto fileInfo = QFileInfo{path};
         auto info = MusicInfo{fileInfo};
+        GlobalSingleton::get().musicConfig.isPlay = true;
         SignalBusSingleton::get().newSongLoaded(info);
         GlobalSingleton::get().music.setLengthInMilliseconds(info.getLengthInMilliseconds());
         GlobalSingleton::get().music.switchMusic(info.filePath()).play();
