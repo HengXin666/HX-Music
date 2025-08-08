@@ -38,11 +38,11 @@ class MusicListModel : public QAbstractListModel {
     };
 
     struct MusicInfoData {
-        QString title;    // 歌名
-        QString artist;   // 歌手
-        QString album;    // 专辑
-        QString duration; // 时长 (单位: 秒(s))
-        QString url;      // path && img.url && imgPool-id && 配置文件歌曲路径
+        QString title;          // 歌名
+        QStringList artist;     // 歌手列表
+        QString album;          // 专辑
+        QString duration;       // 时长 (单位: 秒(s))
+        QString url;            // path && img.url && imgPool-id && 配置文件歌曲路径
     };
 public:
     explicit MusicListModel(QObject* parent = nullptr)
@@ -83,7 +83,7 @@ public:
         MusicInfo musicInfo{QFileInfo{path}};
         addMusic(
             musicInfo.getTitle(),
-            musicInfo.getArtist(),
+            musicInfo.getArtistList(),
             musicInfo.getAlbum(),
             QString{"%1"}.arg(musicInfo.getLengthInSeconds()),
             path
@@ -94,14 +94,20 @@ public:
     }
 
     Q_INVOKABLE void addMusic(
-        const QString& title,
-        const QString& artist,
-        const QString& album,
-        const QString& duration,
-        const QString& url
+        QString title,
+        QStringList artist,
+        QString album,
+        QString duration,
+        QString const& url
     ) {
         emit beginInsertRows({}, _musicArr.size(), _musicArr.size());
-        _musicArr.append({title, artist, album, duration, url});
+        _musicArr.append({
+            std::move(title),
+            std::move(artist),
+            std::move(album),
+            std::move(duration),
+            url
+        });
         emit endInsertRows();
     }
 

@@ -22,11 +22,13 @@
 
 #include <taglib/fileref.h>
 #include <taglib/flacfile.h>
+#include <taglib/tpropertymap.h> // PropertyMap
 
 #include <QTime>
 #include <QFileInfo>
 #include <QPixmap>
 #include <QString>
+#include <QRegularExpression>
 
 #include <utils/FileInfo.hpp>
 
@@ -63,6 +65,46 @@ public:
             return errRes;
         }
         return QString::fromStdString(mpegFile.tag()->artist().to8Bit(true));
+    }
+
+    /**
+     * @brief 获取音频歌手信息列表
+     * @param errRes 
+     * @return QVector<QString> 每一项就是一个歌手名
+     */
+    QStringList getArtistList(QStringList&& errRes = {}) const {
+        if (mpegFile.isNull()) {
+            return errRes;
+        }
+        auto* tag = mpegFile.tag();
+        if (!tag) {
+            return errRes;
+        }
+        
+        const TagLib::PropertyMap& map = tag->properties();
+        if (!map.contains("ARTIST")) {
+            return errRes;
+        }
+        const auto& values = map["ARTIST"];
+        if (values.size() > 1) {
+            QStringList res;
+            for (const auto& val : values) {
+                qDebug() << QString::fromStdWString(val.toWString());
+                res << QString::fromStdWString(val.toWString());
+            }
+            return res;
+        }
+        QString raw = QString::fromStdWString(values.front().toWString()).trimmed();
+    
+        // 启发式分隔
+        raw.replace(" feat. ", ";", Qt::CaseInsensitive);
+        raw.replace(" ft. ", ";", Qt::CaseInsensitive);
+        raw.replace("、", ";");
+        raw.replace("／", ";");
+        raw.replace(";", ";");  // 防御性
+    
+        return raw.split(";", Qt::SkipEmptyParts)
+                  .replaceInStrings(QRegularExpression("^\\s+|\\s+$"), "");
     }
 
     /**
