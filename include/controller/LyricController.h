@@ -70,8 +70,8 @@ public:
 
         /* newSongLoaded (加载新歌) */
         connect(&SignalBusSingleton::get(), &SignalBusSingleton::newSongLoaded, this,
-            [this](HX::MusicInfo const& info) {
-            findLyricFile(info);
+            [this](HX::MusicInfo* info) {
+            findLyricFile(*info);
         });
     }
 

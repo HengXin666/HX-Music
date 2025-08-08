@@ -32,7 +32,14 @@ int main(int argc, char* argv[]) {
         "PlayMode", // QML 中使用名
         "PlayMode 是一个枚举类型, 不可实例化"
     );
-    
+
+    // 注册 音频信息
+    qmlRegisterType<HX::MusicInfo>(
+        "HX.Music",
+        1, 0,
+        "MusicInfo"
+    );
+
     QQmlContext* cp = engine.rootContext();
     // 信号总线
     cp->setContextProperty("SignalBusSingleton", &HX::SignalBusSingleton::get());

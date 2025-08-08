@@ -20,23 +20,20 @@ Slider {
     }
 
     Connections {
-        target: SignalBusSingleton
-
+        id: songConn
+        target: null
         // 绑定信号: 更新歌曲
-        function onNewSongLoaded(song) {
-            console.log("新歌加载:", musicController.getLengthInMilliseconds());
-            root.to = musicController.getLengthInMilliseconds();
-            console.log("播放进度变化", pos, "但是:", root.from, " -> ", root.to, "当前: ", root.value);
+        function onNewSongLoaded(song: MusicInfo) {
+            root.to = song.getLengthInMilliseconds();
         }
 
         // 绑定信号: 播放位置变化
         function onMusicPlayPosChanged(pos: int) {
-            // { debug
-            if (pos > root.to) /* [[unlikely]] */ {
-                root.to = musicController.getLengthInMilliseconds();
-            }
-            // } debug
             root.value = pos;
         }
+    }
+
+    Component.onCompleted: {
+        songConn.target = SignalBusSingleton;
     }
 }

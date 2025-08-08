@@ -38,7 +38,7 @@ struct MusicCommand {
         auto fileInfo = QFileInfo{path};
         auto info = MusicInfo{fileInfo};
         GlobalSingleton::get().musicConfig.isPlay = true;
-        SignalBusSingleton::get().newSongLoaded(info);
+        SignalBusSingleton::get().newSongLoaded(&info);
         GlobalSingleton::get().music.setLengthInMilliseconds(info.getLengthInMilliseconds());
         GlobalSingleton::get().music.switchMusic(info.filePath()).play();
     }

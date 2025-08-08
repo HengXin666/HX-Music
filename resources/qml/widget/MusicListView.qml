@@ -166,6 +166,7 @@ Item {
         }
 
         Component.onCompleted: {
+            // @todo 应该支持从配置恢复
             listView.currentIndex = -1;
         }
     }

@@ -53,9 +53,9 @@ public:
 Q_SIGNALS:
     /**
      * @brief 加载新歌信号
-     * @param info 歌曲信息
+     * @param info 歌曲信息 (QML中使用自定义类型只能是指针传递)
      */
-    void newSongLoaded(HX::MusicInfo const& info);
+    void newSongLoaded(HX::MusicInfo* info);
 
     /**
      * @brief 音量变化

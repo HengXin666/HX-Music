@@ -5,7 +5,6 @@ import QtQuick.Layouts
 
 Item {
     id: root
-    width: 400
     height: 40
 
     property var itemData: []       // 用户数据 {text, onClick}
@@ -24,6 +23,20 @@ Item {
     // 轻量委托
     property color textColor: "#f6f6f6"
     property int fontPixelSize: 16
+
+    function checkWidth() {
+        scrollAnimation.stop();
+        flickable.contentX = 0;
+
+        // 更新动画参数
+        scrollAnimation.from = 0;
+        scrollAnimation.to = root._contentWidth + root.spacingWidth;
+        scrollAnimation.duration = (scrollAnimation.to / root.scrollSpeed) * 1000;
+
+        if (root._needScrolling && !root._hovered) {
+            scrollAnimation.start();
+        }
+    }
 
     // 背景容器
     Rectangle {
@@ -161,23 +174,13 @@ Item {
         }
 
         onWidthChanged: {
-            scrollAnimation.stop();
-            flickable.contentX = 0;
-
-            // 更新动画参数
-            scrollAnimation.from = 0;
-            scrollAnimation.to = root._contentWidth + root.spacingWidth;
-            scrollAnimation.duration = (scrollAnimation.to / root.scrollSpeed) * 1000;
-
-            if (root._needScrolling && !root._hovered) {
-                scrollAnimation.start();
-            }
+            root.checkWidth();
         }
-    }
 
-    // 初始化后重置位置
-    Component.onCompleted: {
-        flickable.contentX = 0;
-        scrollAnimation.start();
+        // 初始化后重置位置
+        Component.onCompleted: {
+            flickable.contentX = 0;
+            root.checkWidth();
+        }
     }
 }

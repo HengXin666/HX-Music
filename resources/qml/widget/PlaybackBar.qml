@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Material
@@ -30,11 +31,24 @@ Item {
 
                 // 封面
                 Item {
+                    id: cover
                     Layout.preferredWidth: 60
                     Layout.preferredHeight: 60
+                    property string url: "qrc:/icons/audio.svg"
+
                     MusicActionButton {
                         anchors.fill: parent
                         url: "qrc:/icons/audio.svg"
+                        visible: cover.url == "qrc:/icons/audio.svg"
+                    }
+
+                    Image {
+                        source: cover.url
+                        visible: cover.url != "qrc:/icons/audio.svg"
+
+                        anchors.fill: parent
+                        anchors.verticalCenter: parent.verticalCenter
+                        fillMode: Image.PreserveAspectFit
                     }
                 }
 
@@ -43,30 +57,36 @@ Item {
 
                     // 滚动文本: 歌曲名 - 歌手... (可点击)
                     LoopingScrollingText {
+                        id: title
                         Layout.fillWidth: true
                         itemData: [
-                            { text: "__xxx__", onClick: function() { console.log("点击xxx") } },
-                            { text: "-", onClick: function() { console.log("点击2") } },
-                            { text: "__yyy__", onClick: function() { console.log("点击yyy") } },
-                            { text: "、", onClick: function() { console.log("点击4") } },
-                            { text: "__zzz__", onClick: function() { console.log("点击zzz") } },
+                            {
+                                text: "HX-Music",
+                                onClick: function () {
+                                    console.log("HX-Music: Hi");
+                                }
+                            }
                         ]
                     }
 
-                    // 操作按钮
+                    // 操作按钮 @todo: 大小需要调整
                     RowLayout {
                         Layout.alignment: Qt.AlignVCenter
                         spacing: 10
-                        MusicActionButton { // 喜欢
+                        MusicActionButton {
+                            // 喜欢
                             url: "qrc:/icons/like.svg"
                         }
-                        MusicActionButton { // 评论
+                        MusicActionButton {
+                            // 评论
                             url: "qrc:/icons/message.svg"
                         }
-                        MusicActionButton { // 下载
+                        MusicActionButton {
+                            // 下载
                             url: "qrc:/icons/download.svg"
                         }
-                        MusicActionButton { // 分享
+                        MusicActionButton {
+                            // 分享
                             url: "qrc:/icons/share.svg"
                         }
                     }
@@ -143,14 +163,6 @@ Item {
                         id: musicLengthText
                         text: "--:--"
                         color: "#c2c2c2"
-                        Connections {
-                            target: SignalBusSingleton
-                            // 绑定信号: 更新歌曲
-                            function onNewSongLoaded(_) {
-                                musicLengthText.text = musicProgressBarLayout.formatTime(
-                                    musicController.getLengthInMilliseconds() / 1000);
-                            }
-                        }
                     }
                 }
             }
@@ -167,13 +179,11 @@ Item {
                 }
 
                 // 播放序列
-                PlayModeButton {
-                }
+                PlayModeButton {}
 
                 // 音量
-                VolumeButton {
-                }
-                
+                VolumeButton {}
+
                 // 歌词
                 Item {
                     Layout.preferredWidth: 32
@@ -186,5 +196,62 @@ Item {
                 }
             }
         }
+    }
+
+    Connections {
+        id: songConn
+        target: null
+
+        // 绑定信号: 更新歌曲
+        function onNewSongLoaded(song: MusicInfo) {
+            // 更新: 歌曲名 - 歌手
+            const musicTitle = song.getTitle();
+            const artists = song.getArtistList();
+            const dataList = [
+                {
+                    text: musicTitle,
+                    onClick: function () {
+                        console.log(`点击了: ${musicTitle}`);
+                    }
+                },
+                {
+                    text: " - ",
+                    onClick: () => {}
+                }
+            ];
+            let isBegin = true;
+            for (const name of artists) {
+                if (isBegin) {
+                    isBegin = false;
+                } else {
+                    dataList.push({
+                        text: "、",
+                        onClick: () => {}
+                    });
+                }
+                dataList.push({
+                    text: name,
+                    onClick: function () {
+                        console.log(`点击了: ${name}`);
+                    }
+                });
+            }
+            title.itemData = dataList;
+
+            // 更新封面
+            cover.url = `image://imgPool/${song.filePath()}`;
+
+            // 更新时长
+            musicLengthText.text = musicProgressBarLayout.formatTime(song.getLengthInMilliseconds() / 1000);
+
+            // 更新滚动播放状态, 需要延迟一步, 否则有bug, 内部还没有来得及更新
+            Qt.callLater(() => {
+                title.checkWidth(); // 外部长度没有刷新
+            });
+        }
+    }
+
+    Component.onCompleted: {
+        songConn.target = SignalBusSingleton;
     }
 }

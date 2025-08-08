@@ -37,21 +37,23 @@ namespace HX {
 
 class MusicInfo : public QObject {
     Q_OBJECT
+    Q_PROPERTY(QString title READ getTitle CONSTANT)
+    Q_PROPERTY(QStringList artistList READ getArtistList CONSTANT)
 public:
-    explicit MusicInfo(QFileInfo const& fileInfo) 
-        : _fileInfo(fileInfo)
-        , mpegFile(QFile::encodeName(_fileInfo.canonicalFilePath()).constData())
+    explicit MusicInfo(QFileInfo fileInfo) 
+        : _fileInfo(std::move(fileInfo))
+        , _mpegFile(QFile::encodeName(_fileInfo.canonicalFilePath()).constData())
     {}
 
     /**
      * @brief 获取音频标题
      * @return QString `获取失败`则返回文件名
      */
-    QString getTitle() const {
-        if (mpegFile.isNull() || !mpegFile.tag()) {
+    Q_INVOKABLE QString getTitle() const {
+        if (_mpegFile.isNull() || !_mpegFile.tag()) {
             return _fileInfo.fileName();
         }
-        auto res = QString::fromStdString(mpegFile.tag()->title().to8Bit(true));
+        auto res = QString::fromStdString(_mpegFile.tag()->title().to8Bit(true));
         return res.isEmpty() ? _fileInfo.fileName() : res;
     }
 
@@ -60,11 +62,11 @@ public:
      * @param errRes 获取失败返回的值
      * @return QString
      */
-    QString getArtist(QString&& errRes = "") const {
-        if (mpegFile.isNull() || !mpegFile.tag()) {
+    Q_INVOKABLE QString getArtist(QString errRes = "") const {
+        if (_mpegFile.isNull() || !_mpegFile.tag()) {
             return errRes;
         }
-        return QString::fromStdString(mpegFile.tag()->artist().to8Bit(true));
+        return QString::fromStdString(_mpegFile.tag()->artist().to8Bit(true));
     }
 
     /**
@@ -72,11 +74,11 @@ public:
      * @param errRes 
      * @return QVector<QString> 每一项就是一个歌手名
      */
-    QStringList getArtistList(QStringList&& errRes = {}) const {
-        if (mpegFile.isNull()) {
+    Q_INVOKABLE QStringList getArtistList(QStringList errRes = {}) const {
+        if (_mpegFile.isNull()) {
             return errRes;
         }
-        auto* tag = mpegFile.tag();
+        auto* tag = _mpegFile.tag();
         if (!tag) {
             return errRes;
         }
@@ -113,10 +115,10 @@ public:
      * @return QString
      */
     QString getAlbum(QString&& errRes = "") const {
-        if (mpegFile.isNull() || !mpegFile.tag()) {
+        if (_mpegFile.isNull() || !_mpegFile.tag()) {
             return errRes;
         }
-        return QString::fromStdString(mpegFile.tag()->album().to8Bit(true));
+        return QString::fromStdString(_mpegFile.tag()->album().to8Bit(true));
     }
 
     /**
@@ -125,10 +127,10 @@ public:
      * @return QString
      */
     QString formatTimeLengthToHHMMSS(QString&& errRes = "") const {
-        if (mpegFile.isNull() || !mpegFile.audioProperties()) {
+        if (_mpegFile.isNull() || !_mpegFile.audioProperties()) {
             return errRes;
         }
-        if (auto sec = mpegFile.audioProperties()->lengthInSeconds();
+        if (auto sec = _mpegFile.audioProperties()->lengthInSeconds();
             sec < 3600) {
             return QTime{0, 0}.addSecs(sec).toString("mm:ss");
         } else {
@@ -142,10 +144,10 @@ public:
      * @return int
      */
     int getLengthInSeconds(int errRes = 0) const {
-        if (mpegFile.isNull() || !mpegFile.audioProperties()) {
+        if (_mpegFile.isNull() || !_mpegFile.audioProperties()) {
             return errRes;
         }
-        return mpegFile.audioProperties()->lengthInSeconds();
+        return _mpegFile.audioProperties()->lengthInSeconds();
     }
 
     /**
@@ -153,11 +155,11 @@ public:
      * @param errRes 获取失败返回的值
      * @return int
      */
-    int getLengthInMilliseconds(int errRes = 0) const {
-        if (mpegFile.isNull() || !mpegFile.audioProperties()) {
+    Q_INVOKABLE int getLengthInMilliseconds(int errRes = 0) const {
+        if (_mpegFile.isNull() || !_mpegFile.audioProperties()) {
             return errRes;
         }
-        return mpegFile.audioProperties()->lengthInMilliseconds();
+        return _mpegFile.audioProperties()->lengthInMilliseconds();
     }
 
     /**
@@ -173,7 +175,7 @@ public:
             return std::nullopt;
         };
 
-        auto* baseFile = mpegFile.file();
+        auto* baseFile = _mpegFile.file();
         if (!baseFile) {
             return {};
         }
@@ -214,7 +216,7 @@ public:
         return {};
     }
 
-    QString filePath() const {
+    Q_INVOKABLE QString filePath() const {
         return _fileInfo.filePath();
     }
 
@@ -222,9 +224,30 @@ public:
         return _fileInfo;
     }
 
+    MusicInfo(const MusicInfo& that)
+        : _fileInfo{that._fileInfo}
+        , _mpegFile{that._mpegFile}
+    {}
+
+    MusicInfo& operator=(const MusicInfo& that) {
+        _fileInfo = that._fileInfo;
+        _mpegFile = that._mpegFile;
+        return *this;
+    }
+
+    MusicInfo(MusicInfo&& that) noexcept 
+        : _fileInfo{std::move(that._fileInfo)}
+        , _mpegFile{std::move(that._mpegFile)}
+    {}
+
+    MusicInfo& operator=(MusicInfo&& that) noexcept {
+        std::swap(_fileInfo, that._fileInfo);
+        std::swap(_mpegFile, that._mpegFile);
+        return *this;
+    }
 private:
-    QFileInfo const& _fileInfo;
-    TagLib::FileRef mpegFile;
+    QFileInfo _fileInfo;
+    TagLib::FileRef _mpegFile;
 };
 
 } // namespace HX
