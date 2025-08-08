@@ -30,6 +30,8 @@ class ImagePoll : public QQuickImageProvider {
 
     ImagePoll()
         : QQuickImageProvider{QQuickImageProvider::Image}
+        , _noFindImg{":/icons/audio.svg"}
+        , _imgPool{}
     {}
 
     ImagePoll& operator=(ImagePoll&&) noexcept = delete;
@@ -45,8 +47,8 @@ public:
         [[maybe_unused]] QSize const& requestedSize
     ) override {
         auto it = _imgPool.find(id);
-        if (it == _imgPool.end()) [[unlikely]] {
-            return {}; // @todo 需要一个默认的加载失败的img
+        if (it == _imgPool.end()) {
+            return _noFindImg;
         }
         auto& res = it.value();
         if (size) {
@@ -63,6 +65,7 @@ public:
         _imgPool.remove(key);
     }
 private:
+    QImage _noFindImg;
     QHash<QString, QImage> _imgPool;
 };
 
