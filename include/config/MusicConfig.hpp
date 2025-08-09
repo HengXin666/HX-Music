@@ -47,6 +47,8 @@ struct MusicConfig {
     float volume;       // 音量大小
     PlayMode playMode;  // 播放模式
     qint64 position;    // 播放位置
+                        // @todo 歌单索引?? 如何保存上一次播放的歌曲加载?? 保存 URL ??
+    int listIndex;      // 处于歌单的索引
     bool isPlay{false}; // 是正在播放
 };
 

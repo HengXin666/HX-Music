@@ -137,7 +137,7 @@ Item {
                     }
                 }
 
-                // 专辑(靠左, 自适应宽度) listView.currentIndex = delegateRoot.index
+                // 专辑(靠左, 自适应宽度)
                 Text {
                     id: albumColumn
                     text: delegateRoot.model.album.length > 16
@@ -165,9 +165,17 @@ Item {
             }
         }
 
+        onCurrentIndexChanged: {
+            musicController.listIndex = listView.currentIndex;
+        }
+
         Component.onCompleted: {
             // @todo 应该支持从配置恢复
-            listView.currentIndex = -1;
+            listView.currentIndex = musicController.listIndex;
+
+            musicController.listIndexChanged.connect((idx) => {
+                listView.currentIndex = idx;
+            });
         }
     }
 

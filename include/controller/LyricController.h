@@ -56,11 +56,7 @@ public:
     {
         _assParse.setFrameSize(1920, 1080);
 
-        if (auto uri = GlobalSingleton::get().playQueue.now()) {
-            findLyricFile(HX::MusicInfo{QFileInfo{*uri}});
-        } else {
-            _assParse.readMemory(internal::readQrcFile(":default/default.ass"));
-        }
+        _assParse.readMemory(internal::readQrcFile(":default/default.ass"));
 
         /* musicPlayPosChanged (歌曲播放位置变化) */
         connect(&SignalBusSingleton::get(), &SignalBusSingleton::musicPlayPosChanged, this,
@@ -123,7 +119,7 @@ public:
                 // 清屏
                 _lastImage = {1, 1, QImage::Format_ARGB32};
                 _lastImage.fill(Qt::transparent);
-                emit updateLyriced();
+                Q_EMIT updateLyriced();
             }
             return;
         }
@@ -161,7 +157,7 @@ public:
         painter.end();
 
         _lastImage = std::move(result);
-        emit updateLyriced(); // 发送渲染完成信号
+        Q_EMIT updateLyriced(); // 发送渲染完成信号
     }
 
     // QML 调用

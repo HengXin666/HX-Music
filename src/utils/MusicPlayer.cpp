@@ -34,6 +34,6 @@ HX::MusicPlayer::MusicPlayer()
 
     // 播放位置变化
     connect(&_player, &QMediaPlayer::positionChanged, this, [this](qint64 pos) {
-        SignalBusSingleton::get().musicPlayPosChanged(pos);
+        Q_EMIT SignalBusSingleton::get().musicPlayPosChanged(pos);
     });
 }

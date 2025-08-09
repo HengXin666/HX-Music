@@ -21,8 +21,13 @@
 #define _HX_MUSIC_LIST_MODEL_H_
 
 #include <QAbstractListModel>
+#include <cmd/MusicCommand.hpp>
 #include <utils/MusicInfo.hpp>
 #include <singleton/ImagePool.h>
+#include <singleton/GlobalSingleton.hpp>
+#include <singleton/SignalBusSingleton.h>
+
+#include <random>
 
 namespace HX {
 
@@ -44,10 +49,90 @@ class MusicListModel : public QAbstractListModel {
         QString duration;       // 时长 (单位: 秒(s))
         QString url;            // path && img.url && imgPool-id && 配置文件歌曲路径
     };
+
+    int findByUrl(QString const& url) const noexcept {
+        for (int i = 0; auto const& it : _musicArr) {
+            if (it.url == url) {
+                return i;
+            }
+            ++i;
+        }
+        return -1;
+    }
 public:
     explicit MusicListModel(QObject* parent = nullptr)
         : QAbstractListModel(parent)
-    {}
+    {
+        // 下首歌
+        connect(
+            &SignalBusSingleton::get(),
+            &SignalBusSingleton::nextMusicByMusicListModel,
+            this,
+            [this](int index) {
+            switch (GlobalSingleton::get().musicConfig.playMode) {
+            case PlayMode::RandomPlay:  // 随机播放
+                if (auto it = GlobalSingleton::get().playQueue.next()) {
+                    MusicCommand::switchMusic<false>(*it);
+                    Q_EMIT SignalBusSingleton::get().musicResumed();
+                    GlobalSingleton::get().musicConfig.listIndex = findByUrl(*it);
+                    Q_EMIT SignalBusSingleton::get().listIndexChanged();
+                    break;
+                } else {
+                    index = std::uniform_int_distribution<int>{
+                        0, static_cast<int>(_musicArr.size()) - 1
+                    }(_rng);
+                }
+            [[fallthrough]];
+            case PlayMode::ListLoop:    // 列表循环
+            case PlayMode::SingleLoop:  // 单曲循环
+            {
+                auto idx = (index + 1) % static_cast<int>(_musicArr.size());
+                MusicCommand::switchMusic(_musicArr[idx].url);
+                GlobalSingleton::get().musicConfig.listIndex = idx;
+                Q_EMIT SignalBusSingleton::get().listIndexChanged();
+                break;
+            }
+            case PlayMode::PlayModeCnt: // !保留!
+                break;
+            }
+        });
+
+        // 上首歌
+        connect(
+            &SignalBusSingleton::get(),
+            &SignalBusSingleton::prevMusicByMusicListModel,
+            this,
+            [this](int index) {
+            switch (GlobalSingleton::get().musicConfig.playMode) {
+            case PlayMode::RandomPlay:  // 随机播放
+                if (auto it = GlobalSingleton::get().playQueue.prev()) {
+                    MusicCommand::switchMusic<false>(*it);
+                    Q_EMIT SignalBusSingleton::get().musicResumed();
+                    GlobalSingleton::get().musicConfig.listIndex = findByUrl(*it);
+                    Q_EMIT SignalBusSingleton::get().listIndexChanged();
+                    break;
+                } else {
+                    // 也是随机
+                    index = std::uniform_int_distribution<int>{
+                        0, static_cast<int>(_musicArr.size()) - 1
+                    }(_rng);
+                }
+            [[fallthrough]];
+            case PlayMode::ListLoop:    // 列表循环
+            case PlayMode::SingleLoop:  // 单曲循环
+            {
+                auto idx = (index - 1 + static_cast<int>(_musicArr.size())) 
+                              % static_cast<int>(_musicArr.size());
+                MusicCommand::switchMusic(_musicArr[idx].url);
+                GlobalSingleton::get().musicConfig.listIndex = idx;
+                Q_EMIT SignalBusSingleton::get().listIndexChanged();
+                break;
+            }
+            case PlayMode::PlayModeCnt: // !保留!
+                break;
+            }
+        });
+    }
 
     int rowCount(const QModelIndex& parent = QModelIndex()) const override {
         Q_UNUSED(parent);
@@ -100,7 +185,7 @@ public:
         QString duration,
         QString const& url
     ) {
-        emit beginInsertRows({}, _musicArr.size(), _musicArr.size());
+        Q_EMIT beginInsertRows({}, _musicArr.size(), _musicArr.size());
         _musicArr.append({
             std::move(title),
             std::move(artist),
@@ -108,16 +193,17 @@ public:
             std::move(duration),
             url
         });
-        emit endInsertRows();
+        Q_EMIT endInsertRows();
     }
 
     Q_INVOKABLE void clear() {
-        emit beginResetModel();
+        Q_EMIT beginResetModel();
         _musicArr.clear();
-        emit endResetModel();
+        Q_EMIT endResetModel();
     }
 
 private:
+    std::mt19937 _rng{std::random_device{}()};
     QVector<MusicInfoData> _musicArr;
 };
 

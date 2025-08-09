@@ -89,6 +89,23 @@ Q_SIGNALS:
      * @param isLock true: 上锁
      */
     void lyricViewLockChanged(bool isLock);
+
+    /**
+     * @brief 当前歌曲 index 变化信号 (MusicListModel 触发给 控制器)
+     */
+    void listIndexChanged();
+
+    /**
+     * @brief 发送信号给 MusicListModel 让他根据模式播放下首歌
+     * @param index 当前歌曲 index
+     */
+    void nextMusicByMusicListModel(int index);
+
+    /**
+     * @brief 发送信号给 MusicListModel 让他根据模式播放上首歌
+     * @param index 当前歌曲 index
+     */
+    void prevMusicByMusicListModel(int index);
 };
 
 } // namespace HX

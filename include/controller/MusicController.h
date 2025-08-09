@@ -40,6 +40,16 @@ namespace HX {
 class MusicController : public QObject {
     Q_OBJECT
 public:
+    MusicController() {
+        // 订阅更新索引
+        connect(
+            &SignalBusSingleton::get(),
+            &SignalBusSingleton::listIndexChanged,
+            this,
+            [this]() { Q_EMIT listIndexChanged(getListIndex()); }
+        );
+    }
+
     Q_INVOKABLE void prev() {
         qDebug() << "上一首";
         MusicCommand::prevMusic();
@@ -59,7 +69,7 @@ public:
         GlobalSingleton::get().musicConfig.isPlay
             ? MusicCommand::pause()
             : MusicCommand::resume();
-        emit playingChanged(GlobalSingleton::get().musicConfig.isPlay);
+        Q_EMIT playingChanged(GlobalSingleton::get().musicConfig.isPlay);
     }
 
     /**
@@ -68,7 +78,7 @@ public:
      */
     Q_INVOKABLE void playMusic(QString const& path) {
         MusicCommand::switchMusic(path);
-        emit playingChanged(true);
+        Q_EMIT playingChanged(true);
     }
 
     /**
@@ -83,7 +93,7 @@ public:
      */
     Q_INVOKABLE void setPlayMode(PlayMode mode) {
         MusicCommand::setPlayMode(mode);
-        emit playModeChanged(mode);
+        Q_EMIT playModeChanged(mode);
     }
 
     /**
@@ -116,7 +126,7 @@ public:
      */
     Q_INVOKABLE void setVolume(float volume) {
         MusicCommand::setVolume(volume);
-        emit volumeChanged(volume);
+        Q_EMIT volumeChanged(volume);
     }
 
     /**
@@ -142,12 +152,29 @@ public:
      */
     void setPlaying(bool val) noexcept {
         GlobalSingleton::get().musicConfig.isPlay = val;
-        emit playingChanged(val);
+        Q_EMIT playingChanged(val);
+    }
+
+    /**
+     * @brief 获取当前所在歌单的选择音乐的索引 (-1为无效, 即未选择)
+     * @return int 
+     */
+    int getListIndex() const noexcept {
+        return GlobalSingleton::get().musicConfig.listIndex;
+    }
+
+    /**
+     * @brief 设置当前所在歌单的选择音乐的索引 (-1为无效, 即未选择)
+     * @param index 
+     */
+    void setListIndex(int index) noexcept {
+        GlobalSingleton::get().musicConfig.listIndex = index;
     }
 Q_SIGNALS:
     void playingChanged(bool isPlaying);
     void volumeChanged(float volume);
     void playModeChanged(PlayMode mode);
+    void listIndexChanged(int index);
 
 private:
     Q_PROPERTY(
@@ -167,6 +194,12 @@ private:
         READ getPlayMode
         WRITE setPlayMode 
         NOTIFY playModeChanged
+    );
+    Q_PROPERTY(
+        int listIndex 
+        READ getListIndex
+        WRITE setListIndex 
+        NOTIFY listIndexChanged
     );
 };
 

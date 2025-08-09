@@ -39,6 +39,7 @@ public:
         _settings.setValue("Music/Volume", config.volume);
         _settings.setValue("Music/PlayMode", static_cast<int>(config.playMode));
         _settings.setValue("Music/Position", config.position);
+        _settings.setValue("Music/ListIndex", config.listIndex);
     }
 
     MusicConfig loadConfig() {
@@ -46,6 +47,7 @@ public:
         config.volume = _settings.value("Music/Volume", 0.75).toFloat();
         config.playMode = static_cast<PlayMode>(_settings.value("Music/PlayMode", static_cast<int>(PlayMode::ListLoop)).toInt());
         config.position = _settings.value("Music/Position", 0).toLongLong();
+        config.listIndex = _settings.value("Music/ListIndex", -1).toInt();
         return config;
     }
 

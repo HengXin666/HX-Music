@@ -33,12 +33,15 @@ struct MusicCommand {
      * @brief 切换音乐, 并且播放
      * @param it 
      */
+    template <bool IsAddQueue = true>
     static void switchMusic(PlayQueue::Type path) {
-        GlobalSingleton::get().playQueue.push(path);
+        if constexpr (IsAddQueue) {
+            GlobalSingleton::get().playQueue.push(path);
+        }
         auto fileInfo = QFileInfo{path};
         auto info = MusicInfo{fileInfo};
         GlobalSingleton::get().musicConfig.isPlay = true;
-        SignalBusSingleton::get().newSongLoaded(&info);
+        Q_EMIT SignalBusSingleton::get().newSongLoaded(&info);
         GlobalSingleton::get().music.setLengthInMilliseconds(info.getLengthInMilliseconds());
         GlobalSingleton::get().music.switchMusic(info.filePath()).play();
     }
@@ -50,7 +53,7 @@ struct MusicCommand {
     static void setVolume(float volume) {
         GlobalSingleton::get().musicConfig.volume = volume;
         GlobalSingleton::get().music.setVolume(volume);
-        SignalBusSingleton::get().volumeChanged(volume);
+        Q_EMIT SignalBusSingleton::get().volumeChanged(volume);
     }
 
     /**
@@ -59,7 +62,7 @@ struct MusicCommand {
     static void pause() {
         GlobalSingleton::get().musicConfig.isPlay = false;
         GlobalSingleton::get().music.pause();
-        SignalBusSingleton::get().musicPaused();
+        Q_EMIT SignalBusSingleton::get().musicPaused();
     }
 
     /**
@@ -74,7 +77,7 @@ struct MusicCommand {
         // 难道是因为qt层次没有动. 而ff层没有停吗? 这不对吧
         setMusicPos(GlobalSingleton::get().music.getNowPos());
         GlobalSingleton::get().music.play();
-        SignalBusSingleton::get().musicResumed();
+        Q_EMIT SignalBusSingleton::get().musicResumed();
     }
 
     /**
@@ -82,49 +85,25 @@ struct MusicCommand {
      */
     static void setPlayMode(PlayMode mode) {
         GlobalSingleton::get().musicConfig.playMode = mode;
-        SignalBusSingleton::get().playModeChanged(mode);
+        Q_EMIT SignalBusSingleton::get().playModeChanged(mode);
     }
 
     /**
      * @brief 下一首
      */
     static void nextMusic() {
-        switch (GlobalSingleton::get().musicConfig.playMode) {
-        case PlayMode::RandomPlay:  // 随机播放
-            if (auto it = GlobalSingleton::get().playQueue.next()) {
-                switchMusic(*it);
-                SignalBusSingleton::get().musicResumed();
-                break;
-            }
-        [[fallthrough]];
-        case PlayMode::ListLoop:    // 列表循环
-        case PlayMode::SingleLoop:  // 单曲循环
-            // 从 MusicListModel 中得
-            break;
-        case PlayMode::PlayModeCnt: // !保留!
-            break;
-        }
+        Q_EMIT SignalBusSingleton::get().nextMusicByMusicListModel(
+            GlobalSingleton::get().musicConfig.listIndex
+        );
     }
 
     /**
      * @brief 上一首
      */
     static void prevMusic() {
-        switch (GlobalSingleton::get().musicConfig.playMode) {
-        case PlayMode::RandomPlay:  // 随机播放
-            if (auto it = GlobalSingleton::get().playQueue.prev()) {
-                switchMusic(*it);
-                SignalBusSingleton::get().musicResumed();
-                break;
-            }
-        [[fallthrough]];
-        case PlayMode::ListLoop:    // 列表循环
-        case PlayMode::SingleLoop:  // 单曲循环
-            // 应该从 MusicListModel 中变
-            break;
-        case PlayMode::PlayModeCnt: // !保留!
-            break;
-        }
+        Q_EMIT SignalBusSingleton::get().prevMusicByMusicListModel(
+            GlobalSingleton::get().musicConfig.listIndex
+        );
     }
 
     /**
@@ -132,7 +111,7 @@ struct MusicCommand {
      * @param pos 
      */
     static void setMusicPos(qint64 pos) {
-        GlobalSingleton::get().music.setPosition(pos);
+        Q_EMIT GlobalSingleton::get().music.setPosition(pos);
     }
 };
 

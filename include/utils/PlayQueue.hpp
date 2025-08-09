@@ -39,20 +39,15 @@ public:
         , _it{_pq.end()}
     {}
 
-    TypeOpt now() {
-        if (_it == _pq.end()) [[unlikely]] {
-            return {};
-        }
-        return *_it;
-    }
-
     /**
      * @brief 歌单列表下一首
      * @return ItOpt 
      */
     TypeOpt next() {
-        itNext();
-        return now();
+        if (_it == --_pq.end()) {
+            return {};
+        }
+        return *++_it;
     }
 
     /**
@@ -60,8 +55,10 @@ public:
      * @return ItOpt 
      */
     TypeOpt prev() {
-        itPrev();
-        return now();
+        if (_it == _pq.begin()) {
+            return {};
+        }
+        return *--_it;
     }
 
     /**
@@ -78,17 +75,6 @@ public:
         return _pq.empty();
     }
 private:
-    void itNext() noexcept {
-        if (++_it == _pq.end())
-            _it = _pq.begin();
-    }
-
-    void itPrev() noexcept {
-        if (_it == _pq.begin())
-            _it = _pq.end();
-        --_it;
-    }
-
     std::list<Type> _pq; // 歌曲路径
     decltype(_pq.begin()) _it; // 当前歌曲迭代器
 };
