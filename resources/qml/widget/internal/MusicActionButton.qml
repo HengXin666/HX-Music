@@ -8,9 +8,6 @@ Button {
     property string pressedColor: "#FF00CC" // 点击时颜色
     property string hoveredColor: "gold" // 悬停颜色
     
-    width: 64
-    height: 64
-
     background: Rectangle { color: "transparent" }
     Image {
         id: img

@@ -25,7 +25,6 @@ Item {
             }
         }
     }
-
     property real maxTitleColumnWidth: 0
     property real maxAlbumColumnWidth: 0
 
@@ -54,14 +53,33 @@ Item {
                 id: mouseArea
                 property bool _hovered: false // 是否悬浮
                 anchors.fill: parent
-                onDoubleClicked: {
-                    listView.currentIndex = delegateRoot.index;
-                    console.log("播放:", delegateRoot.index);
-                    musicController.playMusic(delegateRoot.model.url);
+
+                // 双击是选择
+                onDoubleClicked: (mouse) => {
+                    if (mouse.button === Qt.LeftButton) {
+                        listView.currentIndex = delegateRoot.index;
+                        musicController.playMusic(delegateRoot.model.url);
+                    }
                 }
+
                 hoverEnabled: true
                 onEntered: _hovered = true;
                 onExited: _hovered = false;
+
+                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                // 右键开菜单
+                onPressed: (mouse) => {
+                    if (mouse.button === Qt.RightButton) {
+                        // 设置菜单的当前索引（供菜单项使用）
+                        menu.index = delegateRoot.index;
+
+                        // 换算为父上控件的坐标系
+                        var p = mouseArea.mapToItem(root, mouse.x, mouse.y);
+                        menu.x = p.x;
+                        menu.y = p.y;
+                        menu.visible = true;
+                    }
+                }
             }
 
             RowLayout {
@@ -173,9 +191,29 @@ Item {
             // @todo 应该支持从配置恢复
             listView.currentIndex = musicController.listIndex;
 
+            // 绑定 当前选择项更新信号
             musicController.listIndexChanged.connect((idx) => {
                 listView.currentIndex = idx;
             });
+        }
+    }
+
+    // 右键菜单
+    Menu {
+        id: menu
+        property int index: -1
+
+        MenuItem {
+            text: "播放"
+            onTriggered: {
+                musicController.playMusic(musicListModel.getUrl(menu.index));
+            }
+        }
+        MenuItem {
+            text: "删除"
+            onTriggered: {
+                // @todo
+            }
         }
     }
 

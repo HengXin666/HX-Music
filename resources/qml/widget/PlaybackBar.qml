@@ -20,20 +20,21 @@ Item {
 
         RowLayout {
             anchors.fill: parent
-            anchors.margins: 10
+            Layout.margins: 10
             spacing: 20
 
             // 靠左
             RowLayout {
                 id: leftLayout
-                Layout.minimumWidth: 200
+                Layout.minimumWidth: 360
                 Layout.alignment: Qt.AlignVCenter
 
                 // 封面
                 Item {
                     id: cover
-                    Layout.preferredWidth: 60
-                    Layout.preferredHeight: 60
+                    Layout.preferredWidth: 64
+                    Layout.preferredHeight: 64
+                    Layout.margins: 3
                     property string url: "qrc:/icons/audio.svg"
 
                     MusicActionButton {
@@ -47,7 +48,7 @@ Item {
                         visible: cover.url != "qrc:/icons/audio.svg"
 
                         anchors.fill: parent
-                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.centerIn: parent
                         fillMode: Image.PreserveAspectFit
                     }
                 }
@@ -72,20 +73,30 @@ Item {
                     // 操作按钮 @todo: 大小需要调整
                     RowLayout {
                         Layout.alignment: Qt.AlignVCenter
+                        id: actionButtons
+                        property int actionButtonSize: 24
                         spacing: 10
                         MusicActionButton {
+                            Layout.preferredWidth: actionButtons.actionButtonSize
+                            Layout.preferredHeight: actionButtons.actionButtonSize
                             // 喜欢
                             url: "qrc:/icons/like.svg"
                         }
                         MusicActionButton {
+                            Layout.preferredWidth: actionButtons.actionButtonSize
+                            Layout.preferredHeight: actionButtons.actionButtonSize
                             // 评论
                             url: "qrc:/icons/message.svg"
                         }
                         MusicActionButton {
+                            Layout.preferredWidth: actionButtons.actionButtonSize
+                            Layout.preferredHeight: actionButtons.actionButtonSize
                             // 下载
                             url: "qrc:/icons/download.svg"
                         }
                         MusicActionButton {
+                            Layout.preferredWidth: actionButtons.actionButtonSize
+                            Layout.preferredHeight: actionButtons.actionButtonSize
                             // 分享
                             url: "qrc:/icons/share.svg"
                         }
@@ -103,18 +114,26 @@ Item {
 
                 // 歌曲操作按钮 @todo: 大小需要调整
                 RowLayout {
+                    id: songActionButton
+                    property int actionButtonSize: 32
                     Layout.fillWidth: true
                     Layout.alignment: Qt.AlignHCenter
                     spacing: 10
                     MusicActionButton {
+                        Layout.preferredWidth: songActionButton.actionButtonSize
+                        Layout.preferredHeight: songActionButton.actionButtonSize
                         url: "qrc:/icons/previous.svg"
                         onClicked: musicController.prev()
                     }
                     MusicActionButton {
+                        Layout.preferredWidth: songActionButton.actionButtonSize
+                        Layout.preferredHeight: songActionButton.actionButtonSize
                         url: musicController.isPlaying ? "qrc:/icons/pause.svg" : "qrc:/icons/play.svg"
                         onClicked: musicController.togglePause()
                     }
                     MusicActionButton {
+                        Layout.preferredWidth: songActionButton.actionButtonSize
+                        Layout.preferredHeight: songActionButton.actionButtonSize
                         url: "qrc:/icons/next.svg"
                         onClicked: musicController.next()
                     }

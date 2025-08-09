@@ -8,8 +8,8 @@ import "./data"
 
 ApplicationWindow {
     id: mainWin
-    minimumWidth: 640
-    minimumHeight: 480
+    minimumWidth: 1080
+    minimumHeight: 720
 
     visible: true
     title: "HX.Music"

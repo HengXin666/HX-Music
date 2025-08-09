@@ -164,6 +164,10 @@ public:
         };
     }
 
+    Q_INVOKABLE QString getUrl(int row) const {
+        return _musicArr[row].url;
+    }
+
     Q_INVOKABLE void addFromPath(QString const& path) {
         MusicInfo musicInfo{QFileInfo{path}};
         addMusic(
