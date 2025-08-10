@@ -69,6 +69,9 @@ public:
             &SignalBusSingleton::nextMusicByMusicListModel,
             this,
             [this](int index) {
+            if (_musicArr.empty()) {
+                return;
+            }
             switch (GlobalSingleton::get().musicConfig.playMode) {
             case PlayMode::RandomPlay:  // 随机播放
                 if (auto it = GlobalSingleton::get().playQueue.next()) {
@@ -103,6 +106,9 @@ public:
             &SignalBusSingleton::prevMusicByMusicListModel,
             this,
             [this](int index) {
+            if (_musicArr.empty()) {
+                return;
+            }
             switch (GlobalSingleton::get().musicConfig.playMode) {
             case PlayMode::RandomPlay:  // 随机播放
                 if (auto it = GlobalSingleton::get().playQueue.prev()) {

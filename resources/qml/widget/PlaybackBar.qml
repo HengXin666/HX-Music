@@ -116,12 +116,14 @@ Item {
                 RowLayout {
                     id: songActionButton
                     property int actionButtonSize: 32
+                    property int actionButtonMiniSize: actionButtonSize * 0.666
+                    
                     Layout.fillWidth: true
                     Layout.alignment: Qt.AlignHCenter
                     spacing: 10
                     MusicActionButton {
-                        Layout.preferredWidth: songActionButton.actionButtonSize
-                        Layout.preferredHeight: songActionButton.actionButtonSize
+                        Layout.preferredWidth: songActionButton.actionButtonMiniSize
+                        Layout.preferredHeight: songActionButton.actionButtonMiniSize
                         url: "qrc:/icons/previous.svg"
                         onClicked: musicController.prev()
                     }
@@ -132,8 +134,8 @@ Item {
                         onClicked: musicController.togglePause()
                     }
                     MusicActionButton {
-                        Layout.preferredWidth: songActionButton.actionButtonSize
-                        Layout.preferredHeight: songActionButton.actionButtonSize
+                        Layout.preferredWidth: songActionButton.actionButtonMiniSize
+                        Layout.preferredHeight: songActionButton.actionButtonMiniSize
                         url: "qrc:/icons/next.svg"
                         onClicked: musicController.next()
                     }
