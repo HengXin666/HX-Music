@@ -234,12 +234,15 @@ Item {
                     onClick: function () {
                         console.log(`点击了: ${musicTitle}`);
                     }
-                },
-                {
-                    text: " - ",
-                    onClick: () => {}
                 }
             ];
+
+            if (artists.length > 0) {
+                dataList.push({
+                    text: " - ",
+                    onClick: () => {}
+                });
+            }
             let isBegin = true;
             for (const name of artists) {
                 if (isBegin) {

@@ -4,8 +4,6 @@
 
 #include <controller/LyricController.h>
 
-// #undef
-
 namespace HX {
 
 AssParse LyricController::preprocessLyricBoundingBoxes(
@@ -17,13 +15,12 @@ AssParse LyricController::preprocessLyricBoundingBoxes(
         int btmMin;
         int btmMax;
     };
-    constexpr int fps = 60;
+    constexpr int fps = 30;
     constexpr qint64 frameInterval = 1000 / fps;
     std::size_t n = (endTime - startTime) / frameInterval;
     int topMinY = INT_MAX, topMaxY = 0;
     int bottomMinY = INT_MAX, bottomMaxY = 0;
-
-    int midLine = _assParse.getHeight() / 2;
+    int midLine = _assParse.getHeight() >> 1;
 
     _tb_lr ans;
     std::size_t maxConcurrency = std::thread::hardware_concurrency();

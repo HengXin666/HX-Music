@@ -25,6 +25,7 @@ HX::MusicPlayer::MusicPlayer()
             MusicCommand::nextMusic();
             break;
         case PlayMode::SingleLoop:  // 单曲循环
+            MusicCommand::setMusicPos(0);
             MusicCommand::resume();
             break;
         case PlayMode::PlayModeCnt: // !保留!

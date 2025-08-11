@@ -115,10 +115,6 @@ public:
         return decltype(lyricFilePath.string()){};
     }
 
-    QPoint _cachedTopYLR;
-    QPoint _cachedBottomYLR;
-    bool _hasCachedY = false;
-
     // 仅缓存上下范围, 左右实时
     AssParse preprocessLyricBoundingBoxes(qint64 startTime, qint64 endTime, std::string_view data);
 
@@ -143,7 +139,7 @@ public:
 
     // 2. 渲染: 使用预计算的边界框
     void renderLyric(qint64 nowTime) {
-        constexpr int middleGapHeight = 0; // 中间空白高度
+        constexpr int middleGapHeight = 0; // 中间空白高度 (好像没有作用)
         if (!_hasCachedY) [[unlikely]] {
             return;
         }
@@ -241,6 +237,9 @@ private:
     QImage _lastImage;
     AssParse _assParse;
     long long _offset = 0; // 字幕偏移量
+    QPoint _cachedTopYLR;
+    QPoint _cachedBottomYLR;
+    bool _hasCachedY = false;
 };
 
 } // namespace HX
