@@ -29,6 +29,10 @@ target_link_libraries(HX-Music
     PRIVATE Qt::Quick
 )
 
+# 添加TBB依赖
+find_package(TBB REQUIRED)
+target_link_libraries(HX-Music PRIVATE TBB::tbb)
+
 set(QT_QML_GENERATE_QMLLS_INI ON)
 
 # 添加 QML 文件所在目录作为资源路径
