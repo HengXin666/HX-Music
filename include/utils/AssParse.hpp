@@ -211,12 +211,24 @@ public:
         );
     }
 
+    void closeLog() noexcept {
+        ::ass_set_message_cb(
+            _assLibrary,
+            [](int /*level*/,
+               const char* /*fmt*/,
+               va_list /*args*/,
+               void* /*data*/) {
+                // 什么都不做, 完全屏蔽日志
+            },
+            nullptr);
+    }
+
     /**
      * @brief 设置渲染器输出字幕图像的参考尺寸 即(ASS 字幕坐标系统的宽度和高度)
      * @param w 宽度
      * @param h 高度
      */
-    void setFrameSize(int w, int h) {
+    void setFrameSize(int w, int h) noexcept {
         _width = w;
         _height = h;
         ::ass_set_frame_size(_assRenderer, w, h);
@@ -235,7 +247,7 @@ public:
      * @param filePath 文件路径
      * @param encoded 文件编码
      */
-    void readFile(const char* filePath, const char* encoded = "UTF-8") {
+    void readFile(const char* filePath, const char* encoded = "UTF-8") noexcept {
         // auto result = internal::separateAssFile(filePath);
         // readMemory(result.nonTextAss.data());
         // return;
@@ -249,7 +261,7 @@ public:
      * @brief 加载内存中已读取的ass文件内容
      * @param buf 
      */
-    void readMemory(QByteArray&& buf) {
+    void readMemory(QByteArray&& buf) noexcept {
         if (_assTrack) {
             ::ass_free_track(_assTrack);
         }
@@ -268,7 +280,7 @@ public:
      * @warning 请不要释放`ASS_Image*`! 它是库内部维护的!
      * @return ASS_Image* 图像链表
      */
-    ASS_Image* rendererFrame(long long now, int& change) {
+    ASS_Image* rendererFrame(long long now, int& change) noexcept {
         return ::ass_render_frame(_assRenderer, _assTrack, now, &change);
     }
 
