@@ -44,13 +44,6 @@ int main(int argc, char* argv[]) {
     // 信号总线
     cp->setContextProperty("SignalBusSingleton", &HX::SignalBusSingleton::get());
 
-    // 歌词渲染与管理
-    qmlRegisterType<HX::LyricController>(
-        "HX.Music", // 导入时候的名称 (import Xxx) (注意得是大写开头)
-        1, 0,                       // 主版本号 与 次版本号
-        "LyricController"           // qml中使用的组件名称 (注意得是大写开头)
-    );
-
     // 音乐控制
     qmlRegisterType<HX::MusicController>(
         "HX.Music", // 导入时候的名称 (import Xxx) (注意得是大写开头)
@@ -65,8 +58,11 @@ int main(int argc, char* argv[]) {
         "MusicListModel"
     );
 
+    // 歌词渲染与管理
+    auto* lyricController = new HX::LyricController;
+    cp->setContextProperty("LyricController", lyricController);
     // 注册img链接: image://musicLyric
-    engine.addImageProvider("musicLyric", new HX::LyricController); // 内部会释放!
+    engine.addImageProvider("musicLyric", lyricController); // 内部会释放!
     
     // 注册img链接: image://svgColored
     engine.addImageProvider("svgColored", new HX::QmlSvgPars); // 内部会释放!

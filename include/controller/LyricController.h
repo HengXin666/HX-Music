@@ -67,7 +67,7 @@ public:
             &SignalBusSingleton::musicPlayPosChanged,
             this,
             [this](qint64 pos) { updateCropFuckLyric(pos); });
-
+        
         /* newSongLoaded (加载新歌) */
         connect(
             &SignalBusSingleton::get(),

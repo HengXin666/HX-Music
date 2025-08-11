@@ -25,11 +25,6 @@ Window {
         locked = false
     }
 
-    // C++侧: 歌词控制器
-    LyricController {
-        id: lyricController
-    }
-
     flags: Qt.FramelessWindowHint
          | Qt.WindowStaysOnTopHint
          | Qt.Tool
@@ -95,7 +90,7 @@ Window {
 
     Component.onCompleted: {
         // 更新歌词
-        lyricController.updateLyriced.connect(() => {
+        LyricController.updateLyriced.connect(() => {
             lyricImage.source = `image://musicLyric?f=${Date.now()}`;
         });
     }
