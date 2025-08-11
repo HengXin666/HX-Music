@@ -7,6 +7,7 @@
 #include <singleton/ImagePool.h>
 #include <controller/LyricController.h>
 #include <controller/MusicController.h>
+#include <controller/PlaylistController.h>
 #include <cmd/MusicCommand.hpp>
 #include <config/MusicConfig.hpp>
 #include <utils/SvgPars.hpp>
@@ -73,5 +74,6 @@ int main(int argc, char* argv[]) {
     // 应该使用 _ 和 [0-9a-Z], 不能使用`-`
     engine.loadFromModule("HX.Music", "Main");
 
+    HX::PlaylistController playlistController{};
     return app.exec();
 }

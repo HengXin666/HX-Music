@@ -138,6 +138,22 @@ public:
                 break;
             }
         });
+
+        // 歌单更新信号
+        connect(
+            &SignalBusSingleton::get(),
+            &SignalBusSingleton::playlistChanged,
+            this,
+            [this]() {
+            auto& playlist = GlobalSingleton::get().musicList;
+            clear();
+            _isActiveUpdate = true;
+            for (auto const& songData : playlist.songList) {
+                auto const& url = songData.url;
+                addFromPath(QString::fromStdString(url));
+            }
+            _isActiveUpdate = false;
+        });
     }
 
     int rowCount(const QModelIndex& parent = QModelIndex()) const override {
@@ -204,6 +220,13 @@ public:
             url
         });
         Q_EMIT endInsertRows();
+        if (!_isActiveUpdate) {
+            // 非主动更新, 即用户更新! 主动更新是对于本类来说的        
+            GlobalSingleton::get().musicList.songList.push_back({
+                url.toStdString()
+            });
+            Q_EMIT SignalBusSingleton::get().savePlaylistSignal();
+        }
     }
 
     Q_INVOKABLE void clear() {
@@ -214,7 +237,8 @@ public:
 
 private:
     std::mt19937 _rng{std::random_device{}()};
-    QVector<MusicInfoData> _musicArr;
+    QVector<MusicInfoData> _musicArr{};
+    bool _isActiveUpdate = false;
 };
 
 } // namespace HX

@@ -106,6 +106,22 @@ Q_SIGNALS:
      * @param index 当前歌曲 index
      */
     void prevMusicByMusicListModel(int index);
+
+    /**
+     * @brief 加载歌单信号
+     * @param id 歌单id
+     */
+    void loadPlaylistSignal(std::string const& id);
+
+    /**
+     * @brief 歌单更新信号 (加载完毕) (通过全局单例查看)
+     */
+    void playlistChanged();
+
+    /**
+     * @brief 保存歌单信号 (通过全局单例查看) [任意歌曲顺序变化/添加、删除歌曲时候立刻触发]
+     */
+    void savePlaylistSignal();
 };
 
 } // namespace HX

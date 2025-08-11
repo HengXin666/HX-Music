@@ -17,7 +17,9 @@ qt_add_executable(HX-Music
     ${qrc_files}
 )
 
-target_include_directories(HX-Music PRIVATE libs/HXLibs/include)
+# 导入 HXLibs
+add_subdirectory(libs/HXLibs)
+target_link_libraries(HX-Music PRIVATE HXLibs)
 
 target_compile_features(HX-Music PUBLIC cxx_std_20)
 

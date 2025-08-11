@@ -40,6 +40,7 @@ public:
         _settings.setValue("Music/PlayMode", static_cast<int>(config.playMode));
         _settings.setValue("Music/Position", config.position);
         _settings.setValue("Music/ListIndex", config.listIndex);
+        _settings.setValue("Music/MusicListId", QString::fromStdString(config.musicListId));
     }
 
     MusicConfig loadConfig() {
@@ -47,6 +48,7 @@ public:
         config.volume = _settings.value("Music/Volume", 0.75).toFloat();
         config.playMode = static_cast<PlayMode>(_settings.value("Music/PlayMode", static_cast<int>(PlayMode::ListLoop)).toInt());
         config.position = _settings.value("Music/Position", 0).toLongLong();
+        config.musicListId = _settings.value("Music/MusicListId", "localPlaylist").toString().toStdString();
         config.listIndex = _settings.value("Music/ListIndex", -1).toInt();
         return config;
     }

@@ -17,41 +17,20 @@
  * You should have received a copy of the GNU General Public License
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef _HX_MUSIC_CONFIG_H_
-#define _HX_MUSIC_CONFIG_H_
+#ifndef _HX_SONG_INFORMATION_H_
+#define _HX_SONG_INFORMATION_H_
 
-#include <QString>
-#include <QObject>
+#include <string>
 
 namespace HX {
 
-class PlayModeWrapper {
-    Q_GADGET
-
-public:
-    enum class PlayMode {
-        ListLoop = 0,   // 列表循环
-        RandomPlay,     // 随机播放
-        SingleLoop,     // 单曲循环
-        PlayModeCnt     // !保留字段!
-    };
-    Q_ENUM(PlayMode)
-};
-
-using PlayMode = PlayModeWrapper::PlayMode;
-
 /**
- * @brief 音乐配置
+ * @brief 歌曲信息
  */
-struct MusicConfig {
-    float volume;            // 音量大小
-    PlayMode playMode;       // 播放模式
-    qint64 position;         // 播放位置
-    std::string musicListId; // 处于歌单id
-    int listIndex;           // 处于歌单的索引
-    bool isPlay{false};      // 是正在播放
+struct SongInformation {
+    std::string url;
 };
 
 } // namespace HX
 
-#endif // !_HX_MUSIC_CONFIG_H_
+#endif // !_HX_SONG_INFORMATION_H_

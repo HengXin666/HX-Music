@@ -23,6 +23,7 @@
 #include <config/ConfigManager.hpp>
 #include <utils/MusicPlayer.h>
 #include <utils/PlayQueue.hpp>
+#include <pojo/MusicList.hpp>
 
 namespace HX {
 
@@ -41,6 +42,9 @@ struct GlobalSingleton {
 
     /// @brief 音频配置 (播放状态)
     MusicConfig musicConfig{};
+
+    /// @brief 当前加载的歌单
+    MusicList musicList{};
 
     /// @brief 音频播放实例
     MusicPlayer music{};
