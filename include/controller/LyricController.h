@@ -74,8 +74,7 @@ public:
             [this](HX::MusicInfo* info) {
                 auto path = findLyricFile(*info);
                 auto data = utils::FileUtils::getFileContent(path);
-                preprocessLyricBoundingBoxes(0, info->getLengthInMilliseconds(), data);
-                _assParse.readMemory(data.data());
+                _assParse = preprocessLyricBoundingBoxes(0, info->getLengthInMilliseconds(), data);
             });
     }
 
@@ -121,7 +120,7 @@ public:
     bool _hasCachedY = false;
 
     // 仅缓存上下范围, 左右实时
-    void preprocessLyricBoundingBoxes(qint64 startTime, qint64 endTime, std::string_view data);
+    AssParse preprocessLyricBoundingBoxes(qint64 startTime, qint64 endTime, std::string_view data);
 
     // 辅助函数: 绘制ASS图像到指定画布
     inline void drawAssImage(QPainter* painter, ASS_Image* img, int baseX, int baseY) {

@@ -8,7 +8,9 @@
 
 namespace HX {
 
-void LyricController::preprocessLyricBoundingBoxes(qint64 startTime, qint64 endTime, std::string_view data) {
+AssParse LyricController::preprocessLyricBoundingBoxes(
+    qint64 startTime, qint64 endTime, std::string_view data
+) {
     struct _tb_lr {
         int topMin;
         int topMax;
@@ -24,17 +26,20 @@ void LyricController::preprocessLyricBoundingBoxes(qint64 startTime, qint64 endT
     int midLine = _assParse.getHeight() / 2;
 
     _tb_lr ans;
-    tbb::task_arena task{};
+    std::size_t maxConcurrency = std::thread::hardware_concurrency();
+    tbb::task_arena task{static_cast<int>(maxConcurrency)};
+    std::vector<AssParse> assArr(maxConcurrency);
+    for (auto& assParse : assArr) {
+        assParse.closeLog();
+        assParse.setFrameSize(_assParse.getWidth(), _assParse.getHeight());
+        assParse.readMemory(data.data());
+    }
     task.execute([&] {
         ans = tbb::parallel_reduce(tbb::blocked_range<std::size_t>{0, n}, _tb_lr{}, 
         [&](tbb::blocked_range<std::size_t> const& r, _tb_lr const& rect) -> _tb_lr {
             int topMinY = INT_MAX, topMaxY = 0;
             int bottomMinY = INT_MAX, bottomMaxY = 0;
-            AssParse assParse{};
-            assParse.closeLog();
-            assParse.setFrameSize(_assParse.getWidth(), _assParse.getHeight());
-            assParse.readMemory(data.data());
-            
+            AssParse& assParse = assArr[tbb::this_task_arena::current_thread_index()];
             for (auto it = r.begin(); it != r.end(); ++it) {
                 int change;
                 int t = it * frameInterval;
@@ -69,6 +74,7 @@ void LyricController::preprocessLyricBoundingBoxes(qint64 startTime, qint64 endT
     _cachedTopYLR = QPoint{ti, ta};
     _cachedBottomYLR = QPoint{bi, ba};
     _hasCachedY = !(_cachedTopYLR.isNull() && _cachedBottomYLR.isNull());
+    return std::move(assArr.front());
 }
 
 } // namespace HX
