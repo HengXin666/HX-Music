@@ -66,14 +66,17 @@ public:
             &SignalBusSingleton::get(),
             &SignalBusSingleton::musicPlayPosChanged,
             this,
-            [this](qint64 pos) { updateCropFuckLyric(pos); });
+            [this](qint64 pos) { renderLyric(pos); });
         
         /* newSongLoaded (加载新歌) */
         connect(
             &SignalBusSingleton::get(),
             &SignalBusSingleton::newSongLoaded,
             this,
-            [this](HX::MusicInfo* info) { findLyricFile(*info); });
+            [this](HX::MusicInfo* info) { 
+                findLyricFile(*info);
+                preprocessLyricBoundingBoxes(0, info->getLengthInMilliseconds());
+            });
     }
 
     void findLyricFile(HX::MusicInfo const& info) {
@@ -91,9 +94,10 @@ public:
         qDebug() << "查找: " << lyricFilePath.c_str();
         if (std::filesystem::exists(lyricFilePath)) {
             qInfo() << "[HX]: 找到歌词文件: " << lyricFilePath.string().c_str();
-            auto data = internal::separateAssFile(lyricFilePath);
-            _assParse.readMemory(data.textAss.data());
-            _assEffectParse.readMemory(data.nonTextAss.data());
+            // auto data = internal::separateAssFile(lyricFilePath);
+            // _assParse.readMemory(data.textAss.data());
+            // _assEffectParse.readMemory(data.nonTextAss.data());
+            _assParse.readFile(lyricFilePath.c_str());
             return;
         }
 
@@ -105,9 +109,10 @@ public:
             lyricFilePath = lyricFolderPath / (songName + ".ass");
             if (std::filesystem::exists(lyricFilePath)) {
                 qInfo() << "[HX]: 找到歌词文件: " << lyricFilePath.c_str();
-                auto data = internal::separateAssFile(lyricFilePath);
-                _assParse.readMemory(data.textAss.data());
-                _assEffectParse.readMemory(data.nonTextAss.data());
+                // auto data = internal::separateAssFile(lyricFilePath);
+                // _assParse.readMemory(data.textAss.data());
+                // _assEffectParse.readMemory(data.nonTextAss.data());
+                _assParse.readFile(lyricFilePath.c_str());
                 return;
             }
         }
@@ -117,213 +122,416 @@ public:
         _assParse.readMemory(internal::readQrcFile(":default/default.ass"));
     }
 
-void updateCropFuckLyric(qint64 nowTime) {
-    constexpr int marginTopBottom = 10; // 上下额外边距
-    constexpr int marginMiddle = 20;    // 上下字幕间的空白间距
+    QRect _cachedTopRect;
+    QRect _cachedBottomRect;
+    bool _hasCachedRect = false;
 
-    struct SubtitlePart {
-        std::vector<ASS_Image*> images;
-        int minY = INT_MAX;
-        int maxY = 0;
-    };
+    // 1. 预处理：扫描所有帧确定固定边界框
+    void preprocessLyricBoundingBoxes(qint64 startTime, qint64 endTime) {
+        constexpr int fps = 60;
+        constexpr qint64 frameInterval = 1000 / fps;
 
-    int change01, change02;
-    auto* imgList = _assParse.rendererFrame(nowTime + _offset, change01);
-    auto* imgEffList = _assEffectParse.rendererFrame(nowTime + _offset, change02);
-    if (!change01 && !change02)
-        return;
+        int topMinX = INT_MAX;
+        int topMinY = INT_MAX;
+        int topMaxX = 0;
+        int topMaxY = 0;
 
-    if (!imgList && !imgEffList) {
-        if (!_lastImage.isNull()) {
-            _lastImage = {1, 1, QImage::Format_ARGB32};
-            _lastImage.fill(Qt::transparent);
-            Q_EMIT updateLyriced();
-        }
-        return;
-    }
+        int bottomMinX = INT_MAX;
+        int bottomMinY = INT_MAX;
+        int bottomMaxX = 0;
+        int bottomMaxY = 0;
 
-    // 分组: 按 y 坐标判断上字幕和下字幕 (仅文本ASS)
-    SubtitlePart top, bottom;
-    int midLine = _assParse.getHeight() >> 1;
-    for (ASS_Image* img = imgList; img; img = img->next) {
-        if (img->dst_y < midLine) {
-            top.images.push_back(img);
-            top.minY = std::min(top.minY, img->dst_y);
-            top.maxY = std::max(top.maxY, img->dst_y + img->h);
-        } else {
-            bottom.images.push_back(img);
-            bottom.minY = std::min(bottom.minY, img->dst_y);
-            bottom.maxY = std::max(bottom.maxY, img->dst_y + img->h);
-        }
-    }
+        int midLine = _assParse.getHeight() / 2;
+        bool hasTop = false;
+        bool hasBottom = false;
 
-    struct ImgInfo {
-        ASS_Image* src = nullptr;
-        QImage trimmedImage;
-        int trimLeft = 0;
-        int trimTop = 0;
-        int visibleAbsLeft = 0;
-        int visibleAbsTop = 0;
-        int visibleW = 0;
-        int visibleH = 0;
-        int fullW = 0;
-        int fullH = 0;
-        int dstX = 0;
-        int dstY = 0;
-    };
+        for (qint64 t = startTime; t <= endTime; t += frameInterval) {
+            int change;
+            auto* imgList = _assParse.rendererFrame(t + _offset, change);
+            if (!imgList)
+                continue;
 
-    auto makeTrimmedInfo = [&](ASS_Image* img)->ImgInfo {
-        ImgInfo info;
-        info.src = img;
-        info.fullW = img->w;
-        info.fullH = img->h;
-        info.dstX = img->dst_x;
-        info.dstY = img->dst_y;
-
-        QImage full(img->w, img->h, QImage::Format_RGBA8888);
-        full.fill(Qt::transparent);
-        uint8_t r = (img->color >> 24) & 0xFF;
-        uint8_t g = (img->color >> 16) & 0xFF;
-        uint8_t b = (img->color >> 8) & 0xFF;
-
-        for (int y = 0; y < img->h; ++y) {
-            uint8_t* srcLine = img->bitmap + y * img->stride;
-            QRgb* destLine = reinterpret_cast<QRgb*>(full.scanLine(y));
-            for (int x = 0; x < img->w; ++x) {
-                destLine[x] = qRgba(r, g, b, srcLine[x]);
-            }
-        }
-
-        int left = img->w, right = -1, topY = img->h, bottom = -1;
-        for (int y = 0; y < img->h; ++y) {
-            QRgb* destLine = reinterpret_cast<QRgb*>(full.scanLine(y));
-            for (int x = 0; x < img->w; ++x) {
-                if (qAlpha(destLine[x]) > 0) {
-                    if (x < left) left = x;
-                    if (x > right) right = x;
-                    if (y < topY) topY = y;
-                    if (y > bottom) bottom = y;
+            for (ASS_Image* img = imgList; img; img = img->next) {
+                int centerY = img->dst_y + img->h / 2;
+                if (centerY < midLine) {
+                    topMinX = qMin(topMinX, img->dst_x);
+                    topMinY = qMin(topMinY, img->dst_y);
+                    topMaxX = qMax(topMaxX, img->dst_x + img->w);
+                    topMaxY = qMax(topMaxY, img->dst_y + img->h);
+                    hasTop = true;
+                } else {
+                    bottomMinX = qMin(bottomMinX, img->dst_x);
+                    bottomMinY = qMin(bottomMinY, img->dst_y);
+                    bottomMaxX = qMax(bottomMaxX, img->dst_x + img->w);
+                    bottomMaxY = qMax(bottomMaxY, img->dst_y + img->h);
+                    hasBottom = true;
                 }
             }
         }
 
-        if (right < left || bottom < topY) {
-            info.visibleW = info.visibleH = 0;
-            info.visibleAbsLeft = img->dst_x;
-            info.visibleAbsTop = img->dst_y;
+        _cachedTopRect =
+            hasTop
+                ? QRect(topMinX, topMinY, topMaxX - topMinX, topMaxY - topMinY)
+                : QRect();
+        _cachedBottomRect = hasBottom ? QRect(
+                                            bottomMinX,
+                                            bottomMinY,
+                                            bottomMaxX - bottomMinX,
+                                            bottomMaxY - bottomMinY)
+                                      : QRect();
+        _hasCachedRect = hasTop || hasBottom;
+    }
+
+    // 辅助函数：绘制ASS图像到指定画布
+    inline void
+    drawAssImage(QPainter* painter, ASS_Image* img, int baseX, int baseY) {
+        uint8_t r = (img->color >> 24) & 0xFF;
+        uint8_t g = (img->color >> 16) & 0xFF;
+        uint8_t b = (img->color >> 8) & 0xFF;
+        // uint8_t a = (img->color >>  0) & 0xFF;
+
+        QImage image(img->w, img->h, QImage::Format_RGBA8888);
+        for (int y = 0; y < img->h; ++y) {
+            uint8_t* srcLine = img->bitmap + y * img->stride;
+            QRgb* destLine = reinterpret_cast<QRgb*>(image.scanLine(y));
+            for (int x = 0; x < img->w; ++x) {
+                // uint8_t alpha = 255 - srcLine[x]; // 反转 alpha 值
+                destLine[x] = qRgba(r, g, b, srcLine[x]);
+            }
+        }
+        painter->drawImage(img->dst_x - baseX, img->dst_y - baseY, image);
+    }
+
+    // 2. 渲染：使用预计算的边界框
+    void renderLyric(qint64 nowTime) {
+        if (!_hasCachedRect)
+            return;
+
+        constexpr int middleGapHeight = 8;
+        int change;
+        auto* imgList = _assParse.rendererFrame(nowTime + _offset, change);
+        if (!change)
+            return;
+
+        if (!imgList) {
+            if (!_lastImage.isNull()) {
+                _lastImage = QImage(1, 1, QImage::Format_ARGB32);
+                _lastImage.fill(Qt::transparent);
+                Q_EMIT updateLyriced();
+            }
+            return;
+        }
+
+        // 分组处理上下部分
+        int midLine = _assParse.getHeight() / 2;
+        std::vector<ASS_Image*> topImages, bottomImages;
+        for (ASS_Image* img = imgList; img; img = img->next) {
+            if (img->dst_y + img->h / 2 < midLine) {
+                topImages.push_back(img);
+            } else {
+                bottomImages.push_back(img);
+            }
+        }
+
+        // 计算最终图像尺寸
+        int globalMinX = qMin(_cachedTopRect.left(), _cachedBottomRect.left());
+        int globalMaxX =
+            qMax(_cachedTopRect.right(), _cachedBottomRect.right());
+        int width = qMax(1, globalMaxX - globalMinX);
+
+        int height = 0;
+        if (!topImages.empty())
+            height += _cachedTopRect.height();
+        if (!bottomImages.empty()) {
+            height += _cachedBottomRect.height();
+            if (!topImages.empty())
+                height += middleGapHeight;
+        }
+        height = qMax(1, height);
+
+        // 创建最终图像
+        QImage result(width, height, QImage::Format_ARGB32);
+        result.fill(Qt::transparent);
+        QPainter painter(&result);
+
+        // 绘制上半部分
+        if (!topImages.empty()) {
+            QImage topCanvas(_cachedTopRect.size(), QImage::Format_ARGB32);
+            topCanvas.fill(Qt::transparent);
+            QPainter topPainter(&topCanvas);
+
+            for (ASS_Image* img : topImages) {
+                drawAssImage(
+                    &topPainter,
+                    img,
+                    _cachedTopRect.left(),
+                    _cachedTopRect.top());
+            }
+
+            painter.drawImage(_cachedTopRect.left() - globalMinX, 0, topCanvas);
+        }
+
+        // 绘制下半部分
+        if (!bottomImages.empty()) {
+            int yOffset =
+                (!topImages.empty() ? _cachedTopRect.height() + middleGapHeight
+                                    : 0);
+            QImage bottomCanvas(
+                _cachedBottomRect.size(), QImage::Format_ARGB32);
+            bottomCanvas.fill(Qt::transparent);
+            QPainter bottomPainter(&bottomCanvas);
+
+            for (ASS_Image* img : bottomImages) {
+                drawAssImage(
+                    &bottomPainter,
+                    img,
+                    _cachedBottomRect.left(),
+                    _cachedBottomRect.top());
+            }
+
+            painter.drawImage(
+                _cachedBottomRect.left() - globalMinX, yOffset, bottomCanvas);
+        }
+
+        _lastImage = result;
+        Q_EMIT updateLyriced();
+    }
+
+    void updateCropFuckLyric(qint64 nowTime) {
+        constexpr int marginTopBottom = 10; // 上下额外边距
+        constexpr int marginMiddle = 20;    // 上下字幕间的空白间距
+
+        struct SubtitlePart {
+            std::vector<ASS_Image*> images;
+            int minY = INT_MAX;
+            int maxY = 0;
+        };
+
+        int change01, change02;
+        auto* imgList = _assParse.rendererFrame(nowTime + _offset, change01);
+        auto* imgEffList =
+            _assEffectParse.rendererFrame(nowTime + _offset, change02);
+        if (!change01 && !change02)
+            return;
+
+        if (!imgList && !imgEffList) {
+            if (!_lastImage.isNull()) {
+                _lastImage = {1, 1, QImage::Format_ARGB32};
+                _lastImage.fill(Qt::transparent);
+                Q_EMIT updateLyriced();
+            }
+            return;
+        }
+
+        // 分组: 按 y 坐标判断上字幕和下字幕 (仅文本ASS)
+        SubtitlePart top, bottom;
+        int midLine = _assParse.getHeight() >> 1;
+        for (ASS_Image* img = imgList; img; img = img->next) {
+            if (img->dst_y < midLine) {
+                top.images.push_back(img);
+                top.minY = std::min(top.minY, img->dst_y);
+                top.maxY = std::max(top.maxY, img->dst_y + img->h);
+            } else {
+                bottom.images.push_back(img);
+                bottom.minY = std::min(bottom.minY, img->dst_y);
+                bottom.maxY = std::max(bottom.maxY, img->dst_y + img->h);
+            }
+        }
+
+        struct ImgInfo {
+            ASS_Image* src = nullptr;
+            QImage trimmedImage;
+            int trimLeft = 0;
+            int trimTop = 0;
+            int visibleAbsLeft = 0;
+            int visibleAbsTop = 0;
+            int visibleW = 0;
+            int visibleH = 0;
+            int fullW = 0;
+            int fullH = 0;
+            int dstX = 0;
+            int dstY = 0;
+        };
+
+        auto makeTrimmedInfo = [&](ASS_Image* img) -> ImgInfo {
+            ImgInfo info;
+            info.src = img;
+            info.fullW = img->w;
+            info.fullH = img->h;
+            info.dstX = img->dst_x;
+            info.dstY = img->dst_y;
+
+            QImage full(img->w, img->h, QImage::Format_RGBA8888);
+            full.fill(Qt::transparent);
+            uint8_t r = (img->color >> 24) & 0xFF;
+            uint8_t g = (img->color >> 16) & 0xFF;
+            uint8_t b = (img->color >> 8) & 0xFF;
+
+            for (int y = 0; y < img->h; ++y) {
+                uint8_t* srcLine = img->bitmap + y * img->stride;
+                QRgb* destLine = reinterpret_cast<QRgb*>(full.scanLine(y));
+                for (int x = 0; x < img->w; ++x) {
+                    destLine[x] = qRgba(r, g, b, srcLine[x]);
+                }
+            }
+
+            int left = img->w, right = -1, topY = img->h, bottom = -1;
+            for (int y = 0; y < img->h; ++y) {
+                QRgb* destLine = reinterpret_cast<QRgb*>(full.scanLine(y));
+                for (int x = 0; x < img->w; ++x) {
+                    if (qAlpha(destLine[x]) > 0) {
+                        if (x < left)
+                            left = x;
+                        if (x > right)
+                            right = x;
+                        if (y < topY)
+                            topY = y;
+                        if (y > bottom)
+                            bottom = y;
+                    }
+                }
+            }
+
+            if (right < left || bottom < topY) {
+                info.visibleW = info.visibleH = 0;
+                info.visibleAbsLeft = img->dst_x;
+                info.visibleAbsTop = img->dst_y;
+                return info;
+            }
+
+            int w = right - left + 1;
+            int h = bottom - topY + 1;
+            info.trimLeft = left;
+            info.trimTop = topY;
+            info.visibleW = w;
+            info.visibleH = h;
+            info.visibleAbsLeft = img->dst_x + left;
+            info.visibleAbsTop = img->dst_y + topY;
+            info.trimmedImage = full.copy(left, topY, w, h);
             return info;
+        };
+
+        std::vector<ImgInfo> topInfos, bottomInfos, effInfos;
+        for (auto* img : top.images) {
+            auto inf = makeTrimmedInfo(img);
+            if (inf.visibleW > 0)
+                topInfos.push_back(std::move(inf));
+        }
+        for (auto* img : bottom.images) {
+            auto inf = makeTrimmedInfo(img);
+            if (inf.visibleW > 0)
+                bottomInfos.push_back(std::move(inf));
+        }
+        for (ASS_Image* img = imgEffList; img; img = img->next) {
+            auto inf = makeTrimmedInfo(img);
+            if (inf.visibleW > 0)
+                effInfos.push_back(std::move(inf));
         }
 
-        int w = right - left + 1;
-        int h = bottom - topY + 1;
-        info.trimLeft = left;
-        info.trimTop = topY;
-        info.visibleW = w;
-        info.visibleH = h;
-        info.visibleAbsLeft = img->dst_x + left;
-        info.visibleAbsTop = img->dst_y + topY;
-        info.trimmedImage = full.copy(left, topY, w, h);
-        return info;
-    };
-
-    std::vector<ImgInfo> topInfos, bottomInfos, effInfos;
-    for (auto* img : top.images) {
-        auto inf = makeTrimmedInfo(img);
-        if (inf.visibleW > 0) topInfos.push_back(std::move(inf));
-    }
-    for (auto* img : bottom.images) {
-        auto inf = makeTrimmedInfo(img);
-        if (inf.visibleW > 0) bottomInfos.push_back(std::move(inf));
-    }
-    for (ASS_Image* img = imgEffList; img; img = img->next) {
-        auto inf = makeTrimmedInfo(img);
-        if (inf.visibleW > 0) effInfos.push_back(std::move(inf));
-    }
-
-    if (topInfos.empty() && bottomInfos.empty() && effInfos.empty()) {
-        if (!_lastImage.isNull()) {
-            _lastImage = {1, 1, QImage::Format_ARGB32};
-            _lastImage.fill(Qt::transparent);
-            Q_EMIT updateLyriced();
+        if (topInfos.empty() && bottomInfos.empty() && effInfos.empty()) {
+            if (!_lastImage.isNull()) {
+                _lastImage = {1, 1, QImage::Format_ARGB32};
+                _lastImage.fill(Qt::transparent);
+                Q_EMIT updateLyriced();
+            }
+            return;
         }
-        return;
-    }
 
-    auto computeGroupBox = [](const std::vector<ImgInfo>& infos, int& minX, int& minY, int& maxX, int& maxY) {
-        minX = INT_MAX; minY = INT_MAX; maxX = 0; maxY = 0;
-        for (const auto& it : infos) {
-            minX = std::min(minX, it.visibleAbsLeft);
-            minY = std::min(minY, it.visibleAbsTop);
-            maxX = std::max(maxX, it.visibleAbsLeft + it.visibleW);
-            maxY = std::max(maxY, it.visibleAbsTop + it.visibleH);
+        auto computeGroupBox = [](const std::vector<ImgInfo>& infos,
+                                  int& minX,
+                                  int& minY,
+                                  int& maxX,
+                                  int& maxY) {
+            minX = INT_MAX;
+            minY = INT_MAX;
+            maxX = 0;
+            maxY = 0;
+            for (const auto& it : infos) {
+                minX = std::min(minX, it.visibleAbsLeft);
+                minY = std::min(minY, it.visibleAbsTop);
+                maxX = std::max(maxX, it.visibleAbsLeft + it.visibleW);
+                maxY = std::max(maxY, it.visibleAbsTop + it.visibleH);
+            }
+        };
+
+        int topMinX, topMinY, topMaxX, topMaxY;
+        int bottomMinX, bottomMinY, bottomMaxX, bottomMaxY;
+        computeGroupBox(topInfos, topMinX, topMinY, topMaxX, topMaxY);
+        computeGroupBox(
+            bottomInfos, bottomMinX, bottomMinY, bottomMaxX, bottomMaxY);
+
+        bool hasTop = !topInfos.empty();
+        bool hasBottom = !bottomInfos.empty();
+
+        int globalMinX = INT_MAX, globalMaxX = 0;
+        int totalHeight = marginTopBottom * 2;
+        int topHeight = 0, bottomHeight = 0;
+
+        if (hasTop) {
+            globalMinX = std::min(globalMinX, topMinX);
+            globalMaxX = std::max(globalMaxX, topMaxX);
+            topHeight = topMaxY - topMinY;
+            totalHeight += topHeight;
         }
-    };
-
-    int topMinX, topMinY, topMaxX, topMaxY;
-    int bottomMinX, bottomMinY, bottomMaxX, bottomMaxY;
-    computeGroupBox(topInfos, topMinX, topMinY, topMaxX, topMaxY);
-    computeGroupBox(bottomInfos, bottomMinX, bottomMinY, bottomMaxX, bottomMaxY);
-
-    bool hasTop = !topInfos.empty();
-    bool hasBottom = !bottomInfos.empty();
-
-    int globalMinX = INT_MAX, globalMaxX = 0;
-    int totalHeight = marginTopBottom * 2;
-    int topHeight = 0, bottomHeight = 0;
-
-    if (hasTop) {
-        globalMinX = std::min(globalMinX, topMinX);
-        globalMaxX = std::max(globalMaxX, topMaxX);
-        topHeight = topMaxY - topMinY;
-        totalHeight += topHeight;
-    }
-    if (hasBottom) {
-        globalMinX = std::min(globalMinX, bottomMinX);
-        globalMaxX = std::max(globalMaxX, bottomMaxX);
-        bottomHeight = bottomMaxY - bottomMinY;
-        if (hasTop) totalHeight += marginMiddle;
-        totalHeight += bottomHeight;
-    }
-
-    // 宽度随特效动态变化
-    for (const auto& inf : effInfos) {
-        globalMinX = std::min(globalMinX, inf.visibleAbsLeft);
-        globalMaxX = std::max(globalMaxX, inf.visibleAbsLeft + inf.visibleW);
-    }
-
-    if (globalMinX == INT_MAX) globalMinX = 0;
-    int width = std::max(1, globalMaxX - globalMinX);
-    int height = std::max(1, totalHeight);
-
-    QImage result(width, height, QImage::Format_RGBA8888);
-    result.fill(Qt::transparent);
-    QPainter painter(&result);
-    painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
-
-    int yOffset = marginTopBottom;
-    if (hasTop) {
-        for (const auto& info : topInfos) {
-            painter.drawImage(info.visibleAbsLeft - globalMinX, (info.visibleAbsTop - topMinY) + yOffset, info.trimmedImage);
+        if (hasBottom) {
+            globalMinX = std::min(globalMinX, bottomMinX);
+            globalMaxX = std::max(globalMaxX, bottomMaxX);
+            bottomHeight = bottomMaxY - bottomMinY;
+            if (hasTop)
+                totalHeight += marginMiddle;
+            totalHeight += bottomHeight;
         }
-        yOffset += topHeight;
-    }
-    if (hasTop && hasBottom) yOffset += marginMiddle;
-    if (hasBottom) {
-        for (const auto& info : bottomInfos) {
-            painter.drawImage(info.visibleAbsLeft - globalMinX, (info.visibleAbsTop - bottomMinY) + yOffset, info.trimmedImage);
+
+        // 宽度随特效动态变化
+        for (const auto& inf : effInfos) {
+            globalMinX = std::min(globalMinX, inf.visibleAbsLeft);
+            globalMaxX =
+                std::max(globalMaxX, inf.visibleAbsLeft + inf.visibleW);
         }
+
+        if (globalMinX == INT_MAX)
+            globalMinX = 0;
+        int width = std::max(1, globalMaxX - globalMinX);
+        int height = std::max(1, totalHeight);
+
+        QImage result(width, height, QImage::Format_RGBA8888);
+        result.fill(Qt::transparent);
+        QPainter painter(&result);
+        painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
+
+        int yOffset = marginTopBottom;
+        if (hasTop) {
+            for (const auto& info : topInfos) {
+                painter.drawImage(
+                    info.visibleAbsLeft - globalMinX,
+                    (info.visibleAbsTop - topMinY) + yOffset,
+                    info.trimmedImage);
+            }
+            yOffset += topHeight;
+        }
+        if (hasTop && hasBottom)
+            yOffset += marginMiddle;
+        if (hasBottom) {
+            for (const auto& info : bottomInfos) {
+                painter.drawImage(
+                    info.visibleAbsLeft - globalMinX,
+                    (info.visibleAbsTop - bottomMinY) + yOffset,
+                    info.trimmedImage);
+            }
+        }
+
+        // 绘制特效
+        for (const auto& info : effInfos) {
+            painter.drawImage(
+                info.visibleAbsLeft - globalMinX,
+                info.visibleAbsTop - topMinY + marginTopBottom,
+                info.trimmedImage);
+        }
+
+        painter.end();
+        _lastImage = std::move(result);
+        Q_EMIT updateLyriced();
     }
-
-    // 绘制特效
-    for (const auto& info : effInfos) {
-        painter.drawImage(info.visibleAbsLeft - globalMinX, info.visibleAbsTop - topMinY + marginTopBottom, info.trimmedImage);
-    }
-
-    painter.end();
-    _lastImage = std::move(result);
-    Q_EMIT updateLyriced();
-}
-
 
     void updateCropTwoLyric(qint64 nowTime) {
         struct SubtitlePart {
