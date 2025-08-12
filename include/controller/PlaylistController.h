@@ -48,15 +48,8 @@ public:
                     utils::AsyncFile file{loop};
                     std::string json;
                     try {
-                        std::vector<char> buf;
                         file.syncOpen("./localPlaylist.json", platform::OpenMode::Read);
-                        buf.resize(utils::FileUtils::kBufMaxSize);
-                        for (;;) {
-                            int n = file.syncRead(buf);
-                            json += {buf.data(), buf.size()};
-                            if (n == 0)
-                                break;
-                        }
+                        json = file.syncReadAll();
                     } catch (...) {
                         json = R"({
     "playlistId": "localPlaylist",
@@ -90,7 +83,7 @@ public:
                 utils::AsyncFile file{loop};
                 file.syncOpen("./localPlaylist.json");
                 std::string json;
-                reflection::toJson(musicList, json);
+                reflection::toJson<true>(musicList, json);
                 file.syncWrite(json);
                 file.syncClose();
             } else {

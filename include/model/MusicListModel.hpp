@@ -186,6 +186,68 @@ public:
         };
     }
 
+    /**
+     * @brief 拖拽交换接口
+     * @param from 
+     * @param to 
+     * @return bool 是否成功进行交换 
+     */
+    Q_INVOKABLE bool swapRow(int from, int to) {
+        if (from != to
+            && from >= 0
+            && from < _musicArr.count()
+            && to >= 0
+            && to < _musicArr.count()
+        ) {
+            beginMoveRows(
+                QModelIndex(),
+                from,
+                from,
+                QModelIndex(),
+                from > to ? (to) : (to + 1));
+            _musicArr.swapItemsAt(from, to);
+            endMoveRows();
+            return true;
+        }
+        return false;
+    }
+
+    bool moveRows(
+        const QModelIndex& sourceParent,
+        int sourceRow,
+        int count,
+        const QModelIndex& destinationParent,
+        int destinationRow
+    ) override {
+        qDebug() << sourceParent << "-->" << destinationParent;
+        if (count != 1 || sourceParent.isValid() || destinationParent.isValid())
+            return false;
+        if (sourceRow < 0 || sourceRow >= static_cast<int>(_musicArr.size()))
+            return false;
+        if (destinationRow < 0 || destinationRow > static_cast<int>(_musicArr.size()))
+            return false;
+        if (sourceRow == destinationRow || sourceRow + 1 == destinationRow)
+            return false;
+
+        beginMoveRows(
+            QModelIndex(),
+            sourceRow,
+            sourceRow,
+            QModelIndex(),
+            (destinationRow > sourceRow) ? destinationRow + 1 : destinationRow
+        );
+        auto item = _musicArr[sourceRow];
+        _musicArr.erase(_musicArr.begin() + sourceRow);
+        _musicArr.insert(
+            _musicArr.begin()
+                + ((destinationRow > sourceRow) ? destinationRow - 1
+                                                : destinationRow),
+            item
+        );
+        endMoveRows();
+        return true;
+    }
+
     Q_INVOKABLE QString getUrl(int row) const {
         return _musicArr[row].url;
     }
@@ -227,6 +289,22 @@ public:
             });
             Q_EMIT SignalBusSingleton::get().savePlaylistSignal();
         }
+    }
+
+    /**
+     * @brief 保存歌单接口
+     * @return Q_INVOKABLE 
+     */
+    Q_INVOKABLE void savePlaylist() {
+        decltype(GlobalSingleton::get().musicList.songList) newSongList;
+        newSongList.reserve(_musicArr.size());
+        for (auto const& it : _musicArr) {
+            newSongList.push_back({
+                it.url.toStdString()
+            });
+        }
+        GlobalSingleton::get().musicList.songList = std::move(newSongList);
+        Q_EMIT SignalBusSingleton::get().savePlaylistSignal();
     }
 
     Q_INVOKABLE void clear() {

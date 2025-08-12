@@ -30,12 +30,27 @@ Item {
 
     ListView {
         id: listView
+        property bool isSwaped: false // 是否进行了交换
+
         model: musicListModel
         anchors.fill: parent
         clip: true
+        interactive: true
+        // snapMode: ListView.SnapToItem   // 松手自动对齐
+        // boundsBehavior: Flickable.DragOverBounds // 允许拖出时自动滚动
         highlight: Rectangle { // 高亮选中的项
             color: "lightsteelblue"
             radius: 5
+        }
+
+        // 当前项动画
+        move: Transition {
+            NumberAnimation { property: "y"; duration: 200; easing.type: Easing.OutQuad }
+        }
+
+        // 被挤开的项动画
+        moveDisplaced: Transition {
+            NumberAnimation { property: "y"; duration: 200; easing.type: Easing.OutQuad }
         }
 
         delegate: Item {
@@ -48,17 +63,39 @@ Item {
             
             width: listView.width
             height: 60
+            z: mouseArea.pressed ? 10 : 1
 
             MouseArea {
                 id: mouseArea
                 property bool _hovered: false // 是否悬浮
                 anchors.fill: parent
+                preventStealing: true // 防止信号被窃取
 
                 // 双击是选择
                 onDoubleClicked: (mouse) => {
                     if (mouse.button === Qt.LeftButton) {
                         listView.currentIndex = delegateRoot.index;
                         musicController.playMusic(delegateRoot.model.url);
+                    }
+                }
+
+                // 拖拽
+                onPositionChanged: (mouse) => {
+                    if (!mouseArea.pressed) {
+                        if (listView.isSwaped) {
+                            listView.isSwaped = false;
+                            // 保存歌单
+                            // console.log("我保存了", Date.now()); // @debug
+                            musicListModel.savePlaylist();
+                        }
+                        return;
+                    }
+                    let from = delegateRoot.index;
+                    // 换算为父上控件的坐标系
+                    let p = mouseArea.mapToItem(listView, mouse.x, mouse.y);
+                    let to = listView.indexAt(p.x, p.y);
+                    if (to !== -1 && to !== from) {
+                        listView.isSwaped |= musicListModel.swapRow(from, to);
                     }
                 }
 
@@ -74,7 +111,7 @@ Item {
                         menu.index = delegateRoot.index;
 
                         // 换算为父上控件的坐标系
-                        var p = mouseArea.mapToItem(root, mouse.x, mouse.y);
+                        let p = mouseArea.mapToItem(root, mouse.x, mouse.y);
                         menu.x = p.x;
                         menu.y = p.y;
                         menu.visible = true;
@@ -82,103 +119,110 @@ Item {
                 }
             }
 
-            RowLayout {
+            Rectangle {
                 anchors.fill: parent
-                anchors.margins: 5
-                spacing: 10
 
-                // 编号图标
-                PlayStatusButton {
-                    Layout.preferredWidth: 40
-                    Layout.alignment: Qt.AlignCenter
-                    text: (delegateRoot.index + 1).toString()
-                    isSelected: delegateRoot.isSelected
-                    isHovered: mouseArea._hovered
-                    path: delegateRoot.model.url
-                    onSwitchThisMusic: {
-                        listView.currentIndex = delegateRoot.index;
-                    }
-                }
+                // @todo
+                // color: mouseArea.pressed ?" black" : "gray"
 
-                // 封面 + 标题 + 歌手(靠左, 自适应宽度)
                 RowLayout {
-                    id: titleColumn
-                    Layout.alignment: Qt.AlignLeft
-                    spacing: 8
-                    Layout.preferredWidth: root.maxTitleColumnWidth
-                    onWidthChanged: {
-                        if (width > root.maxTitleColumnWidth) {
-                            root.maxTitleColumnWidth = width;
+                    anchors.fill: parent
+                    anchors.margins: 5
+                    spacing: 10
+
+                    // 编号图标
+                    PlayStatusButton {
+                        Layout.preferredWidth: 40
+                        Layout.alignment: Qt.AlignCenter
+                        text: (delegateRoot.index + 1).toString()
+                        isSelected: delegateRoot.isSelected
+                        isHovered: mouseArea._hovered
+                        path: delegateRoot.model.url
+                        onSwitchThisMusic: {
+                            listView.currentIndex = delegateRoot.index;
                         }
                     }
 
-                    // 封面
-                    Rectangle {
-                        Layout.preferredWidth: 50
-                        Layout.preferredHeight: 50
-                        color: "#0a7d92"
-                        Image {
-                            anchors.fill: parent
-                            source: `image://imgPool/${delegateRoot.model.url}`
-                            fillMode: Image.PreserveAspectCrop
-                        }
-                    }
-
-                    // 标题 + 歌手
-                    ColumnLayout {
-                        spacing: 2
+                    // 封面 + 标题 + 歌手(靠左, 自适应宽度)
+                    RowLayout {
+                        id: titleColumn
                         Layout.alignment: Qt.AlignLeft
-                        Layout.fillWidth: true
-
-                        Text {
-                            text: delegateRoot.model.title
-                            font.pixelSize: 16
-                            elide: Text.ElideRight
-                            Layout.fillWidth: true
+                        spacing: 8
+                        Layout.preferredWidth: root.maxTitleColumnWidth
+                        onWidthChanged: {
+                            if (width > root.maxTitleColumnWidth) {
+                                root.maxTitleColumnWidth = width;
+                            }
                         }
 
-                        RowLayout {
-                            spacing: 5
+                        // 封面
+                        Rectangle {
+                            Layout.preferredWidth: 50
+                            Layout.preferredHeight: 50
+                            color: "#0a7d92"
+                            Image {
+                                anchors.fill: parent
+                                source: `image://imgPool/${delegateRoot.model.url}`
+                                fillMode: Image.PreserveAspectCrop
+                            }
+                        }
+
+                        // 标题 + 歌手
+                        ColumnLayout {
+                            spacing: 2
+                            Layout.alignment: Qt.AlignLeft
                             Layout.fillWidth: true
 
-                            Repeater {
-                                model: delegateRoot.model.artist
-                                Text {
-                                    required property var modelData
-                                    text: modelData
-                                    font.pixelSize: 14
-                                    color: "#e62727"
-                                    elide: Text.ElideRight
+                            Text {
+                                text: delegateRoot.model.title
+                                font.pixelSize: 16
+                                elide: Text.ElideRight
+                                Layout.fillWidth: true
+                            }
+
+                            RowLayout {
+                                spacing: 5
+                                Layout.fillWidth: true
+
+                                Repeater {
+                                    model: delegateRoot.model.artist
+                                    Text {
+                                        required property var modelData
+                                        text: modelData
+                                        font.pixelSize: 14
+                                        color: "#e62727"
+                                        elide: Text.ElideRight
+                                    }
                                 }
                             }
                         }
                     }
-                }
 
-                // 专辑(靠左, 自适应宽度)
-                Text {
-                    id: albumColumn
-                    text: delegateRoot.model.album.length > 16
-                            ? delegateRoot.model.album.substring(0, 16) + "…"
-                            : delegateRoot.model.album
-                    font.pixelSize: 14
-                    color: "#079f25"
-                    Layout.alignment: Qt.AlignRight
-                    Layout.preferredWidth: root.maxAlbumColumnWidth
-                    onWidthChanged: {
-                        if (width > root.maxAlbumColumnWidth) {
-                            root.maxAlbumColumnWidth = width;
+                    // 专辑(靠左, 自适应宽度)
+                    Text {
+                        id: albumColumn
+                        text: delegateRoot.model.album.length > 16
+                                ? delegateRoot.model.album.substring(0, 16) + "…"
+                                : delegateRoot.model.album
+                        font.pixelSize: 14
+                        color: "#079f25"
+                        Layout.alignment: Qt.AlignRight
+                        Layout.preferredWidth: root.maxAlbumColumnWidth
+                        onWidthChanged: {
+                            if (width > root.maxAlbumColumnWidth) {
+                                root.maxAlbumColumnWidth = width;
+                            }
                         }
                     }
-                }
 
-                // 时长(固定宽度, 永远贴最右)
-                Text {
-                    text: root.formatDuration(delegateRoot.model.duration)
-                    font.pixelSize: 14
-                    horizontalAlignment: Text.AlignRight
-                    Layout.preferredWidth: 60
-                    Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+                    // 时长(固定宽度, 永远贴最右)
+                    Text {
+                        text: root.formatDuration(delegateRoot.model.duration)
+                        font.pixelSize: 14
+                        horizontalAlignment: Text.AlignRight
+                        Layout.preferredWidth: 60
+                        Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+                    }
                 }
             }
         }

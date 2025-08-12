@@ -28,7 +28,8 @@ namespace HX {
  * @brief 歌曲信息
  */
 struct SongInformation {
-    std::string url;
+    std::string url; // 歌曲链接 (远程 / 本地)
+                     // @todo 字幕配置: 计算过一次, 日后直接复用缓存即可
 };
 
 } // namespace HX
