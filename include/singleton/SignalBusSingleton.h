@@ -122,6 +122,12 @@ Q_SIGNALS:
      * @brief 保存歌单信号 (通过全局单例查看) [任意歌曲顺序变化/添加、删除歌曲时候立刻触发]
      */
     void savePlaylistSignal();
+
+    /**
+     * @brief 添加字幕偏移量
+     * @param addOffset 单位: 毫秒 (ms)
+     */
+    void lyricAddOffset(long long addOffset);
 };
 
 } // namespace HX

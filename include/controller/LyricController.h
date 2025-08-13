@@ -76,6 +76,15 @@ public:
                 auto data = utils::FileUtils::getFileContent(path);
                 _assParse = preprocessLyricBoundingBoxes(0, info->getLengthInMilliseconds(), data);
             });
+
+        /* lyricAddOffset 歌词加上偏移量 */
+        connect(
+            &SignalBusSingleton::get(),
+            &SignalBusSingleton::lyricAddOffset,
+            this,
+            [this](long long add) {
+                _offset += add;
+            });
     }
 
     decltype(std::declval<std::filesystem::path>().string()) findLyricFile(
@@ -229,14 +238,13 @@ public:
         }
         return _lastImage;
     }
-
 Q_SIGNALS:
     void updateLyriced();
 
 private:
     QImage _lastImage;
     AssParse _assParse;
-    long long _offset = 0; // 字幕偏移量
+    long long _offset = 0; // 字幕偏移量 @todo 应该记录到配置文件
     QPoint _cachedTopYLR;
     QPoint _cachedBottomYLR;
     bool _hasCachedY = false;

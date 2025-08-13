@@ -106,6 +106,24 @@ BorderlessWindow {
                 onClicked: musicController.next()
             }
             Button {
+                visible: root.showControls
+                background: Rectangle { color: "transparent" }
+                Image {
+                    anchors.fill: parent
+                    source: "qrc:/icons/back.svg"
+                }
+                onClicked: SignalBusSingleton.lyricAddOffset(-100)
+            }
+            Button {
+                visible: root.showControls
+                background: Rectangle { color: "transparent" }
+                Image {
+                    anchors.fill: parent
+                    source: "qrc:/icons/enter.svg"
+                }
+                onClicked: SignalBusSingleton.lyricAddOffset(100)
+            }
+            Button {
                 id: lockButton
                 visible: root.showControls || mouseArea._isHover
                 background: Rectangle { color: "transparent" }
