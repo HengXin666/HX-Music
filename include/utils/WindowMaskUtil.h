@@ -47,16 +47,12 @@ public:
         _regions = QRegion(
             QRect(x, y, width, height)
         );
-        qDebug() << x << y << width << height;
     }
 
     Q_INVOKABLE void setMask(QWindow* window) {
-        qDebug() << "设了吗";
         if (!window || _regions.isEmpty()) {
-            qDebug() << (window ? "win sb" : "reg sb");
             return;
         }
-        qDebug() << "设了";
         window->setMask(_regions);
     }
 private:

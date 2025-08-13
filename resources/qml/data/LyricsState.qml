@@ -25,7 +25,11 @@ QtObject {
         } else {
             // 切换窗口显示/隐藏
             if (windowLyrics.visible) {
-                windowLyrics.hide();
+                if (windowLyrics.locked) {
+                    windowLyrics.unlock();
+                } else {
+                    windowLyrics.hide();
+                }
             } else {
                 windowLyrics.unlock();
                 windowLyrics.show();

@@ -54,7 +54,7 @@ BorderlessWindow {
 
         anchors.fill: parent
         Rectangle {
-            // visible: mouseArea._isHover
+            visible: root.showControls
             anchors.fill: parent
             color: "#3f000000"
         }
@@ -107,6 +107,7 @@ BorderlessWindow {
             }
             Button {
                 id: lockButton
+                visible: root.showControls || mouseArea._isHover
                 background: Rectangle { color: "transparent" }
                 Image {
                     anchors.fill: parent
@@ -128,16 +129,34 @@ BorderlessWindow {
         anchors.fill: parent
         acceptedButtons: Qt.NoButton
         property bool _isHover: false
-        hoverEnabled: true // 必须开启, 否则不会触发 onEntered/onExited
+        hoverEnabled: true
+
+        // 延迟退出时间 (毫秒)
+        property int hoverDelay: 1500
+
+        Timer {
+            id: exitTimer
+            interval: mouseArea.hoverDelay
+            repeat: false;
+            onTriggered: {
+                mouseArea._isHover = false;
+            }
+        }
 
         onEntered: {
+            // 停止退出定时器, 保证回到 hover 状态
+            if (exitTimer.running) {
+                exitTimer.stop();
+            }
             _isHover = true;
-            console.log("鼠标进入")
         }
 
         onExited: {
-            _isHover = false;
-            console.log("鼠标离开")
+            // 启动退出定时器, 延迟取消 hover 状态
+            if (exitTimer.running) {
+                exitTimer.stop();
+            }
+            exitTimer.start();
         }
     }
 }
