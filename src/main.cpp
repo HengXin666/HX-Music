@@ -11,6 +11,7 @@
 #include <cmd/MusicCommand.hpp>
 #include <config/MusicConfig.hpp>
 #include <utils/SvgPars.hpp>
+#include <utils/WindowMaskUtil.h>
 #include <model/MusicListModel.hpp>
 
 int main(int argc, char* argv[]) {
@@ -44,6 +45,10 @@ int main(int argc, char* argv[]) {
     QQmlContext* cp = engine.rootContext();
     // 信号总线
     cp->setContextProperty("SignalBusSingleton", &HX::SignalBusSingleton::get());
+
+    // 窗口掩码工具类
+    HX::WindowMaskUtil windowMaskUtil;
+    cp->setContextProperty("WindowMaskUtil", &windowMaskUtil);
 
     // 音乐控制
     qmlRegisterType<HX::MusicController>(

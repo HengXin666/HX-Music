@@ -93,6 +93,10 @@ Window {
         }
     }
 
+    // 暴露的引用
+    property alias delegateRef: mainUI.item
+    property alias titleBarRef: titleBarLoader.item
+
     function toggleMaximized() {
         if ((root.visibility & Window.Maximized) === Window.Maximized) {
             root.showNormal();
@@ -107,10 +111,15 @@ Window {
         property int bw: 0 // 边框厚度 [const]
 
         Component.onCompleted: {
+            if (root.showBorder) {
+                // 如果显示边框, 那么全屏时候也需要显示边框, 因此不应该屏蔽边框
+                return;
+            }
             bw = root.bw;
         }
     }
 
+    // 全屏时候是否需要边距
     onVisibilityChanged: (val) => {
         if (self.bw === 0) {
             return;
@@ -188,15 +197,16 @@ Window {
 
     // 标题栏 (如果有的话)
     Loader {
+        id: titleBarLoader
         width: parent.width - 2 * root.bw
         x: root.bw
         y: root.bw
-        id: titleBarLoader
         sourceComponent: root.titleBar
     }
 
     // 内容区
     Loader {
+        id: mainUI
         x: root.bw
         y: titleBarLoader.item ? titleBarLoader.y + titleBarLoader.height : root.bw
         width: root.width - 2 * root.bw
