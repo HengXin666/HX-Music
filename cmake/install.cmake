@@ -46,6 +46,7 @@ qt_add_qml_module(HX-Music
         resources/qml/Main.qml
         # 窗口
         resources/qml/window/LyricsWindow.qml
+        resources/qml/window/BorderlessWindow.qml
         # 控件
         resources/qml/widget/PlaybackBar.qml
         resources/qml/widget/SideBar.qml

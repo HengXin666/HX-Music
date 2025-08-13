@@ -1,16 +1,19 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Window
 import HX.Music
 
-Window {
+BorderlessWindow {
     id: floatWin
     width: 800
     height: 200
     visible: true
     title: "HX.Music 歌词浮窗 [Wayland置顶]"
-
+    titleBar: null
+    showBorder: false
+    
     // 是否锁定
     property bool locked: false
 
@@ -32,66 +35,72 @@ Window {
 
     color: "transparent"
 
-    Rectangle {
-        visible: floatWin.showControls
+    delegate: Item {
         anchors.fill: parent
-        color: "#3f000000"
-    }
-
-    Image {
-        id: lyricImage
-        anchors.fill: parent
-        fillMode: Image.PreserveAspectFit
-        smooth: true
-        cache: false
-        source: ""
-    }
-
-    RowLayout {
-        id: controlBar
-        visible: floatWin.showControls
-        spacing: 10
-        anchors {
-            bottom: parent.bottom
-            horizontalCenter: parent.horizontalCenter
-            margins: 12
+        Rectangle {
+            visible: floatWin.showControls
+            anchors.fill: parent
+            color: "#3f000000"
         }
 
-        Button {
-            Image {
-                anchors.fill: parent
-                source: "qrc:/icons/previous.svg"
-            }
-            onClicked: musicController.prev()
+        Image {
+            id: lyricImage
+            anchors.fill: parent
+            fillMode: Image.PreserveAspectFit
+            smooth: true
+            cache: false
+            source: ""
         }
-        Button {
-            Image {
-                anchors.fill: parent
-                source: musicController.isPlaying ? "qrc:/icons/pause.svg"
-                                                  : "qrc:/icons/play.svg"
-            }
-            onClicked: musicController.togglePause()
-        }
-        Button {
-            Image {
-                anchors.fill: parent
-                source: "qrc:/icons/next.svg"
-            }
-            onClicked: musicController.next()
-        }
-        Button {
-            Image {
-                anchors.fill: parent
-                source: "qrc:/icons/lock.svg"
-            }
-            onClicked: floatWin.lock()
-        }
-    }
 
-    Component.onCompleted: {
-        // 更新歌词
-        LyricController.updateLyriced.connect(() => {
-            lyricImage.source = `image://musicLyric?f=${Date.now()}`;
-        });
+        RowLayout {
+            id: controlBar
+            visible: floatWin.showControls
+            spacing: 10
+            anchors {
+                top: parent.top
+                horizontalCenter: parent.horizontalCenter
+                margins: 12
+            }
+
+            Button {
+                background: Rectangle { color: "transparent" }
+                Image {
+                    anchors.fill: parent
+                    source: "qrc:/icons/previous.svg"
+                }
+                onClicked: musicController.prev()
+            }
+            Button {
+                background: Rectangle { color: "transparent" }
+                Image {
+                    anchors.fill: parent
+                    source: musicController.isPlaying ? "qrc:/icons/pause.svg"
+                                                    : "qrc:/icons/play.svg"
+                }
+                onClicked: musicController.togglePause()
+            }
+            Button {
+                background: Rectangle { color: "transparent" }
+                Image {
+                    anchors.fill: parent
+                    source: "qrc:/icons/next.svg"
+                }
+                onClicked: musicController.next()
+            }
+            Button {
+                background: Rectangle { color: "transparent" }
+                Image {
+                    anchors.fill: parent
+                    source: "qrc:/icons/lock.svg"
+                }
+                onClicked: floatWin.lock()
+            }
+        }
+        Component.onCompleted: {
+            // 更新歌词
+            LyricController.updateLyriced.connect(() => {
+                lyricImage.source = `image://musicLyric?f=${Date.now()}`;
+            });
+        }
     }
 }

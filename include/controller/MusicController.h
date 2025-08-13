@@ -53,10 +53,12 @@ public:
     Q_INVOKABLE void prev() {
         qDebug() << "上一首";
         MusicCommand::prevMusic();
+        Q_EMIT playingChanged(GlobalSingleton::get().musicConfig.isPlay = true);
     }
     Q_INVOKABLE void next() {
         qDebug() << "下一首";
         MusicCommand::nextMusic();
+        Q_EMIT playingChanged(GlobalSingleton::get().musicConfig.isPlay = true);
     }
 
     /**
