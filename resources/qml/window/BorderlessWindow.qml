@@ -13,12 +13,13 @@ Window {
     property bool allowInnerMove: true  // 中间区域是否允许拖动
     property bool showBorder: true      // 是否显示边框 (不影响resize交互)
     property color borderColor: "red"   // 边框颜色
-    property Component delegate: Item {
+    property Component delegate: Item { // 正文内容
         Text {
             text: "请务必实现 delegate 自绘内部内容"
         }
     }
-    property Component titleBar: Rectangle { // 自绘标题栏, 可为null
+    property Component titleBar: Rectangle { // 自绘标题栏, 可为null, 内部需要自定义 height
+        height: 30
         color: "#3f3f3f"
         MouseArea {
             anchors.fill: parent
@@ -35,15 +36,88 @@ Window {
                 verticalAlignment: Qt.AlignVCenter
                 Layout.fillWidth: true
             }
+            // 最小化按钮
+            Item {
+                Layout.preferredWidth: 30
+                Layout.preferredHeight: 30
+                Image {
+                    anchors.centerIn: parent
+                    width: 16
+                    height: 16
+                    source: "qrc:/icons/dropdown.svg"
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: root.showMinimized()
+                }
+            }
+
+            // 最大化/还原按钮
+            Item {
+                Layout.preferredWidth: 30
+                Layout.preferredHeight: 30
+                Image {
+                    anchors.centerIn: parent
+                    width: 16
+                    height: 16
+                    source: root.visibility === Window.Maximized
+                            ? "qrc:/icons/restore.svg"   // 还原图标
+                            : "qrc:/icons/up.svg"  // 最大化图标
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: {
+                        if (root.visibility === Window.Maximized)
+                            root.showNormal()
+                        else
+                            root.showMaximized()
+                    }
+                }
+            }
+
+            // 关闭按钮
+            Item {
+                Layout.preferredWidth: 30
+                Layout.preferredHeight: 30
+                Image {
+                    anchors.centerIn: parent
+                    width: 16
+                    height: 16
+                    source: "qrc:/icons/close.svg" // 你自己换
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: root.close()
+                }
+            }
         }
     }
 
     function toggleMaximized() {
-        if (root.visibility === Window.Maximized) {
+        if ((root.visibility & Window.Maximized) === Window.Maximized) {
             root.showNormal();
         } else {
             root.showMaximized();
         }
+    }
+
+    // 内部状态数据
+    QtObject {
+        id: self
+        property int bw: 0 // 边框厚度 [const]
+
+        Component.onCompleted: {
+            bw = root.bw;
+        }
+    }
+
+    onVisibilityChanged: (val) => {
+        if (self.bw === 0) {
+            return;
+        }
+        root.bw = (val & Window.Maximized) === Window.Maximized 
+            ? 0 
+            : self.bw;
     }
 
     // 鼠标区域仅用于设置正确的光标形状
@@ -115,7 +189,6 @@ Window {
     // 标题栏 (如果有的话)
     Loader {
         width: parent.width - 2 * root.bw
-        height: 30
         x: root.bw
         y: root.bw
         id: titleBarLoader
