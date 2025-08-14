@@ -5,14 +5,11 @@ import QtQuick.Layouts
 import QtQuick.Window
 import HX.Music
 
-BorderlessWindow {
+FullScreenWindow {
     id: root
-    width: 800
-    height: 200
     visible: true
-    title: "HX.Music 歌词浮窗 [Wayland置顶]"
-    titleBar: null
-    showBorder: false
+    windowTitle: "HX.Music 歌词浮窗"
+    // color: "#05990099"
     
     // 是否锁定
     property bool locked: false
@@ -24,11 +21,12 @@ BorderlessWindow {
     function lock() {
         locked = true;
         Qt.callLater(() => {
-            const posInRoot = delegateRef.lockButtonRef.mapToItem(delegateRef.delegateRoot, 0, 0);
+            const posInRoot = windowItemRef.lockButtonRef.mapToItem(windowItemRef.delegateRoot, 0, 0);
+            WindowMaskUtil.clear(root);
             WindowMaskUtil.addControlRect(
                 posInRoot.x, posInRoot.y,
-                delegateRef.lockButtonRef.width,
-                delegateRef.lockButtonRef.height
+                windowItemRef.lockButtonRef.width,
+                windowItemRef.lockButtonRef.height
             );
             WindowMaskUtil.setMask(root);
         });
@@ -40,19 +38,13 @@ BorderlessWindow {
         });
     }
 
-    flags: Qt.FramelessWindowHint
-         | Qt.WindowStaysOnTopHint
-         | Qt.Tool
-        //  | (locked ? Qt.WindowDoesNotAcceptFocus | Qt.WindowTransparentForInput : Qt.NoItemFlags)
-
-    color: "transparent"
-
-    delegate: Item {
+    windowItem: Item {
         id: delegateRoot
+        width: 800
+        height: 200
         property alias lockButtonRef: lockButton
         property alias delegateRootRef: delegateRoot
 
-        anchors.fill: parent
         Rectangle {
             visible: root.showControls
             anchors.fill: parent
@@ -140,41 +132,45 @@ BorderlessWindow {
                 lyricImage.source = `image://musicLyric?f=${Date.now()}`;
             });
         }
+        MouseArea {
+            id: mouseArea
+            anchors.fill: parent
+            acceptedButtons: Qt.NoButton
+            property bool _isHover: false
+            hoverEnabled: true
+
+            // 延迟退出时间 (毫秒)
+            property int hoverDelay: 1500
+
+            Timer {
+                id: exitTimer
+                interval: mouseArea.hoverDelay
+                repeat: false;
+                onTriggered: {
+                    mouseArea._isHover = false;
+                }
+            }
+
+            onEntered: {
+                // 停止退出定时器, 保证回到 hover 状态
+                if (exitTimer.running) {
+                    exitTimer.stop();
+                }
+                _isHover = true;
+            }
+
+            onExited: {
+                // 启动退出定时器, 延迟取消 hover 状态
+                if (exitTimer.running) {
+                    exitTimer.stop();
+                }
+                exitTimer.start();
+            }
+        }
     }
-
-    MouseArea {
-        id: mouseArea
+    Rectangle {
+        id: selfSize
         anchors.fill: parent
-        acceptedButtons: Qt.NoButton
-        property bool _isHover: false
-        hoverEnabled: true
-
-        // 延迟退出时间 (毫秒)
-        property int hoverDelay: 1500
-
-        Timer {
-            id: exitTimer
-            interval: mouseArea.hoverDelay
-            repeat: false;
-            onTriggered: {
-                mouseArea._isHover = false;
-            }
-        }
-
-        onEntered: {
-            // 停止退出定时器, 保证回到 hover 状态
-            if (exitTimer.running) {
-                exitTimer.stop();
-            }
-            _isHover = true;
-        }
-
-        onExited: {
-            // 启动退出定时器, 延迟取消 hover 状态
-            if (exitTimer.running) {
-                exitTimer.stop();
-            }
-            exitTimer.start();
-        }
+        color: "transparent"
     }
 }
