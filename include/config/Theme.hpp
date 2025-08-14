@@ -32,6 +32,7 @@ namespace HX {
  * @param defaultValue 默认颜色
  */
 #define HX_QML_TYPE_PROPERTY(type, name, defaultValue)                         \
+private:                                                                       \
     Q_PROPERTY(type name READ name WRITE set##name NOTIFY name##Changed)       \
 public:                                                                        \
     type name() const noexcept {                                               \
@@ -68,6 +69,8 @@ public:
     HX_QML_QCOLOR_PROPERTY(paratextColor            , "#b3b3b3"); // 副文本颜色
     HX_QML_QCOLOR_PROPERTY(highlightingColor        , "#ff13ff"); // 高亮颜色
 
+    // 悬浮色系
+    
     // 背景色
     HX_QML_QCOLOR_PROPERTY(backgroundColor          , "#121212");
 

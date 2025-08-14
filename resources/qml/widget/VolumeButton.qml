@@ -16,6 +16,9 @@ Item {
 
     MusicActionButton {
         id: btn
+        defaultColor: popup.visible ? Theme.highlightingColor : Theme.paratextColor
+        pressedColor: Theme.textColor
+        hoveredColor: Theme.highlightingColor
         anchors.fill: parent
         url: root.volumeLevel > 0.5 
             ? "qrc:/icons/volume_up.svg"
