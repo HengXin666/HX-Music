@@ -56,6 +56,7 @@ qt_add_qml_module(HX-Music
         resources/qml/widget/LoopingScrollingText.qml
         resources/qml/widget/MusicListView.qml
         resources/qml/widget/PlayStatusButton.qml
+        resources/qml/widget/ProgressBarRect.qml
         # 内部控件组件
         resources/qml/widget/internal/MusicActionButton.qml
         resources/qml/widget/internal/AudioVisualizerBars.qml

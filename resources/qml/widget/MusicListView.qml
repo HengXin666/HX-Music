@@ -121,7 +121,7 @@ Item {
                     if (delegateRoot.isSelected)
                         return "#2bffffff";
                     else if (mouseArea._hovered)
-                        return "#8effffff";
+                        return "#3fffffff";
                     return "transparent";
                 }
 
@@ -183,22 +183,21 @@ Item {
                             }
 
                             // 歌手
-                            RowLayout {
-                                spacing: 5
+                            Text {
+                                id: artistText
+                                font.pixelSize: 14
                                 Layout.fillWidth: true
+                                color: delegateRoot.isSelected ? Theme.highlightingColor : Theme.paratextColor
+                                elide: Text.ElideRight
 
-                                Repeater {
-                                    id: artistRepeater
-                                    model: delegateRoot.model.artist
-                                    Text {
-                                        required property var modelData
-                                        required property int index
-                                        text: modelData + (index < artistRepeater.count - 1 ? "、" : "")
-                                        font.pixelSize: 14
-                                        color: delegateRoot.isSelected ? Theme.highlightingColor : Theme.paratextColor
-                                        elide: Text.ElideRight
-                                    }
+                                // 动态生成文本
+                                property string artistString: {
+                                    const list = delegateRoot.model.artist
+                                    if (!list || list.length === 0) return ""
+                                    return list.join("、")
                                 }
+
+                                text: artistString
                             }
                         }
                     }

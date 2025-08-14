@@ -25,6 +25,7 @@ Item {
     Text {
         id: txt
         text: root.text
+        color: Theme.paratextColor
         font.pixelSize: 16
         anchors.centerIn: parent
         // 没有选中 && 没有悬浮
