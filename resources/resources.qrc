@@ -1,5 +1,8 @@
 <RCC>
     <qresource prefix="/"/>
+    <qresource prefix="/img">
+        <file alias="background.jpg">img/background.jpg</file>
+    </qresource>
     <qresource prefix="/icons">
         <file alias="back.svg">icons/back.svg</file>
         <file alias="close.svg">icons/close.svg</file>

@@ -17,8 +17,6 @@ BorderlessWindow {
 
     // === 全局状态 ===
     property var lyricsState: LyricsState{} // 歌词悬浮窗口状态控制
-    property var theme: ThemeData{}         // 全局主题配置
-    property var musicController: MusicController {} // 音乐控制
 
     onClosing: {
         lyricsState.del();
@@ -26,7 +24,72 @@ BorderlessWindow {
     }
 
     delegate: Rectangle {
+        id: rootUI
         anchors.fill: parent
+
+        Item {
+            id: bk
+            anchors.fill: parent
+
+            // 当前窗口的 DPR
+            readonly property real dpr: Screen.devicePixelRatio
+
+            // 计算符合当前窗口的最佳解码分辨率(避免过大或过小)
+            function targetSizeForImage(): size {
+                // 可按需给点超采样裕量, 例如 ×1.2, 抗缩放抖动
+                const w = Math.max(1, Math.ceil(width  * dpr * 1.0))
+                const h = Math.max(1, Math.ceil(height * dpr * 1.0))
+                return Qt.size(w, h)
+            }
+
+            Image {
+                id: bgCurrent
+                anchors.fill: parent
+                fillMode: Image.PreserveAspectCrop
+                cache: true
+                mipmap: true
+                smooth: true
+            }
+
+            Image {
+                id: bgNext
+                anchors.fill: parent
+                fillMode: Image.PreserveAspectCrop
+                cache: true
+                mipmap: true
+                smooth: true
+                opacity: 0
+                onStatusChanged: {
+                    if (status === Image.Ready) {
+                        bgCurrent.source = source
+                        bgNext.opacity = 0
+                    }
+                }
+                Behavior on opacity { NumberAnimation { duration: 150 } }
+            }
+
+            function updateBackground(size) {
+                bgNext.sourceSize = size
+                bgNext.source = Theme.backgroundImgUrl
+                bgNext.opacity = 1
+            }
+
+            Timer {
+                id: resizeThrottle
+                interval: 120
+                repeat: false
+                onTriggered: bk.updateBackground(bk.targetSizeForImage())
+            }
+
+            onWidthChanged: resizeThrottle.restart()
+            onHeightChanged: resizeThrottle.restart()
+            Component.onCompleted: {
+                bgCurrent.sourceSize = bk.targetSizeForImage()
+                bgCurrent.source = Theme.backgroundImgUrl
+            }
+        }
+
+
         ColumnLayout {
             anchors.fill: parent
 
@@ -48,6 +111,7 @@ BorderlessWindow {
                     Layout.fillHeight: true
 
                     Rectangle {
+                        color: "transparent"
                         MusicListView {
                             anchors.fill: parent
                         }

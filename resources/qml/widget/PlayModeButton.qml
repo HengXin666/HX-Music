@@ -15,7 +15,7 @@ Item {
     MusicActionButton {
         id: btn
         anchors.fill: parent
-        property int currentMode: musicController.playMode
+        property int currentMode: MusicController.playMode
 
         // 播放模式数量(最后那个 PlayModeCnt 不算实际模式)
         readonly property int modeCount: PlayMode.PlayModeCnt
@@ -34,7 +34,7 @@ Item {
             currentMode = (currentMode + 1) % modeCount;
             iconSource = playModeIcons[currentMode];
             root.playModeChanged(currentMode);
-            musicController.setPlayMode(currentMode);
+            MusicController.setPlayMode(currentMode);
         }
 
         url: btn.iconSource

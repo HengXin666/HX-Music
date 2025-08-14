@@ -81,10 +81,10 @@ Item {
     }
 
     onVolumeLevelChanged: {
-        musicController.volume = volumeLevel;
+        MusicController.volume = volumeLevel;
     }
 
     Component.onCompleted: {
-        volumeLevel = musicController.volume;
+        volumeLevel = MusicController.volume;
     }
 }

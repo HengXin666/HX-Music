@@ -40,7 +40,7 @@ Item {
         anchors.fill: parent
         source: {
             if (root.isSelected) {
-                return musicController.isPlaying 
+                return MusicController.isPlaying 
                     ? `image://svgColored/qrc:/icons/pause.svg?color=${"#990099"}`
                     : `image://svgColored/qrc:/icons/play.svg?color=${"#990099"}`;
             } else {
@@ -55,9 +55,9 @@ Item {
 
             onClicked: {
                 if (root.isSelected) {
-                    musicController.togglePause();
+                    MusicController.togglePause();
                 } else {
-                    musicController.playMusic(path);
+                    MusicController.playMusic(path);
                     root.switchThisMusic();
                 }
             }
@@ -67,8 +67,9 @@ Item {
     AudioVisualizerBars {
         id: audioVisualizerBars
         anchors.fill: parent
+        color: Theme.highlightingColor
         // 选中 && 没有悬浮 && 没有暂停
-        visible: root.isSelected && !root.isHovered && musicController.isPlaying
+        visible: root.isSelected && !root.isHovered && MusicController.isPlaying
     }
 
     signal switchThisMusic();

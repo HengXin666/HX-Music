@@ -84,17 +84,17 @@ BorderlessWindow {
                     anchors.fill: parent
                     source: "qrc:/icons/previous.svg"
                 }
-                onClicked: musicController.prev()
+                onClicked: MusicController.prev()
             }
             Button {
                 visible: root.showControls
                 background: Rectangle { color: "transparent" }
                 Image {
                     anchors.fill: parent
-                    source: musicController.isPlaying ? "qrc:/icons/pause.svg"
+                    source: MusicController.isPlaying ? "qrc:/icons/pause.svg"
                                                       : "qrc:/icons/play.svg"
                 }
-                onClicked: musicController.togglePause()
+                onClicked: MusicController.togglePause()
             }
             Button {
                 visible: root.showControls
@@ -103,7 +103,7 @@ BorderlessWindow {
                     anchors.fill: parent
                     source: "qrc:/icons/next.svg"
                 }
-                onClicked: musicController.next()
+                onClicked: MusicController.next()
             }
             Button {
                 visible: root.showControls

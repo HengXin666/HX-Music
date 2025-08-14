@@ -38,10 +38,6 @@ Item {
         interactive: true
         // snapMode: ListView.SnapToItem   // 松手自动对齐
         // boundsBehavior: Flickable.DragOverBounds // 允许拖出时自动滚动
-        highlight: Rectangle { // 高亮选中的项
-            color: "lightsteelblue"
-            radius: 5
-        }
 
         // 当前项动画
         move: Transition {
@@ -75,7 +71,7 @@ Item {
                 onDoubleClicked: (mouse) => {
                     if (mouse.button === Qt.LeftButton) {
                         listView.currentIndex = delegateRoot.index;
-                        musicController.playMusic(delegateRoot.model.url);
+                        MusicController.playMusic(delegateRoot.model.url);
                     }
                 }
 
@@ -121,9 +117,13 @@ Item {
 
             Rectangle {
                 anchors.fill: parent
-
-                // @todo
-                // color: mouseArea.pressed ?" black" : "gray"
+                color: {
+                    if (delegateRoot.isSelected)
+                        return "#2bffffff";
+                    else if (mouseArea._hovered)
+                        return "#8effffff";
+                    return "transparent";
+                }
 
                 RowLayout {
                     anchors.fill: parent
@@ -159,7 +159,7 @@ Item {
                         Rectangle {
                             Layout.preferredWidth: 50
                             Layout.preferredHeight: 50
-                            color: "#0a7d92"
+                            color: delegateRoot.isSelected ? Theme.highlightingColor : Theme.textColor
                             Image {
                                 anchors.fill: parent
                                 source: `image://imgPool/${delegateRoot.model.url}`
@@ -173,24 +173,29 @@ Item {
                             Layout.alignment: Qt.AlignLeft
                             Layout.fillWidth: true
 
+                            // 标题
                             Text {
                                 text: delegateRoot.model.title
+                                color: delegateRoot.isSelected ? Theme.highlightingColor : Theme.textColor
                                 font.pixelSize: 16
                                 elide: Text.ElideRight
                                 Layout.fillWidth: true
                             }
 
+                            // 歌手
                             RowLayout {
                                 spacing: 5
                                 Layout.fillWidth: true
 
                                 Repeater {
+                                    id: artistRepeater
                                     model: delegateRoot.model.artist
                                     Text {
                                         required property var modelData
-                                        text: modelData
+                                        required property int index
+                                        text: modelData + (index < artistRepeater.count - 1 ? "、" : "")
                                         font.pixelSize: 14
-                                        color: "#e62727"
+                                        color: delegateRoot.isSelected ? Theme.highlightingColor : Theme.paratextColor
                                         elide: Text.ElideRight
                                     }
                                 }
@@ -205,7 +210,7 @@ Item {
                                 ? delegateRoot.model.album.substring(0, 16) + "…"
                                 : delegateRoot.model.album
                         font.pixelSize: 14
-                        color: "#079f25"
+                        color: delegateRoot.isSelected ? Theme.highlightingColor : Theme.textColor
                         Layout.alignment: Qt.AlignRight
                         Layout.preferredWidth: root.maxAlbumColumnWidth
                         onWidthChanged: {
@@ -219,6 +224,7 @@ Item {
                     Text {
                         text: root.formatDuration(delegateRoot.model.duration)
                         font.pixelSize: 14
+                        color: delegateRoot.isSelected ? Theme.highlightingColor : Theme.paratextColor
                         horizontalAlignment: Text.AlignRight
                         Layout.preferredWidth: 60
                         Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
@@ -228,21 +234,21 @@ Item {
         }
 
         onCurrentIndexChanged: {
-            musicController.listIndex = listView.currentIndex;
+            MusicController.listIndex = listView.currentIndex;
         }
 
         Component.onCompleted: {
             // @todo 应该支持从配置恢复
-            listView.currentIndex = musicController.listIndex;
+            listView.currentIndex = MusicController.listIndex;
 
             // 绑定 当前选择项更新信号
-            musicController.listIndexChanged.connect((idx) => {
+            MusicController.listIndexChanged.connect((idx) => {
                 listView.currentIndex = idx;
             });
         }
     }
 
-    // 右键菜单
+    // 右键菜单 @todo 美化: 支持圆边
     Menu {
         id: menu
         property int index: -1
@@ -250,7 +256,7 @@ Item {
         MenuItem {
             text: "播放"
             onTriggered: {
-                musicController.playMusic(musicListModel.getUrl(menu.index));
+                MusicController.playMusic(musicListModel.getUrl(menu.index));
             }
         }
         MenuItem {

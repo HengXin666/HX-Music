@@ -15,7 +15,7 @@ Slider {
 
     onValueChanged: {
         if (root.pressed) {
-            musicController.setPosition(value); // 更新播放位置到指定值，实现手动控制进度条位置改变时同步更新播放位置
+            MusicController.setPosition(value); // 更新播放位置到指定值，实现手动控制进度条位置改变时同步更新播放位置
         }
     }
 

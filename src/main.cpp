@@ -10,6 +10,7 @@
 #include <controller/PlaylistController.h>
 #include <cmd/MusicCommand.hpp>
 #include <config/MusicConfig.hpp>
+#include <config/Theme.hpp>
 #include <utils/SvgPars.hpp>
 #include <utils/WindowMaskUtil.h>
 #include <model/MusicListModel.hpp>
@@ -35,13 +36,6 @@ int main(int argc, char* argv[]) {
         "PlayMode 是一个枚举类型, 不可实例化"
     );
 
-    // 注册 音频信息
-    qmlRegisterType<HX::MusicInfo>(
-        "HX.Music",
-        1, 0,
-        "MusicInfo"
-    );
-
     QQmlContext* cp = engine.rootContext();
     // 信号总线
     cp->setContextProperty("SignalBusSingleton", &HX::SignalBusSingleton::get());
@@ -50,18 +44,26 @@ int main(int argc, char* argv[]) {
     HX::WindowMaskUtil windowMaskUtil;
     cp->setContextProperty("WindowMaskUtil", &windowMaskUtil);
 
-    // 音乐控制
-    qmlRegisterType<HX::MusicController>(
-        "HX.Music", // 导入时候的名称 (import Xxx) (注意得是大写开头)
-        1, 0,                       // 主版本号 与 次版本号
-        "MusicController"           // qml中使用的组件名称 (注意得是大写开头)
-    );
+    // 主题数据类
+    HX::Theme theme;
+    cp->setContextProperty("Theme", &theme);
+
+    // 音乐控制类
+    HX::MusicController musicController;
+    cp->setContextProperty("MusicController", &musicController);
 
     // 注册 歌曲列表视图 到 qml
     qmlRegisterType<HX::MusicListModel>(
         "HX.Music",
         1, 0,
         "MusicListModel"
+    );
+
+    // 注册 音频信息
+    qmlRegisterType<HX::MusicInfo>(
+        "HX.Music",
+        1, 0,
+        "MusicInfo"
     );
 
     // 歌词渲染与管理

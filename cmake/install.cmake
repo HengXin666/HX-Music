@@ -61,7 +61,6 @@ qt_add_qml_module(HX-Music
         resources/qml/widget/internal/AudioVisualizerBars.qml
         # 全局状态数据
         resources/qml/data/LyricsState.qml
-        resources/qml/data/ThemeData.qml
 )
 
 # Qt拓展 (音频播放)

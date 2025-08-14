@@ -40,7 +40,9 @@ namespace HX {
 class MusicController : public QObject {
     Q_OBJECT
 public:
-    MusicController() {
+    MusicController(QObject* p = nullptr)
+        : QObject{p} 
+    {
         // 订阅更新索引
         connect(
             &SignalBusSingleton::get(),

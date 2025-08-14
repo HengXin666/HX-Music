@@ -16,7 +16,7 @@ Item {
     Rectangle {
         id: container
         anchors.fill: parent
-        color: "#3f000000"
+        color: "transparent"
 
         RowLayout {
             anchors.fill: parent
@@ -125,19 +125,19 @@ Item {
                         Layout.preferredWidth: songActionButton.actionButtonMiniSize
                         Layout.preferredHeight: songActionButton.actionButtonMiniSize
                         url: "qrc:/icons/previous.svg"
-                        onClicked: musicController.prev()
+                        onClicked: MusicController.prev()
                     }
                     MusicActionButton {
                         Layout.preferredWidth: songActionButton.actionButtonSize
                         Layout.preferredHeight: songActionButton.actionButtonSize
-                        url: musicController.isPlaying ? "qrc:/icons/pause.svg" : "qrc:/icons/play.svg"
-                        onClicked: musicController.togglePause()
+                        url: MusicController.isPlaying ? "qrc:/icons/pause.svg" : "qrc:/icons/play.svg"
+                        onClicked: MusicController.togglePause()
                     }
                     MusicActionButton {
                         Layout.preferredWidth: songActionButton.actionButtonMiniSize
                         Layout.preferredHeight: songActionButton.actionButtonMiniSize
                         url: "qrc:/icons/next.svg"
-                        onClicked: musicController.next()
+                        onClicked: MusicController.next()
                     }
                 }
 

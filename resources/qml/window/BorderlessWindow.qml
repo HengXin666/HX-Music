@@ -68,9 +68,9 @@ Window {
                     anchors.fill: parent
                     onClicked: {
                         if (root.visibility === Window.Maximized)
-                            root.showNormal()
+                            root.showNormal();
                         else
-                            root.showMaximized()
+                            root.showMaximized();
                     }
                 }
             }
@@ -83,7 +83,7 @@ Window {
                     anchors.centerIn: parent
                     width: 16
                     height: 16
-                    source: "qrc:/icons/close.svg" // 你自己换
+                    source: "qrc:/icons/close.svg"
                 }
                 MouseArea {
                     anchors.fill: parent
