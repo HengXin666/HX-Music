@@ -52,6 +52,11 @@ public:
         );
     }
 
+    ~MusicController() noexcept {
+        // 记录播放位置, 方便恢复...
+        GlobalSingleton::get().musicConfig.position = getNowPos();
+    }
+
     Q_INVOKABLE void prev() {
         qDebug() << "上一首";
         MusicCommand::prevMusic();
@@ -131,6 +136,14 @@ public:
     Q_INVOKABLE void setVolume(float volume) {
         MusicCommand::setVolume(volume);
         Q_EMIT volumeChanged(volume);
+    }
+
+    /**
+     * @brief 获取歌曲播放到的位置 (从配置文件恢复)
+     * @return Q_INVOKABLE qint64
+     */
+    Q_INVOKABLE qint64 getTheLastPlayedPosition() const {
+        return GlobalSingleton::get().musicConfig.position;
     }
 
     /**

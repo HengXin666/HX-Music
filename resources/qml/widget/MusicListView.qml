@@ -237,8 +237,18 @@ Item {
         }
 
         Component.onCompleted: {
-            // @todo 应该支持从配置恢复
-            listView.currentIndex = MusicController.listIndex;
+            Qt.callLater(() => {
+                listView.currentIndex = MusicController.listIndex;
+                if (listView.currentIndex >= 0 && listView.currentIndex < listView.count) {
+                    MusicController.playMusic(musicListModel.getUrl(listView.currentIndex));
+                    Qt.callLater(() => {
+                        MusicController.togglePause();
+                        Qt.callLater(() => {
+                            MusicController.setPosition(MusicController.getTheLastPlayedPosition());
+                        });
+                    });
+                }
+            });;
 
             // 绑定 当前选择项更新信号
             MusicController.listIndexChanged.connect((idx) => {
