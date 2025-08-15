@@ -134,20 +134,20 @@ Window {
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: {
-            const mousePoint = Qt.point(mouseX, mouseY);
             const b = root.bw + 10; // 角尺寸
-            if (mousePoint.x < b && mousePoint.y < root.bw)              // 左上
+            if (mouseX < b && mouseY < root.bw)              // 左上
                 return Qt.SizeFDiagCursor;
-            if (mousePoint.x >= width - b && mousePoint.y >= height - b) // 右下
+            if (mouseX >= width - b && mouseY >= height - b) // 右下
                 return Qt.SizeFDiagCursor;
-            if (mousePoint.x >= width - b && mousePoint.y < root.bw)     // 右上
+            if (mouseX >= width - b && mouseY < root.bw)     // 右上
                 return Qt.SizeBDiagCursor;
-            if (mousePoint.x < b && mousePoint.y >= height - b)          // 左下
+            if (mouseX < b && mouseY >= height - b)          // 左下
                 return Qt.SizeBDiagCursor;
-            if (mousePoint.x < b || mousePoint.x >= width - b)           // 水平
+            if (mouseX < b || mouseX >= width - b)           // 水平
                 return Qt.SizeHorCursor;
-            if (mousePoint.y < root.bw || mousePoint.y >= height - b)    // 竖直
+            if (mouseY < root.bw || mouseY >= height - b)    // 竖直
                 return Qt.SizeVerCursor;
+            return Qt.ArrowCursor;
         }
         acceptedButtons: Qt.NoButton // 不处理实际事件
     }

@@ -9,10 +9,12 @@ FullScreenWindow {
     id: root
     visible: true
     windowTitle: "HX.Music 歌词浮窗"
-    // color: "#05990099"
-    
+
     // 是否锁定
     property bool locked: false
+
+    // 是否显示锁 (悬浮情况)
+    property bool showUnlock: false
 
     // 是否显示控制栏(包括鼠标悬浮后显示的解锁按钮)
     property bool showControls: !locked
@@ -20,8 +22,11 @@ FullScreenWindow {
     // 外部接口: 锁/解锁控制
     function lock() {
         locked = true;
+        root.closeMask = true;
         Qt.callLater(() => {
-            const posInRoot = windowItemRef.lockButtonRef.mapToItem(windowItemRef.delegateRoot, 0, 0);
+            console.log("上锁!")
+            const posInRoot = windowItemRef.lockButtonRef.mapToItem(fillRect, 0, 0);
+            console.log("上锁啊!")
             WindowMaskUtil.clear(root);
             WindowMaskUtil.addControlRect(
                 posInRoot.x, posInRoot.y,
@@ -33,15 +38,23 @@ FullScreenWindow {
     }
     function unlock() {
         locked = false;
+        root.closeMask = false;
         Qt.callLater(() => {
             WindowMaskUtil.clear(root);
+            root.updateMask();
         });
     }
 
+    Rectangle {
+        id: fillRect
+        anchors.fill: parent
+        color: "#05990099"
+    }
+
+    initWidth: 800
+    initHeight: 200
     windowItem: Item {
         id: delegateRoot
-        width: 800
-        height: 200
         property alias lockButtonRef: lockButton
         property alias delegateRootRef: delegateRoot
 
@@ -117,7 +130,7 @@ FullScreenWindow {
             }
             Button {
                 id: lockButton
-                visible: root.showControls || mouseArea._isHover
+                visible: root.showControls || root.showUnlock
                 background: Rectangle { color: "transparent" }
                 Image {
                     anchors.fill: parent
@@ -132,45 +145,26 @@ FullScreenWindow {
                 lyricImage.source = `image://musicLyric?f=${Date.now()}`;
             });
         }
-        MouseArea {
-            id: mouseArea
-            anchors.fill: parent
-            acceptedButtons: Qt.NoButton
-            property bool _isHover: false
-            hoverEnabled: true
+    }
 
-            // 延迟退出时间 (毫秒)
-            property int hoverDelay: 1500
-
-            Timer {
-                id: exitTimer
-                interval: mouseArea.hoverDelay
-                repeat: false;
-                onTriggered: {
-                    mouseArea._isHover = false;
-                }
-            }
-
-            onEntered: {
-                // 停止退出定时器, 保证回到 hover 状态
-                if (exitTimer.running) {
-                    exitTimer.stop();
-                }
-                _isHover = true;
-            }
-
-            onExited: {
-                // 启动退出定时器, 延迟取消 hover 状态
-                if (exitTimer.running) {
-                    exitTimer.stop();
-                }
-                exitTimer.start();
-            }
+    Timer {
+        id: exitTimer
+        // 延迟退出时间 (毫秒)
+        interval: 1500
+        repeat: false;
+        onTriggered: {
+            root.showUnlock = false;
         }
     }
-    Rectangle {
-        id: selfSize
-        anchors.fill: parent
-        color: "transparent"
+
+    onIsHoverChanged: {
+        if (root.isHover) {
+            if (exitTimer.running) {
+                exitTimer.stop();
+            }
+            root.showUnlock = true;
+        } else {
+            exitTimer.start();
+        }
     }
 }
