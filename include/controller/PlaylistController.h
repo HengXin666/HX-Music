@@ -50,6 +50,7 @@ public:
                     try {
                         file.syncOpen("./localPlaylist.json", platform::OpenMode::Read);
                         json = file.syncReadAll();
+                        file.syncClose();
                     } catch (...) {
                         json = R"({
     "playlistId": "localPlaylist",
@@ -57,7 +58,6 @@ public:
     "songList": []
 })";
                     }
-                    file.syncClose();
                     MusicList musicList;
                     reflection::fromJson(musicList, json);
                     GlobalSingleton::get().musicList = std::move(musicList);

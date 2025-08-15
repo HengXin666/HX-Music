@@ -41,7 +41,7 @@ public:                                                                        \
     void set##name(type const& color) noexcept {                               \
         if (_##name != color) {                                                \
             _##name = color;                                                   \
-            emit name##Changed();                                              \
+            Q_EMIT name##Changed();                                            \
         }                                                                      \
     }                                                                          \
 Q_SIGNALS:                                                                     \

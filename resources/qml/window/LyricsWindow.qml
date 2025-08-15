@@ -49,8 +49,10 @@ FullScreenWindow {
         color: "transparent"
     }
 
-    initWidth: 800
-    initHeight: 200
+    initX: LyricController.windowX
+    initY: LyricController.windowY
+    initWidth: LyricController.windowWidth
+    initHeight: LyricController.windowHeight
     windowItem: Item {
         id: delegateRoot
         property alias lockButtonRef: lockButton
@@ -164,5 +166,26 @@ FullScreenWindow {
         } else {
             exitTimer.start();
         }
+    }
+
+    onItemXChanged: function(v: int) {
+        LyricController.windowX = v;
+    }
+
+    onItemYChanged: function(v: int) {
+        LyricController.windowY = v;
+    }
+
+
+    onItemWidthChanged: function(v: int) {
+        if (v === 0)
+            return;
+        LyricController.windowWidth = v;
+    }
+
+    onItemHeightChanged: function(v: int) {
+        if (v === 0)
+            return;
+        LyricController.windowHeight = v;
     }
 }

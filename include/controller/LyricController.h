@@ -30,8 +30,11 @@
 #include <utils/SpscQueue.hpp>
 #include <singleton/GlobalSingleton.hpp>
 #include <singleton/SignalBusSingleton.h>
+#include <config/LyricConfig.hpp>
 
 #include <HXLibs/utils/FileUtils.hpp>
+#include <HXLibs/reflection/json/JsonRead.hpp>
+#include <HXLibs/reflection/json/JsonWrite.hpp>
 
 namespace HX {
 
@@ -49,6 +52,17 @@ inline QByteArray readQrcFile(const QString& qrcPath) {
 
 class LyricController : public QQuickImageProvider {
     Q_OBJECT
+
+    void saveConfig() noexcept {
+        // 加载配置文件
+        coroutine::EventLoop loop{};
+        utils::AsyncFile file{loop};
+        file.syncOpen("./lyricConfig.json", utils::OpenMode::Write);
+        std::string json;
+        reflection::toJson<true>(_lyricConfig, json);
+        file.syncWrite(json);
+        file.syncClose();
+    }
 public:
     LyricController()
         : QQuickImageProvider{QQuickImageProvider::Image}
@@ -56,8 +70,25 @@ public:
         , _assParse{}
     {
         _assParse.setFrameSize(1920, 1080);
-
         _assParse.readMemory(internal::readQrcFile(":default/default.ass"));
+
+        // 加载配置文件
+        coroutine::EventLoop loop{};
+        utils::AsyncFile file{loop};
+        try {
+            file.syncOpen("./lyricConfig.json", utils::OpenMode::Read);
+            reflection::fromJson(_lyricConfig, file.syncReadAll());
+            file.syncClose();
+        } catch (...) {
+            using namespace std::string_view_literals;
+            reflection::fromJson(_lyricConfig, R"({
+"windowX":400,
+"windowY": 300,
+"windowWidth": 800,
+"windowHeight": 200,
+"lyricOffset": 0
+})"sv);
+        }
 
         /* musicPlayPosChanged (歌曲播放位置变化) */
         connect(
@@ -83,8 +114,13 @@ public:
             &SignalBusSingleton::lyricAddOffset,
             this,
             [this](long long add) {
-                _offset += add;
+                _lyricConfig.lyricOffset += add;
+                saveConfig();
             });
+    }
+
+    ~LyricController() noexcept {
+        saveConfig();
     }
 
     decltype(std::declval<std::filesystem::path>().string()) findLyricFile(
@@ -154,7 +190,7 @@ public:
         }
 
         int change;
-        auto* imgList = _assParse.rendererFrame(nowTime + _offset, change);
+        auto* imgList = _assParse.rendererFrame(nowTime + _lyricConfig.lyricOffset, change);
         if (!imgList) {
             if (!_lastImage.isNull()) {
                 _lastImage = QImage(1, 1, QImage::Format_ARGB32);
@@ -244,11 +280,47 @@ Q_SIGNALS:
 private:
     QImage _lastImage;
     AssParse _assParse;
-    long long _offset = 0; // 字幕偏移量 @todo 应该记录到配置文件
+    LyricConfig _lyricConfig;
     QPoint _cachedTopYLR;
     QPoint _cachedBottomYLR;
     bool _hasCachedY = false;
+    
+#ifndef Q_MOC_RUN
+    #define HX_QML_CONFIG_TYPE(name) decltype(_lyricConfig.name)
+#else
+    #define HX_QML_CONFIG_TYPE(name) int
+#endif
+
+/**
+ * @brief 快速注册为 QML 可以用成员
+ * @param name 外露的成员名称, 内部为 _config.name
+ */
+#define HX_QML_CONFIG_PROPERTY(name)                                           \
+private:                                                                       \
+    Q_PROPERTY(HX_QML_CONFIG_TYPE(name)                                        \
+                   name READ name WRITE set##name NOTIFY name##Changed)        \
+public:                                                                        \
+    HX_QML_CONFIG_TYPE(name) name() const noexcept {                           \
+        return _lyricConfig.name;                                              \
+    }                                                                          \
+    void set##name(HX_QML_CONFIG_TYPE(name) const& name) noexcept {            \
+        if (_lyricConfig.name != name) {                                       \
+            _lyricConfig.name = name;                                          \
+            Q_EMIT name##Changed();                                            \
+        }                                                                      \
+    }                                                                          \
+Q_SIGNALS:                                                                     \
+    void name##Changed()
+
+    HX_QML_CONFIG_PROPERTY(windowX);
+    HX_QML_CONFIG_PROPERTY(windowY);
+    HX_QML_CONFIG_PROPERTY(windowWidth);
+    HX_QML_CONFIG_PROPERTY(windowHeight);
+    HX_QML_CONFIG_PROPERTY(lyricOffset);
+
+#undef HX_QML_CONFIG_PROPERTY
 };
+
 
 } // namespace HX
 

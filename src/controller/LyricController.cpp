@@ -40,7 +40,7 @@ AssParse LyricController::preprocessLyricBoundingBoxes(
             for (auto it = r.begin(); it != r.end(); ++it) {
                 int change;
                 int t = it * frameInterval;
-                auto* imgList = assParse.rendererFrame(t + _offset, change);
+                auto* imgList = assParse.rendererFrame(t + _lyricConfig.lyricOffset, change);
                 if (!imgList || !change) {
                     continue;
                 }

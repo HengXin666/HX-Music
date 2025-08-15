@@ -66,10 +66,18 @@ Window {
 
     // 捕捉用户试图退出全屏的行为
     onVisibilityChanged: function(newVisibility) {
+        if (newVisibility === Window.Hidden) {
+            return;
+        }
         if (newVisibility !== Window.FullScreen) {
             Qt.callLater(() => root.showFullScreen())
         }
     }
+
+    signal itemXChanged(val: int);
+    signal itemYChanged(val: int);
+    signal itemWidthChanged(val: int);
+    signal itemHeightChanged(val: int);
 
     // 外层矩形, 作为拖拽 + 缩放边框
     Rectangle {
@@ -81,6 +89,11 @@ Window {
         color: "transparent"
         border.color: "transparent"
         border.width: root.bw
+
+        onXChanged: root.itemXChanged(x);
+        onYChanged: root.itemYChanged(y);
+        onWidthChanged: root.itemWidthChanged(width);
+        onHeightChanged: root.itemHeightChanged(height);
 
         // 内部用户内容
         Loader {
