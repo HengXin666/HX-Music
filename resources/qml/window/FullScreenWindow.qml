@@ -59,6 +59,18 @@ Window {
         color: "transparent"
     }
 
+    // 保证启动时全屏
+    Component.onCompleted: {
+        root.showFullScreen()
+    }
+
+    // 捕捉用户试图退出全屏的行为
+    onVisibilityChanged: function(newVisibility) {
+        if (newVisibility !== Window.FullScreen) {
+            Qt.callLater(() => root.showFullScreen())
+        }
+    }
+
     // 外层矩形, 作为拖拽 + 缩放边框
     Rectangle {
         id: rect

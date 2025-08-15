@@ -24,9 +24,7 @@ FullScreenWindow {
         locked = true;
         root.closeMask = true;
         Qt.callLater(() => {
-            console.log("上锁!")
             const posInRoot = windowItemRef.lockButtonRef.mapToItem(fillRect, 0, 0);
-            console.log("上锁啊!")
             WindowMaskUtil.clear(root);
             WindowMaskUtil.addControlRect(
                 posInRoot.x, posInRoot.y,
@@ -48,7 +46,7 @@ FullScreenWindow {
     Rectangle {
         id: fillRect
         anchors.fill: parent
-        color: "#05990099"
+        color: "transparent"
     }
 
     initWidth: 800
