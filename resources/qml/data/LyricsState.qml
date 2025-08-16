@@ -57,11 +57,13 @@ QtObject {
     }
 
     Component.onCompleted: {
-        if (LyricController.isWindowOpened) {
-            switchWindow();
-            if (LyricController.isLocked) {
-                windowLyrics.lock();
+        Qt.callLater(() => {
+            if (LyricController.isWindowOpened) {
+                switchWindow();
+                if (LyricController.isLocked) {
+                    windowLyrics.lock();
+                }
             }
-        }
+        });
     }
 }

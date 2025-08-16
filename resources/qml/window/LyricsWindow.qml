@@ -7,7 +7,6 @@ import HX.Music
 
 FullScreenWindow {
     id: root
-    visible: true
     windowTitle: "HX.Music 歌词浮窗"
 
     // 是否锁定

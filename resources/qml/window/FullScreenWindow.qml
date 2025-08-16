@@ -7,13 +7,13 @@ import HX.Music
 Window {
     id: root
     visible: true
-    flags: Qt.ToolTip | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.BypassWindowManagerHint
+    flags: Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.BypassWindowManagerHint
     color: "transparent"
     width: Screen.width
     height: Screen.height
 
     property string windowTitle: "HX"
-    title: `${windowTitle} [Wayland置顶]`
+    title: `${windowTitle} [Wayland置顶] [Wayland隐藏切换]`
 
     property int bw: 3 // 边框厚度
     property int obscureBw: 10

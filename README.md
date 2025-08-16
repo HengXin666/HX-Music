@@ -85,7 +85,10 @@ Dialogue: 1,0:01:04.95,0:01:04.96,OP JP 6,,0,0,0,fx,{\an5\blur1\clip(755,42,815,
     - 全屏遮罩窗口, 一次隐藏后, 再显示就仅会固定屏幕显示, 而不是在当前活动屏幕
         > 这个应该可以通过直接销毁窗口 (del), 然后再 new, 从而触发窗口系统的分配. 来绕过手动设置.
     - 全屏遮罩窗口, 无法隐藏任务栏图标 和 tab 切换屏幕... Wayland 妹莉时刻...
-        > 修复了! |= Qt.ToolTip 即可
+        // > 修复了! |= Qt.ToolTip 即可, 无解...
+        // 但是会引发: qt.qpa.wayland: Failed to create popup. Ensure popup  LyricsWindow_QMLTYPE_126(0x7f0ba404bf80) has a transientParent set.
+        // 似乎 Qt.ToolTip 要求设置 transientParent ...
+        // 不对, 移动窗口会跟随...
     - 滚动条在隐藏窗口后, 更新内容会导致 长度计算 bug.
         > 修复了! 检测窗口焦点和隐藏/显示 即可
 ```
@@ -108,6 +111,30 @@ Dialogue: 1,0:01:04.95,0:01:04.96,OP JP 6,,0,0,0,fx,{\an5\blur1\clip(755,42,815,
 >   2. 强制的置顶窗口
 >
 > 才可以置顶窗口
+
+```cpp
+[自动顶置顶置]
+Description=自动顶置顶置
+above=true
+aboverule=2
+title=[Wayland置顶]
+titlematch=2
+wmclass=HX
+wmclassmatch=2
+
+[隐藏切换]
+Description=隐藏切换
+skippager=true
+skippagerrule=2
+skipswitcher=true
+skipswitcherrule=2
+skiptaskbar=true
+skiptaskbarrule=2
+title=[Wayland隐藏切换]
+titlematch=2
+wmclass=HX
+wmclassmatch=2
+```
 
 ## 依赖安装
 ### 1. taglib

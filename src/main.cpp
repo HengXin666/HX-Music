@@ -45,11 +45,11 @@ int main(int argc, char* argv[]) {
     cp->setContextProperty("WindowMaskUtil", &windowMaskUtil);
 
     // 主题数据类
-    HX::Theme theme;
+    static HX::Theme theme;
     cp->setContextProperty("Theme", &theme);
 
     // 音乐控制类
-    HX::MusicController musicController;
+    static HX::MusicController musicController;
     cp->setContextProperty("MusicController", &musicController);
 
     // 注册 歌曲列表视图 到 qml
