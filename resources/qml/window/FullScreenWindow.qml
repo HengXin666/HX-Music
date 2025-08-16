@@ -7,7 +7,7 @@ import HX.Music
 Window {
     id: root
     visible: true
-    flags: Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.BypassWindowManagerHint
+    flags: Qt.ToolTip | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.BypassWindowManagerHint
     color: "transparent"
     width: Screen.width
     height: Screen.height

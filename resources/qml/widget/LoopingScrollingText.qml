@@ -38,6 +38,17 @@ Item {
         }
     }
 
+    // 检测窗口变化, 防止隐藏时候没有更新, 而显示时候出现bug
+    Connections {
+        target: root.Window
+        function onActiveChanged() {
+            root.checkWidth();
+        }
+        function onVisibilityChanged() {
+            root.checkWidth();
+        }
+    }
+
     // 背景容器
     Rectangle {
         anchors.fill: parent
