@@ -18,6 +18,9 @@ FullScreenWindow {
     // 是否显示控制栏(包括鼠标悬浮后显示的解锁按钮)
     property bool showControls: !locked
 
+    // 是否全屏 @todo 配置文件
+    property bool isFullScreen: false
+
     // 外部接口: 锁/解锁控制
     function lock() {
         locked = true;
@@ -166,6 +169,42 @@ FullScreenWindow {
                 }
                 Item {
                     Layout.preferredWidth: 32
+                }
+                MusicActionButton {
+                    visible: root.showControls
+                    Layout.preferredWidth: 24
+                    Layout.preferredHeight: 24
+                    defaultColor: Theme.highlightingColor
+                    hoveredColor: Theme.highlightingColor
+                    url: "qrc:/icons/up.svg"
+                    QtObject {
+                        id: winSizeTmp
+                        property int initWidth
+                        property int initHeight
+                        property int initX
+                        property int initY
+
+                    }
+                    onClicked: {
+                        // 设置全屏
+                        if (root.isFullScreen) {
+                            LyricController.windowX = winSizeTmp.initX ;
+                            LyricController.windowY = winSizeTmp.initY;
+                            LyricController.windowWidth = winSizeTmp.initWidth;
+                            LyricController.windowHeight = winSizeTmp.initHeight;
+                        } else {
+                            winSizeTmp.initX = LyricController.windowX;
+                            winSizeTmp.initY = LyricController.windowY;
+                            winSizeTmp.initWidth = LyricController.windowWidth;
+                            winSizeTmp.initHeight = LyricController.windowHeight;
+                            LyricController.windowX = -root.bw;
+                            LyricController.windowY = -root.bw;
+                            LyricController.windowWidth = root.width + 2 * root.bw;
+                            LyricController.windowHeight = root.height+ 2 * root.bw;
+                        }
+                        root.isFullScreen = !root.isFullScreen;
+                        LyricController.setFullScreen(root.isFullScreen);
+                    }
                 }
                 MusicActionButton {
                     visible: root.showControls

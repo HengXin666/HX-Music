@@ -87,7 +87,13 @@ public:
             &SignalBusSingleton::get(),
             &SignalBusSingleton::musicPlayPosChanged,
             this,
-            [this](qint64 pos) { renderLyric(pos); });
+            [this](qint64 pos) {
+                if (_isFullScreen) {
+                    renderLyricByFullScreen(pos);
+                } else {
+                    renderLyric(pos);
+                }
+            });
 
         /* newSongLoaded (加载新歌) */
         connect(
@@ -97,7 +103,15 @@ public:
             [this](HX::MusicInfo* info) {
                 auto path = findLyricFile(*info);
                 auto data = utils::FileUtils::getFileContent(path);
-                _assParse = preprocessLyricBoundingBoxes(0, info->getLengthInMilliseconds(), data);
+                if (_isFullScreen) {
+                    _assParse.readMemory(data.data());
+                } else {
+                    _assParse = preprocessLyricBoundingBoxes(
+                        0,
+                        info->getLengthInMilliseconds(),
+                        data
+                    );
+                }
             });
 
         /* lyricAddOffset 歌词加上偏移量 */
@@ -265,6 +279,34 @@ public:
         Q_EMIT updateLyriced();
     }
 
+    // 全屏渲染, 原样展示
+    void renderLyricByFullScreen(qint64 nowTime, bool mustBeUpdated = false) {
+        int change;
+        auto* imgList = _assParse.rendererFrame(nowTime + _lyricConfig.lyricOffset, change);
+        if (!imgList) {
+            if (!_lastImage.isNull()) {
+                _lastImage = QImage(1, 1, QImage::Format_ARGB32);
+                _lastImage.fill(Qt::transparent);
+                Q_EMIT updateLyriced();
+            }
+            return;
+        }
+        if (!change && !mustBeUpdated) {
+            return;
+        }
+
+        // 创建最终画布
+        QImage result(_assParse.getWidth(), _assParse.getHeight(), QImage::Format_ARGB32);
+        result.fill(Qt::transparent);
+        QPainter painter(&result);
+        for (ASS_Image* img = imgList; img; img = img->next) {
+            drawAssImage(&painter, img, 0, 0);
+        }
+
+        _lastImage = std::move(result);
+        Q_EMIT updateLyriced();
+    }
+
     // QML 调用
     QImage requestImage(
         [[maybe_unused]] QString const& id,
@@ -279,9 +321,16 @@ public:
 
     // 立即渲染一帧
     Q_INVOKABLE void renderAFrameInstantly() {
-        renderLyric(
-            GlobalSingleton::get().music.getNowPos(), true
-        );
+        if (_isFullScreen) {
+            renderLyricByFullScreen(GlobalSingleton::get().music.getNowPos(), true);
+        } else {
+            renderLyric(GlobalSingleton::get().music.getNowPos(), true);
+        }
+    }
+
+    // 设置是否为全屏渲染
+    Q_INVOKABLE void setFullScreen(bool isFullScreen) noexcept {
+        _isFullScreen = isFullScreen;
     }
 Q_SIGNALS:
     void updateLyriced();
@@ -293,6 +342,7 @@ private:
     QPoint _cachedTopYLR;
     QPoint _cachedBottomYLR;
     bool _hasCachedY = false;
+    bool _isFullScreen = false;
     
 #ifndef Q_MOC_RUN
     #define HX_QML_CONFIG_TYPE(name) decltype(_lyricConfig.name)
