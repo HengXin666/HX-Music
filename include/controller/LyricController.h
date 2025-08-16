@@ -86,7 +86,9 @@ public:
 "windowY": 300,
 "windowWidth": 800,
 "windowHeight": 200,
-"lyricOffset": 0
+"lyricOffset": 0,
+"isWindowOpened": false,
+"isLocked": false
 })"sv);
         }
 
@@ -274,6 +276,15 @@ public:
         }
         return _lastImage;
     }
+
+    // 立即渲染一帧
+    Q_INVOKABLE void renderAFrameInstantly() const {
+        if (GlobalSingleton::get().music.getNowPos() != 0) {
+            Q_EMIT SignalBusSingleton::get().musicPlayPosChanged(
+                GlobalSingleton::get().music.getNowPos()
+            );
+        }
+    }
 Q_SIGNALS:
     void updateLyriced();
 
@@ -317,6 +328,8 @@ Q_SIGNALS:                                                                     \
     HX_QML_CONFIG_PROPERTY(windowWidth);
     HX_QML_CONFIG_PROPERTY(windowHeight);
     HX_QML_CONFIG_PROPERTY(lyricOffset);
+    HX_QML_CONFIG_PROPERTY(isWindowOpened);
+    HX_QML_CONFIG_PROPERTY(isLocked);
 
 #undef HX_QML_CONFIG_PROPERTY
 };

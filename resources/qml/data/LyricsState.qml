@@ -16,6 +16,8 @@ QtObject {
                 windowLyrics = componentLyrics.createObject(); // 指定父对象, 方便生命周期结束顺便带走子对象
                 if (windowLyrics !== null) {
                     windowLyrics.show();
+                    LyricController.isWindowOpened = true;
+                    LyricController.renderAFrameInstantly();
                 } else {
                     console.error("创建窗口失败");
                 }
@@ -28,11 +30,14 @@ QtObject {
                 if (windowLyrics.locked) {
                     windowLyrics.unlock();
                 } else {
+                    LyricController.isWindowOpened = false;
                     windowLyrics.hide();
                 }
             } else {
                 windowLyrics.unlock();
                 windowLyrics.show();
+                LyricController.isWindowOpened = true;
+                LyricController.renderAFrameInstantly();
             }
         }
     }
@@ -50,6 +55,15 @@ QtObject {
                 componentLyrics.destroy();
             }
             componentLyrics = null;
+        }
+    }
+
+    Component.onCompleted: {
+        if (LyricController.isWindowOpened) {
+            switchWindow();
+            if (LyricController.isLocked) {
+                windowLyrics.lock();
+            }
         }
     }
 }

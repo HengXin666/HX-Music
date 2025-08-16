@@ -34,6 +34,12 @@ struct LyricConfig {
 
     // 偏移量
     long long lyricOffset;
+
+    // 是否打开窗口
+    bool isWindowOpened;
+
+    // 歌词是否上锁
+    bool isLocked;
 };
 
 } // namespace HX

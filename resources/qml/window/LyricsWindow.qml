@@ -23,6 +23,7 @@ FullScreenWindow {
     function lock() {
         locked = true;
         root.closeMask = true;
+        LyricController.isLocked = true;
         Qt.callLater(() => {
             const posInRoot = windowItemRef.lockButtonRef.mapToItem(fillRect, 0, 0);
             WindowMaskUtil.clear(root);
@@ -37,6 +38,7 @@ FullScreenWindow {
     function unlock() {
         locked = false;
         root.closeMask = false;
+        LyricController.isLocked = false;
         Qt.callLater(() => {
             WindowMaskUtil.clear(root);
             root.updateMask();
