@@ -17,7 +17,6 @@ QtObject {
                 if (windowLyrics !== null) {
                     windowLyrics.show();
                     LyricController.isWindowOpened = true;
-                    LyricController.renderAFrameInstantly();
                 } else {
                     console.error("创建窗口失败");
                 }
@@ -37,7 +36,6 @@ QtObject {
                 windowLyrics.unlock();
                 windowLyrics.show();
                 LyricController.isWindowOpened = true;
-                LyricController.renderAFrameInstantly();
             }
         }
     }

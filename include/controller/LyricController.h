@@ -185,7 +185,7 @@ public:
     }
 
     // 2. 渲染: 使用预计算的边界框
-    void renderLyric(qint64 nowTime) {
+    void renderLyric(qint64 nowTime, bool mustBeUpdated = false) {
         constexpr int middleGapHeight = 0; // 中间空白高度 (好像没有作用)
         if (!_hasCachedY) [[unlikely]] {
             return;
@@ -201,7 +201,7 @@ public:
             }
             return;
         }
-        if (!change) {
+        if (!change && !mustBeUpdated) {
             return;
         }
 
@@ -278,12 +278,10 @@ public:
     }
 
     // 立即渲染一帧
-    Q_INVOKABLE void renderAFrameInstantly() const {
-        if (GlobalSingleton::get().music.getNowPos() != 0) {
-            Q_EMIT SignalBusSingleton::get().musicPlayPosChanged(
-                GlobalSingleton::get().music.getNowPos()
-            );
-        }
+    Q_INVOKABLE void renderAFrameInstantly() {
+        renderLyric(
+            GlobalSingleton::get().music.getNowPos(), true
+        );
     }
 Q_SIGNALS:
     void updateLyriced();

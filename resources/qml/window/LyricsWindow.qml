@@ -190,4 +190,10 @@ FullScreenWindow {
             return;
         LyricController.windowHeight = v;
     }
+
+    onVisibleChanged: function(v: bool) {
+        if (v) {
+            LyricController.renderAFrameInstantly();
+        }
+    }
 }
