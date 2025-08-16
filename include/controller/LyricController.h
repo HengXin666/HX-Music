@@ -53,16 +53,6 @@ inline QByteArray readQrcFile(const QString& qrcPath) {
 class LyricController : public QQuickImageProvider {
     Q_OBJECT
 
-    void saveConfig() noexcept {
-        // 加载配置文件
-        coroutine::EventLoop loop{};
-        utils::AsyncFile file{loop};
-        file.syncOpen("./lyricConfig.json", utils::OpenMode::Write);
-        std::string json;
-        reflection::toJson<true>(_lyricConfig, json);
-        file.syncWrite(json);
-        file.syncClose();
-    }
 public:
     LyricController()
         : QQuickImageProvider{QQuickImageProvider::Image}
@@ -121,8 +111,18 @@ public:
             });
     }
 
-    ~LyricController() noexcept {
-        saveConfig();
+    /**
+     * @brief 保存配置文件
+     */
+    void saveConfig() noexcept {
+        // 保存配置文件
+        coroutine::EventLoop loop{};
+        utils::AsyncFile file{loop};
+        file.syncOpen("./lyricConfig.json", utils::OpenMode::Write);
+        std::string json;
+        reflection::toJson<true>(_lyricConfig, json);
+        file.syncWrite(json);
+        file.syncClose();
     }
 
     decltype(std::declval<std::filesystem::path>().string()) findLyricFile(

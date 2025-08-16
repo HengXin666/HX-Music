@@ -51,15 +51,15 @@ struct GlobalSingleton {
 
     /// @brief 播放队列
     PlayQueue playQueue{};
+
+    void saveConfig() {
+        ConfigManager config;
+        config.saveConfig(musicConfig);
+    }
 private:
     explicit GlobalSingleton() {
         ConfigManager config;
         musicConfig = config.loadConfig();
-    }
-    
-    ~GlobalSingleton() noexcept {
-        ConfigManager config;
-        config.saveConfig(musicConfig);
     }
 
     GlobalSingleton& operator=(GlobalSingleton&&) = delete;

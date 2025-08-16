@@ -67,77 +67,77 @@ FullScreenWindow {
 
         Image {
             id: lyricImage
-            anchors.fill: parent
+            y: 32
+            height: parent.height - 32
+            anchors {
+                left: parent.left
+                right: parent.right
+            }
             fillMode: Image.PreserveAspectFit
             smooth: true
             cache: false
             source: ""
         }
 
-        RowLayout {
-            id: controlBar
-            spacing: 10
+        Rectangle {
             anchors {
-                top: parent.top
-                horizontalCenter: parent.horizontalCenter
-                margins: 12
+                left: parent.left
+                right: parent.right
             }
-
-            Button {
-                visible: root.showControls
-                background: Rectangle { color: "transparent" }
-                Image {
-                    anchors.fill: parent
-                    source: "qrc:/icons/previous.svg"
+            color: "transparent"
+            y: 0
+            height: 32
+            z: 10
+            RowLayout {
+                id: controlBar
+                spacing: 10
+                anchors.top: parent.top
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.margins: 8
+                MusicActionButton {
+                    visible: root.showControls
+                    defaultColor: Theme.highlightingColor
+                    hoveredColor: Theme.highlightingColor
+                    url: "qrc:/icons/previous.svg"
+                    onClicked: MusicController.prev()
                 }
-                onClicked: MusicController.prev()
-            }
-            Button {
-                visible: root.showControls
-                background: Rectangle { color: "transparent" }
-                Image {
-                    anchors.fill: parent
-                    source: MusicController.isPlaying ? "qrc:/icons/pause.svg"
-                                                      : "qrc:/icons/play.svg"
+                MusicActionButton {
+                    visible: root.showControls
+                    defaultColor: Theme.highlightingColor
+                    hoveredColor: Theme.highlightingColor
+                    url:  MusicController.isPlaying ? "qrc:/icons/pause.svg"
+                                                    : "qrc:/icons/play.svg"
+                    onClicked: MusicController.togglePause()
                 }
-                onClicked: MusicController.togglePause()
-            }
-            Button {
-                visible: root.showControls
-                background: Rectangle { color: "transparent" }
-                Image {
-                    anchors.fill: parent
-                    source: "qrc:/icons/next.svg"
+                MusicActionButton {
+                    visible: root.showControls
+                    defaultColor: Theme.highlightingColor
+                    hoveredColor: Theme.highlightingColor
+                    url: "qrc:/icons/next.svg"
+                    onClicked: MusicController.next()
                 }
-                onClicked: MusicController.next()
-            }
-            Button {
-                visible: root.showControls
-                background: Rectangle { color: "transparent" }
-                Image {
-                    anchors.fill: parent
-                    source: "qrc:/icons/back.svg"
+                MusicActionButton {
+                    visible: root.showControls
+                    defaultColor: Theme.highlightingColor
+                    hoveredColor: Theme.highlightingColor
+                    url: "qrc:/icons/back.svg"
+                    onClicked: SignalBusSingleton.lyricAddOffset(-100)
                 }
-                onClicked: SignalBusSingleton.lyricAddOffset(-100)
-            }
-            Button {
-                visible: root.showControls
-                background: Rectangle { color: "transparent" }
-                Image {
-                    anchors.fill: parent
-                    source: "qrc:/icons/enter.svg"
+                MusicActionButton {
+                    visible: root.showControls
+                    defaultColor: Theme.highlightingColor
+                    hoveredColor: Theme.highlightingColor
+                    url: "qrc:/icons/enter.svg"
+                    onClicked: SignalBusSingleton.lyricAddOffset(100)
                 }
-                onClicked: SignalBusSingleton.lyricAddOffset(100)
-            }
-            Button {
-                id: lockButton
-                visible: root.showControls || root.showUnlock
-                background: Rectangle { color: "transparent" }
-                Image {
-                    anchors.fill: parent
-                    source: root.showControls ? "qrc:/icons/lock.svg" : "qrc:/icons/unlock.svg"
+                MusicActionButton {
+                    id: lockButton
+                    visible: root.showControls || root.showUnlock
+                    defaultColor: Theme.highlightingColor
+                    hoveredColor: Theme.highlightingColor
+                    url: root.showControls ? "qrc:/icons/lock.svg" : "qrc:/icons/unlock.svg"
+                    onClicked: root.showControls ? root.lock() : root.unlock()
                 }
-                onClicked: root.showControls ? root.lock() : root.unlock()
             }
         }
         Component.onCompleted: {

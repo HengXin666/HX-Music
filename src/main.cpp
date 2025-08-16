@@ -82,5 +82,12 @@ int main(int argc, char* argv[]) {
     engine.loadFromModule("HX.Music", "Main");
 
     HX::PlaylistController playlistController{};
+
+    // 集中保存
+    QObject::connect(&app, &QCoreApplication::aboutToQuit, [&] {
+        HX::GlobalSingleton::get().musicConfig.position = musicController.getNowPos();
+        HX::GlobalSingleton::get().saveConfig();
+        lyricController->saveConfig();
+    });
     return app.exec();
 }

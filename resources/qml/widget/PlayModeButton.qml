@@ -15,9 +15,6 @@ Item {
     MusicActionButton {
         id: btn
         anchors.fill: parent
-        defaultColor: Theme.paratextColor
-        pressedColor: Theme.textColor
-        hoveredColor: Theme.highlightingColor
         property int currentMode: MusicController.playMode
 
         // 播放模式数量(最后那个 PlayModeCnt 不算实际模式)

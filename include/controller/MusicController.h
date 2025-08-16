@@ -52,11 +52,6 @@ public:
         );
     }
 
-    ~MusicController() noexcept {
-        // 记录播放位置, 方便恢复...
-        GlobalSingleton::get().musicConfig.position = getNowPos();
-    }
-
     Q_INVOKABLE void prev() {
         qDebug() << "上一首";
         MusicCommand::prevMusic();

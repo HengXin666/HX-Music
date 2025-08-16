@@ -74,36 +74,24 @@ ProgressBarRect {
                     property int actionButtonSize: 24
                     spacing: 10
                     MusicActionButton {
-                        defaultColor: Theme.paratextColor
-                        pressedColor: Theme.textColor
-                        hoveredColor: Theme.highlightingColor
                         Layout.preferredWidth: actionButtons.actionButtonSize
                         Layout.preferredHeight: actionButtons.actionButtonSize
                         // 喜欢
                         url: "qrc:/icons/like.svg"
                     }
                     MusicActionButton {
-                        defaultColor: Theme.paratextColor
-                        pressedColor: Theme.textColor
-                        hoveredColor: Theme.highlightingColor
                         Layout.preferredWidth: actionButtons.actionButtonSize
                         Layout.preferredHeight: actionButtons.actionButtonSize
                         // 评论
                         url: "qrc:/icons/message.svg"
                     }
                     MusicActionButton {
-                        defaultColor: Theme.paratextColor
-                        pressedColor: Theme.textColor
-                        hoveredColor: Theme.highlightingColor
                         Layout.preferredWidth: actionButtons.actionButtonSize
                         Layout.preferredHeight: actionButtons.actionButtonSize
                         // 下载
                         url: "qrc:/icons/download.svg"
                     }
                     MusicActionButton {
-                        defaultColor: Theme.paratextColor
-                        pressedColor: Theme.textColor
-                        hoveredColor: Theme.highlightingColor
                         Layout.preferredWidth: actionButtons.actionButtonSize
                         Layout.preferredHeight: actionButtons.actionButtonSize
                         // 分享
