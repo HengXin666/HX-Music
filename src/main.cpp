@@ -81,7 +81,7 @@ int main(int argc, char* argv[]) {
     // 应该使用 _ 和 [0-9a-Z], 不能使用`-`
     engine.loadFromModule("HX.Music", "Main");
 
-    HX::PlaylistController playlistController{};
+    HX::PlaylistController playlistController{}; // @todo 加载一下歌单
 
     // 集中保存
     QObject::connect(&app, &QCoreApplication::aboutToQuit, [&] {

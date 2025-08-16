@@ -14,6 +14,7 @@ QtObject {
             // 加载
             if (componentLyrics.status === Component.Ready) {
                 windowLyrics = componentLyrics.createObject(); // 指定父对象, 方便生命周期结束顺便带走子对象
+                windowLyrics.reqClose.connect(() => switchWindow());
                 if (windowLyrics !== null) {
                     windowLyrics.show();
                     LyricController.isWindowOpened = true;

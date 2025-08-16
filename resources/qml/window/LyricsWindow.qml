@@ -44,6 +44,8 @@ FullScreenWindow {
         });
     }
 
+    signal reqClose();
+
     Rectangle {
         id: fillRect
         anchors.fill: parent
@@ -96,6 +98,8 @@ FullScreenWindow {
                 anchors.margins: 8
                 MusicActionButton {
                     visible: root.showControls
+                    Layout.preferredWidth: 24
+                    Layout.preferredHeight: 24
                     defaultColor: Theme.highlightingColor
                     hoveredColor: Theme.highlightingColor
                     url: "qrc:/icons/previous.svg"
@@ -103,6 +107,8 @@ FullScreenWindow {
                 }
                 MusicActionButton {
                     visible: root.showControls
+                    Layout.preferredWidth: 24
+                    Layout.preferredHeight: 24
                     defaultColor: Theme.highlightingColor
                     hoveredColor: Theme.highlightingColor
                     url:  MusicController.isPlaying ? "qrc:/icons/pause.svg"
@@ -111,6 +117,8 @@ FullScreenWindow {
                 }
                 MusicActionButton {
                     visible: root.showControls
+                    Layout.preferredWidth: 24
+                    Layout.preferredHeight: 24
                     defaultColor: Theme.highlightingColor
                     hoveredColor: Theme.highlightingColor
                     url: "qrc:/icons/next.svg"
@@ -118,6 +126,20 @@ FullScreenWindow {
                 }
                 MusicActionButton {
                     visible: root.showControls
+                    Layout.preferredWidth: 24
+                    Layout.preferredHeight: 24
+                    defaultColor: Theme.highlightingColor
+                    hoveredColor: Theme.highlightingColor
+                    url: "qrc:/icons/reset.svg"
+                    onClicked: MusicController.setPosition(0)
+                }
+                Item {
+                    Layout.preferredWidth: 32
+                }
+                MusicActionButton {
+                    visible: root.showControls
+                    Layout.preferredWidth: 24
+                    Layout.preferredHeight: 24
                     defaultColor: Theme.highlightingColor
                     hoveredColor: Theme.highlightingColor
                     url: "qrc:/icons/back.svg"
@@ -125,6 +147,8 @@ FullScreenWindow {
                 }
                 MusicActionButton {
                     visible: root.showControls
+                    Layout.preferredWidth: 24
+                    Layout.preferredHeight: 24
                     defaultColor: Theme.highlightingColor
                     hoveredColor: Theme.highlightingColor
                     url: "qrc:/icons/enter.svg"
@@ -133,10 +157,24 @@ FullScreenWindow {
                 MusicActionButton {
                     id: lockButton
                     visible: root.showControls || root.showUnlock
+                    Layout.preferredWidth: 24
+                    Layout.preferredHeight: 24
                     defaultColor: Theme.highlightingColor
                     hoveredColor: Theme.highlightingColor
                     url: root.showControls ? "qrc:/icons/lock.svg" : "qrc:/icons/unlock.svg"
                     onClicked: root.showControls ? root.lock() : root.unlock()
+                }
+                Item {
+                    Layout.preferredWidth: 32
+                }
+                MusicActionButton {
+                    visible: root.showControls
+                    Layout.preferredWidth: 24
+                    Layout.preferredHeight: 24
+                    defaultColor: Theme.highlightingColor
+                    hoveredColor: Theme.highlightingColor
+                    url: "qrc:/icons/close.svg"
+                    onClicked: root.reqClose()
                 }
             }
         }

@@ -27,7 +27,7 @@
 namespace HX {
 
 /**
- * @brief 配置文件管理器
+ * @brief 配置文件管理器 @todo 使用 HXLibs Json 替代
  */
 class ConfigManager {
 public:
