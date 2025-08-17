@@ -176,6 +176,18 @@ FullScreenWindow {
                     Layout.preferredHeight: 24
                     defaultColor: Theme.highlightingColor
                     hoveredColor: Theme.highlightingColor
+                    url: "qrc:/icons/center.svg"
+                    onClicked: {
+                        LyricController.windowX = (root.width - LyricController.windowWidth) >> 1;
+                        root.synchronousCoordinates();
+                    }
+                }
+                MusicActionButton {
+                    visible: root.showControls
+                    Layout.preferredWidth: 24
+                    Layout.preferredHeight: 24
+                    defaultColor: Theme.highlightingColor
+                    hoveredColor: Theme.highlightingColor
                     url: LyricController.isFullScreen ? "qrc:/icons/restore.svg" : "qrc:/icons/up.svg"
                     onClicked: {
                         // 设置全屏
@@ -184,8 +196,6 @@ FullScreenWindow {
                             LyricController.windowY = LyricController.maeWindowY;
                             LyricController.windowWidth = LyricController.maeWindowWidth;
                             LyricController.windowHeight = LyricController.maeWindowHeight;
-                            synchronousCoordinates();
-                            root.updateMask();
                         } else {
                             LyricController.maeWindowX = LyricController.windowX;
                             LyricController.maeWindowY = LyricController.windowY;
@@ -196,13 +206,13 @@ FullScreenWindow {
                             LyricController.windowY = -root.bw;
                             LyricController.windowWidth = root.width + 2 * root.bw;
                             LyricController.windowHeight = root.height+ 2 * root.bw;
-
-                            synchronousCoordinates();
-                            root.updateMask();
                         }
+                        root.synchronousCoordinates();
                         LyricController.isFullScreen = !LyricController.isFullScreen;
                     }
                 }
+                // @todo 设置
+                // MusicActionButton
                 MusicActionButton {
                     visible: root.showControls
                     Layout.preferredWidth: 24
@@ -237,6 +247,7 @@ FullScreenWindow {
         root.setRectY(LyricController.windowY);
         root.setRectWidth(LyricController.windowWidth);
         root.setRectHeight(LyricController.windowHeight);
+        root.updateMask();
     }
 
     onIsHoverChanged: {
