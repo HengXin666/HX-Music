@@ -78,7 +78,8 @@ public:
 "windowHeight": 200,
 "lyricOffset": 0,
 "isWindowOpened": false,
-"isLocked": false
+"isLocked": false,
+"isFullScreen": false
 })"sv);
         }
 
@@ -88,7 +89,7 @@ public:
             &SignalBusSingleton::musicPlayPosChanged,
             this,
             [this](qint64 pos) {
-                if (_isFullScreen) {
+                if (_lyricConfig.isFullScreen) {
                     renderLyricByFullScreen(pos);
                 } else {
                     renderLyric(pos);
@@ -103,15 +104,11 @@ public:
             [this](HX::MusicInfo* info) {
                 auto path = findLyricFile(*info);
                 auto data = utils::FileUtils::getFileContent(path);
-                if (_isFullScreen) {
-                    _assParse.readMemory(data.data());
-                } else {
-                    _assParse = preprocessLyricBoundingBoxes(
-                        0,
-                        info->getLengthInMilliseconds(),
-                        data
-                    );
-                }
+                _assParse = preprocessLyricBoundingBoxes(
+                    0,
+                    info->getLengthInMilliseconds(),
+                    data
+                );
             });
 
         /* lyricAddOffset 歌词加上偏移量 */
@@ -123,6 +120,11 @@ public:
                 _lyricConfig.lyricOffset += add;
                 saveConfig();
             });
+
+        /* isFullScreenChanged 切换全屏, 需要立即渲染新模式的一帧 */
+        connect(this, &LyricController::isFullScreenChanged, this, [this] {
+            renderAFrameInstantly();
+        });
     }
 
     /**
@@ -321,16 +323,11 @@ public:
 
     // 立即渲染一帧
     Q_INVOKABLE void renderAFrameInstantly() {
-        if (_isFullScreen) {
+        if (_lyricConfig.isFullScreen) {
             renderLyricByFullScreen(GlobalSingleton::get().music.getNowPos(), true);
         } else {
             renderLyric(GlobalSingleton::get().music.getNowPos(), true);
         }
-    }
-
-    // 设置是否为全屏渲染
-    Q_INVOKABLE void setFullScreen(bool isFullScreen) noexcept {
-        _isFullScreen = isFullScreen;
     }
 Q_SIGNALS:
     void updateLyriced();
@@ -342,8 +339,7 @@ private:
     QPoint _cachedTopYLR;
     QPoint _cachedBottomYLR;
     bool _hasCachedY = false;
-    bool _isFullScreen = false;
-    
+
 #ifndef Q_MOC_RUN
     #define HX_QML_CONFIG_TYPE(name) decltype(_lyricConfig.name)
 #else
@@ -375,9 +371,14 @@ Q_SIGNALS:                                                                     \
     HX_QML_CONFIG_PROPERTY(windowY);
     HX_QML_CONFIG_PROPERTY(windowWidth);
     HX_QML_CONFIG_PROPERTY(windowHeight);
+    HX_QML_CONFIG_PROPERTY(maeWindowX);
+    HX_QML_CONFIG_PROPERTY(maeWindowY);
+    HX_QML_CONFIG_PROPERTY(maeWindowWidth);
+    HX_QML_CONFIG_PROPERTY(maeWindowHeight);
     HX_QML_CONFIG_PROPERTY(lyricOffset);
     HX_QML_CONFIG_PROPERTY(isWindowOpened);
     HX_QML_CONFIG_PROPERTY(isLocked);
+    HX_QML_CONFIG_PROPERTY(isFullScreen);
 
 #undef HX_QML_CONFIG_PROPERTY
 };

@@ -32,6 +32,12 @@ struct LyricConfig {
     int windowWidth;
     int windowHeight;
 
+    // 记录全屏前的窗口大小, 其中 mae = まえ「前」
+    int maeWindowX;
+    int maeWindowY;
+    int maeWindowWidth;
+    int maeWindowHeight;
+
     // 偏移量
     long long lyricOffset;
 
@@ -40,6 +46,9 @@ struct LyricConfig {
 
     // 歌词是否上锁
     bool isLocked;
+
+    // 是否全屏
+    bool isFullScreen;
 };
 
 } // namespace HX

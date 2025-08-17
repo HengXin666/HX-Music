@@ -18,8 +18,8 @@ FullScreenWindow {
     // 是否显示控制栏(包括鼠标悬浮后显示的解锁按钮)
     property bool showControls: !locked
 
-    // 是否全屏 @todo 配置文件
-    property bool isFullScreen: false
+    // 是否允许缩放
+    allowZooming: !LyricController.isFullScreen
 
     // 外部接口: 锁/解锁控制
     function lock() {
@@ -176,34 +176,31 @@ FullScreenWindow {
                     Layout.preferredHeight: 24
                     defaultColor: Theme.highlightingColor
                     hoveredColor: Theme.highlightingColor
-                    url: "qrc:/icons/up.svg"
-                    QtObject {
-                        id: winSizeTmp
-                        property int initWidth
-                        property int initHeight
-                        property int initX
-                        property int initY
-
-                    }
+                    url: LyricController.isFullScreen ? "qrc:/icons/restore.svg" : "qrc:/icons/up.svg"
                     onClicked: {
                         // 设置全屏
-                        if (root.isFullScreen) {
-                            LyricController.windowX = winSizeTmp.initX ;
-                            LyricController.windowY = winSizeTmp.initY;
-                            LyricController.windowWidth = winSizeTmp.initWidth;
-                            LyricController.windowHeight = winSizeTmp.initHeight;
+                        if (LyricController.isFullScreen) {
+                            LyricController.windowX = LyricController.maeWindowX;
+                            LyricController.windowY = LyricController.maeWindowY;
+                            LyricController.windowWidth = LyricController.maeWindowWidth;
+                            LyricController.windowHeight = LyricController.maeWindowHeight;
+                            synchronousCoordinates();
+                            root.updateMask();
                         } else {
-                            winSizeTmp.initX = LyricController.windowX;
-                            winSizeTmp.initY = LyricController.windowY;
-                            winSizeTmp.initWidth = LyricController.windowWidth;
-                            winSizeTmp.initHeight = LyricController.windowHeight;
+                            LyricController.maeWindowX = LyricController.windowX;
+                            LyricController.maeWindowY = LyricController.windowY;
+                            LyricController.maeWindowWidth = LyricController.windowWidth;
+                            LyricController.maeWindowHeight = LyricController.windowHeight;
+
                             LyricController.windowX = -root.bw;
                             LyricController.windowY = -root.bw;
                             LyricController.windowWidth = root.width + 2 * root.bw;
                             LyricController.windowHeight = root.height+ 2 * root.bw;
+
+                            synchronousCoordinates();
+                            root.updateMask();
                         }
-                        root.isFullScreen = !root.isFullScreen;
-                        LyricController.setFullScreen(root.isFullScreen);
+                        LyricController.isFullScreen = !LyricController.isFullScreen;
                     }
                 }
                 MusicActionButton {
@@ -233,6 +230,13 @@ FullScreenWindow {
         onTriggered: {
             root.showUnlock = false;
         }
+    }
+
+    function synchronousCoordinates() {
+        root.setRectX(LyricController.windowX);
+        root.setRectY(LyricController.windowY);
+        root.setRectWidth(LyricController.windowWidth);
+        root.setRectHeight(LyricController.windowHeight);
     }
 
     onIsHoverChanged: {

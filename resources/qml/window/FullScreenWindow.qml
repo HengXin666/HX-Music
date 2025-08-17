@@ -24,6 +24,7 @@ Window {
     property int initY: (height - initHeight) >> 1
 
     property bool closeMask: false
+    property bool allowZooming: true // 允许缩放
 
     // 用户内容组件
     property Component windowItem: Rectangle {
@@ -79,6 +80,22 @@ Window {
     signal itemWidthChanged(val: int);
     signal itemHeightChanged(val: int);
 
+    function setRectX(val: int) {
+        rect.x = val;
+    }
+
+    function setRectY(val: int) {
+        rect.y = val;
+    }
+
+    function setRectWidth(val: int) {
+        rect.width = val;
+    }
+
+    function setRectHeight(val: int) {
+        rect.height = val;
+    }
+
     // 外层矩形, 作为拖拽 + 缩放边框
     Rectangle {
         id: rect
@@ -88,7 +105,7 @@ Window {
         height: root.initHeight
         color: "transparent"
         border.color: "transparent"
-        border.width: root.bw
+        border.width: root.allowZooming ? 0 : root.bw
 
         onXChanged: root.itemXChanged(x);
         onYChanged: root.itemYChanged(y);
@@ -99,7 +116,7 @@ Window {
         Loader {
             id: loader
             anchors.fill: parent
-            anchors.margins: root.bw  // 确保内容在边框内部
+            anchors.margins: root.allowZooming ? 0 : root.bw  // 确保内容在边框内部
             sourceComponent: root.windowItem
             onLoaded: resizeMoveHandler.updateMask();
         }
@@ -108,7 +125,7 @@ Window {
         MouseArea {
             id: mouseArea
             anchors.fill: parent
-            hoverEnabled: !resizeMoveHandler.active
+            hoverEnabled: !resizeMoveHandler.active && root.allowZooming
             acceptedButtons: Qt.NoButton
             property bool isHover: false
             onEntered: isHover = true
