@@ -236,18 +236,27 @@ Item {
             MusicController.listIndex = listView.currentIndex;
         }
 
+        function init() {
+            if (listView === null) {
+                Qt.callLater(() => {
+                    init();
+                });;
+            }
+            listView.currentIndex = MusicController.listIndex;
+            if (listView.currentIndex >= 0 && listView.currentIndex < listView.count) {
+                MusicController.playMusic(musicListModel.getUrl(listView.currentIndex));
+                Qt.callLater(() => {
+                    MusicController.togglePause();
+                    Qt.callLater(() => {
+                        MusicController.setPosition(MusicController.getTheLastPlayedPosition());
+                    });
+                });
+            }
+        }
+
         Component.onCompleted: {
             Qt.callLater(() => {
-                listView.currentIndex = MusicController.listIndex;
-                if (listView.currentIndex >= 0 && listView.currentIndex < listView.count) {
-                    MusicController.playMusic(musicListModel.getUrl(listView.currentIndex));
-                    Qt.callLater(() => {
-                        MusicController.togglePause();
-                        Qt.callLater(() => {
-                            MusicController.setPosition(MusicController.getTheLastPlayedPosition());
-                        });
-                    });
-                }
+                init();
             });;
 
             // 绑定 当前选择项更新信号

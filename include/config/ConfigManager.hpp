@@ -20,41 +20,51 @@
 #ifndef _HX_CONFIG_MANAGER_H_
 #define _HX_CONFIG_MANAGER_H_
 
-#include <QSettings>
-
 #include <config/MusicConfig.hpp>
+
+#include <HXLibs/reflection/json/JsonRead.hpp>
+#include <HXLibs/reflection/json/JsonWrite.hpp>
+#include <HXLibs/utils/FileUtils.hpp>
 
 namespace HX {
 
 /**
- * @brief 配置文件管理器 @todo 使用 HXLibs Json 替代
+ * @brief 配置文件管理器
  */
 class ConfigManager {
 public:
-    explicit ConfigManager(const QString& fileName = "HX-Music.ini")
-        : _settings("HX", fileName)
-    {}
-
     void saveConfig(const MusicConfig& config) {
-        _settings.setValue("Music/Volume", config.volume);
-        _settings.setValue("Music/PlayMode", static_cast<int>(config.playMode));
-        _settings.setValue("Music/Position", config.position);
-        _settings.setValue("Music/ListIndex", config.listIndex);
-        _settings.setValue("Music/MusicListId", QString::fromStdString(config.musicListId));
+        std::string json;
+        reflection::toJson<true>(config, json);
+        coroutine::EventLoop loop;
+        utils::AsyncFile file{loop};
+        file.syncOpen("./hxMusicConfig.json", utils::OpenMode::Write);
+        file.syncWrite(json);
+        file.syncClose();
     }
 
     MusicConfig loadConfig() {
         MusicConfig config;
-        config.volume = _settings.value("Music/Volume", 0.75).toFloat();
-        config.playMode = static_cast<PlayMode>(_settings.value("Music/PlayMode", static_cast<int>(PlayMode::ListLoop)).toInt());
-        config.position = _settings.value("Music/Position", 0).toLongLong();
-        config.musicListId = _settings.value("Music/MusicListId", "localPlaylist").toString().toStdString();
-        config.listIndex = _settings.value("Music/ListIndex", -1).toInt();
+        std::string json;
+        try {
+            coroutine::EventLoop loop;
+            utils::AsyncFile file{loop};
+            file.syncOpen("./hxMusicConfig.json", utils::OpenMode::Read);
+            json = file.syncReadAll();
+            file.syncClose();
+        } catch (...) {
+            json = R"({
+"volume": 100,
+"playMode": "ListLoop",
+"position": 0,
+"musicListId": "localPlaylist",
+"listIndex": -1,
+"isPlay": false
+})";
+        }
+        reflection::fromJson(config, json);
         return config;
     }
-
-private:
-    QSettings _settings; // qt保证其析构会调用`sync()`
 };
 
 } // namespace HX
