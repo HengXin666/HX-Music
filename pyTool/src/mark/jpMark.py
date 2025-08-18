@@ -6,7 +6,7 @@ from typing import List, Tuple
 from pathlib import Path
 from g2p_en import G2p  # 音素
 
-# 注意, 
+# 迁移位置
 sys.path.append(str(Path(__file__).resolve().parents[2]))
 from libs.e2k.src.e2k import C2K, P2K
 
@@ -75,6 +75,8 @@ class JpMark:
             kotoba = item['orig']
             if (self._isEnglishSimple(kotoba)):
                 res.append((kotoba, self.englishToKatakana(kotoba)))
+            elif (kotoba == item['kana']):
+                res.append((kotoba, kotoba))
             else:
                 res.append((kotoba, item['hira']))
         return res

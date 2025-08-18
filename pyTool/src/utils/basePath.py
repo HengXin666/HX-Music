@@ -16,6 +16,9 @@ class BasePath:
 
     @staticmethod
     def relativePath(relative: str | Path) -> Path:
+        """
+        以程序入口为相对位置
+        """
         relative = Path(relative)
         if relative.is_absolute():
             raise ValueError(f"relativePath 只能传相对路径; 却收到: {relative}")
