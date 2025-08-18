@@ -155,7 +155,7 @@ def english_to_katakana_simple(word: str) -> str:
     return res
 
 def english_to_katakana(word: str, kakasi_obj) -> str:
-    # pykakasi does not natively convert English; we just pass-through here and use fallback.
+    # pykakasi并不原生支持英语转换; 我们只是在这里传递, 并使用回退。
     return english_to_katakana_simple(word)
 
 def build_ruby_line(
