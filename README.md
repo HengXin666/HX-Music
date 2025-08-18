@@ -93,6 +93,137 @@ Dialogue: 1,0:01:04.95,0:01:04.96,OP JP 6,,0,0,0,fx,{\an5\blur1\clip(755,42,815,
         > 修复了! 检测窗口焦点和隐藏/显示 即可
 ```
 
+更新计划:
+
+- [ ] 客户端
+    - [ ] 欢迎界面 & 新手教程
+        - [ ] 引导设置后端, 或者纯本地模式 (仅单歌单)
+    - [ ] 主界面
+        - [ ] 导航栏
+        - [ ] 搜索
+        - [ ] 侧边栏
+            - [ ] 列表展示个人的所有歌单
+    - [ ] 登陆/注册
+        - [ ] rt
+    - [ ] 设置界面
+        - [ ] 服务器设置
+            - [ ] 设置后端地址
+        - [ ] 歌词设置
+            - [ ] 偏移量
+            - [ ] 中间间隔
+            - [ ] Ass 渲染尺寸选择
+        - [ ] 美化
+            - [ ] 设置 UI 颜色
+            - [ ] 设置背景图片
+    - [ ] 关于界面
+    - [ ] 歌单界面
+        - [x] 拖拽项目
+        - [x] 拖拽加入 (尾部) [临时]
+        - [ ] 拖拽插入指定位置
+        - [ ] 删除项目UI
+        - [ ] 重复则以最新的为准
+        - [ ] 审核项目为可播放的歌曲
+        - [ ] 拖拽文件夹, 遍历文件夹所以歌曲内容
+        - [ ] 歌曲上传后端
+    - [ ] 创建歌单界面
+        - [ ] 歌单名称 & 描述 & 歌单封面(可自己上传)
+        - [ ] 指定文件夹作为内容
+    - [ ] 歌词界面
+        - [x] 全屏 & 置顶 & 无任务栏
+        - [x] 记忆位置
+    - [ ] 托盘
+    - [ ] 菜单栏图标右键快捷功能
+    - [ ] 全局按键 (如 播放 按键 (物理的键盘哦))
+
+- [ ] 后端
+    - [ ] 用户
+        - [ ] 登陆
+        - [ ] 注册
+        - [ ] 删除
+        - [ ] 权限鉴定
+    - [ ] 歌单
+    - [ ] 歌曲
+
+本地配置
+
+```cpp
+// 音乐配置
+struct MusicConfig {
+    float volume;            // 音量大小
+    PlayMode playMode;       // 播放模式
+    qint64 position;         // 播放位置
+    std::string musicListId; // 处于歌单id
+    int listIndex;           // 处于歌单的索引
+    bool isPlay{false};      // 是正在播放
+};
+
+// 歌词配置
+struct LyricConfig {
+    // 窗口位置和大小
+    int windowX;
+    int windowY;
+    int windowWidth;
+    int windowHeight;
+
+    // 记录全屏前的窗口大小, 其中 mae = まえ「前」
+    int maeWindowX;
+    int maeWindowY;
+    int maeWindowWidth;
+    int maeWindowHeight;
+
+    // 偏移量
+    long long lyricOffset;
+
+    // 是否打开窗口
+    bool isWindowOpened;
+
+    // 歌词是否上锁
+    bool isLocked;
+
+    // 是否全屏
+    bool isFullScreen;
+};
+
+
+// 主题
+class Theme : public QObject {
+    // 主色系
+    HX_QML_QCOLOR_PROPERTY(textColor                , "#ffffff"); // 文本颜色
+    HX_QML_QCOLOR_PROPERTY(paratextColor            , "#b3b3b3"); // 副文本颜色
+    HX_QML_QCOLOR_PROPERTY(highlightingColor        , "#ff13ff"); // 高亮颜色
+    
+    // 背景色
+    HX_QML_QCOLOR_PROPERTY(backgroundColor          , "#121212");
+
+    // 背景图片, 默认为空, 应该使用背景色
+    HX_QML_TYPE_PROPERTY(QString, backgroundImgUrl  , "qrc:/img/background.jpg");
+};
+```
+
+Pojo:
+
+```cpp
+/**
+ * @brief 歌单
+ */
+struct MusicList {
+    std::string playlistId;                 // 歌单id (唯一), 定义本地歌单为默认, 为 `localPlaylist`
+    std::string playlistDescription;        // 歌单描述
+    std::vector<SongInformation> songList;  // 歌曲列表
+    // @todo 封面 url
+};
+
+/**
+ * @brief 歌曲信息
+ */
+struct SongInformation {
+    std::string url; // 歌曲链接 (远程 / 本地)
+                     // @todo 字幕配置: 计算过一次, 日后直接复用缓存即可
+                     // @todo 歌名 / 歌手
+                     // @todo 唯一 Id, 用于查找 (?), 直接用 url 就可以了
+};
+```
+
 ## 环境要求
 
 - QT 6.9.1 (开发环境)
@@ -180,6 +311,10 @@ qputenv("QT_QPA_PLATFORM", "xcb");
 ```
 
 -->
+
+### 3. HXLibs
+
+现代C++库, 包含协程、网络、反射、序列化/反序列化、日志、元模板等常用功能
 
 ## Win系统配置
 
