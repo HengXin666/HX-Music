@@ -6,6 +6,7 @@ QtObject {
     property var componentLyrics: null    // 存储 Component
     property var windowLyrics: null       // 存储 实际创建的 Window 实例
 
+    // @todo 应该修改为直接释放, 以便可以附着在活动窗口
     function switchWindow() {
         if (windowLyrics === null) {
             if (componentLyrics === null) {

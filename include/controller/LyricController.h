@@ -183,9 +183,10 @@ public:
 
     // 辅助函数: 绘制ASS图像到指定画布
     inline void drawAssImage(QPainter* painter, ASS_Image* img, int baseX, int baseY) {
-        uint8_t r = (img->color >> 24) & 0xFF;
+        // 更正: Ass 使用的颜色是 BGR, 而不是 RGB
+        uint8_t b = (img->color >> 24) & 0xFF;
         uint8_t g = (img->color >> 16) & 0xFF;
-        uint8_t b = (img->color >> 8) & 0xFF;
+        uint8_t r = (img->color >> 8) & 0xFF;
         // uint8_t a = (img->color >>  0) & 0xFF;
 
         QImage image(img->w, img->h, QImage::Format_RGBA8888);

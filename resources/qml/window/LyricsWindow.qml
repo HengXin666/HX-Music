@@ -18,6 +18,9 @@ FullScreenWindow {
     // 是否显示控制栏(包括鼠标悬浮后显示的解锁按钮)
     property bool showControls: !locked
 
+    // 临时显示一下锁
+    property bool showUnlockTmp: false
+
     // 是否允许缩放
     allowZooming: !LyricController.isFullScreen
 
@@ -26,6 +29,7 @@ FullScreenWindow {
         locked = true;
         root.closeMask = true;
         LyricController.isLocked = true;
+        root.showUnlockTmp = true;
         Qt.callLater(() => {
             const posInRoot = windowItemRef.lockButtonRef.mapToItem(fillRect, 0, 0);
             WindowMaskUtil.clear(root);
@@ -35,6 +39,7 @@ FullScreenWindow {
                 windowItemRef.lockButtonRef.height
             );
             WindowMaskUtil.setMask(root);
+            root.showUnlockTmp = false;
         });
     }
     function unlock() {
@@ -42,7 +47,6 @@ FullScreenWindow {
         root.closeMask = false;
         LyricController.isLocked = false;
         Qt.callLater(() => {
-            WindowMaskUtil.clear(root);
             root.updateMask();
         });
     }
@@ -146,7 +150,7 @@ FullScreenWindow {
                     defaultColor: Theme.highlightingColor
                     hoveredColor: Theme.highlightingColor
                     url: "qrc:/icons/back.svg"
-                    onClicked: SignalBusSingleton.lyricAddOffset(-100)
+                    onClicked: SignalBusSingleton.lyricAddOffset(-500)
                 }
                 MusicActionButton {
                     visible: root.showControls
@@ -155,11 +159,11 @@ FullScreenWindow {
                     defaultColor: Theme.highlightingColor
                     hoveredColor: Theme.highlightingColor
                     url: "qrc:/icons/enter.svg"
-                    onClicked: SignalBusSingleton.lyricAddOffset(100)
+                    onClicked: SignalBusSingleton.lyricAddOffset(500)
                 }
                 MusicActionButton {
                     id: lockButton
-                    visible: root.showControls || root.showUnlock
+                    visible: root.showControls || root.showUnlock || root.showUnlockTmp
                     Layout.preferredWidth: 24
                     Layout.preferredHeight: 24
                     defaultColor: Theme.highlightingColor
