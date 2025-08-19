@@ -1,18 +1,7 @@
 import re
 from typing import List, Tuple
 
-from src.mark.jpMark import JpMark
-
-# ラストチャンスに飢えたつま先が、踊り出すまま駆けたこの夜空
-# print(mark.convert("ラストチャンスに飢えたつま先が、踊り出すまま駆けたこの夜空"))
-
-# {\kf16}ラ{\kf13}ス{\kf15}ト{\kf11}チ{\kf11}ャ{\kf11}ン{\kf20}ス{\kf20}に{\kf18}飢{\kf20}え{\kf20}た{\kf22}つ{\kf20}ま{\kf39}先{\kf21}が
-
-# 为了词法分析, 应该先去掉 {\kf%d+}, 复原为一句话
-# 然后进行注音, 之后, 双指针进行
-
-# 复原需要带 kf, 定义一个词组为 {\kf%d+}%s
-# 这样可以通过内置注音平局切分了
+from .jpMark import JpMark
 
 class KfToken:
     def __init__(self, kf: int = 0, text: str = "") -> None:
@@ -21,92 +10,6 @@ class KfToken:
 
     def __repr__(self) -> str:
         return f"KfToken(kf={self.kf}, str='{self.str}')"
-
-def parseKfLine(assLine: str) -> List[KfToken]:
-    """
-    将 ASS 注音行解析成 KfToken 列表
-    每个 KfToken 包含 kf 时间和对应字符 (可能多个字符)
-    """
-    pattern = r'\{\\kf(\d+)\}([^\{]+)'
-    tokens = []
-    for match in re.findall(pattern, assLine):
-        kf_time = int(match[0])
-        text = match[1]
-        tokens.append(KfToken(kf_time, text))
-    return tokens
-
-def toLinkStr(assLine: str) -> str:
-    # 匹配 {\kf数字} 后面的所有非 k 帧标记内容
-    pattern = r'\{\\kf\d+\}([^\{]+)'
-    return "".join(re.findall(pattern, assLine))
-
-assLine = r"{\kf100}よおこそ実力至上教室へ{\kf20}is {\kf20}good {\kf16}ラ{\kf13}ス{\kf15}ト{\kf11}チ{\kf11}ャ{\kf11}ン{\kf20}ス{\kf20}に{\kf17}飢{\kf20}え{\kf20}た{\kf22}つ{\kf20}ま{\kf39}先{\kf21}が{\kf21}繰{\kf21}り{\kf21}返{\kf21}す{\kf20}学{\kf20}校{\kf20}生{\kf20}活{\kf20}行{\kf20}か{\kf20}な{\kf20}け{\kf20}れ{\kf20}ば{\kf18}This {\kf23}lie {\kf32}is {\kf45}love"
-
-def todo(assLine: str):
-    mark = JpMark()
-    # 期望输入是逐字歌词
-    lineStr = toLinkStr(assLine)        # 飢えたつま先が
-    markList = mark.convert(lineStr)    # 飢えた | つま | 先 | が
-    kfTokenList = parseKfLine(assLine)  # 飢 | え | た | つ | ま | 先 | が
-
-    res = []
-
-    i = 0
-    j = 0
-    k = 0
-
-    nowMarkPos = 0
-
-    markLen = len(markList)
-
-    while i < markLen:
-        # 一般情况下 len: mark >= kfToken.str
-        mark = markList[i]
-        kfToken = kfTokenList[j]
-
-        pos = len(kfToken.str)
-        nowMarkPos += pos
-        motoMarkLen = len(mark[0])
-        if (nowMarkPos >= motoMarkLen):
-            nowMarkPos -= motoMarkLen
-            i += 1
-        k += pos
-
-        if (mark[0] == mark[1]):
-            # 为原文, 不需要注音
-            res.append(f"{{\\kf{kfToken.kf}}}{kfToken.str}")
-            j += 1
-        else:
-            # 需要处理注音
-            # 把 kfToken.kf 分给 mark[1]
-            jpMarkLen = len(mark[1])
-            kfLen = kfToken.kf // jpMarkLen
-            res.append(f"{{\\kf{kfLen * jpMarkLen - kfToken.kf}}}{kfToken.str}|<{mark[1][0]}")
-            # 倒序看, 这样可以匹配到更多相同的
-            tmpList = []
-            m0 = motoMarkLen - 1
-            m1 = jpMarkLen - 1
-            flags: bool = True
-            while m1 > 0:
-                if (flags and mark[0][m0] == mark[1][m1]):
-                    tmpList.append(f"{{\\kf{kfLen}}}{mark[1][m1]}")
-                    m0 -= 1
-                else:
-                    flags = False
-                    tmpList.append(f"{{\\kf{kfLen}}}#{mark[1][m1]}")
-                m1 -= 1
-            tmpList.reverse()
-            res.extend(tmpList)
-            i += 1
-            nowMarkPos = 0
-
-            # pos = len(kfToken.str)
-            while (motoMarkLen > 0):
-                j += 1
-                motoMarkLen -= pos
-                pos = len(kfToken.str)
-
-    return "".join(res)
 
 class _MatchPronunciation:
     @staticmethod
@@ -165,9 +68,27 @@ class _MatchPronunciation:
             res.extend(currentPairs)
         return res
 
-class _AssMark:
+class AssMark:
     @staticmethod
-    def markKanJi(kfLine: KfToken, mark: Tuple[str, str]) -> str:
+    def _distributeEvenly(total: int, n: int) -> List[int]:
+        """
+        把 total 平均分成 n 份,尽可能均匀,返回一个 list
+        例如: total=5, n=3 -> [2,2,1]
+            total=10, n=3 -> [4,3,3]
+        """
+        base = total // n
+        remainder = total % n
+        res = []
+        for i in range(n):
+            # 前 remainder 个元素多分 1
+            if i < remainder:
+                res.append(base + 1)
+            else:
+                res.append(base)
+        return res
+
+    @staticmethod
+    def _markKanJi(kfLine: KfToken, mark: Tuple[str, str]) -> str:
         """注音, 返回注音的assStr
            内部会平均分时间
 
@@ -179,7 +100,8 @@ class _AssMark:
             str: 注音的assStr
         """
         kaNaLen = len(mark[1])            # 全部注音的长度
-        avgKfTime = kfLine.kf // kaNaLen  # 平均分时间, 下取整
+        times = AssMark._distributeEvenly(kfLine.kf, len(mark[1]))
+        timesIdx = 0
         # 倒序看, 这样可以匹配到更多相同的
         res: List[str] = []
         m0 = len(mark[0]) - 1             # 原长度
@@ -188,21 +110,30 @@ class _AssMark:
         while m1 > 0:
             if (kanJiRight == -1 and mark[0][m0] == mark[1][m1]):
                 # 尾部如果是假名, 那么不是注音
-                res.append(f"{{\\kf{avgKfTime}}}{mark[1][m1]}")
+                res.append(f"{{\\kf{times[timesIdx]}}}{mark[1][m1]}")
                 m0 -= 1
             else:
                 # 不相同, 说明当前已经是汉字注音了, 前面的都是
                 kanJiRight = m0
-                res.append(f"{{\\kf{avgKfTime}}}#{mark[1][m1]}")
+                res.append(f"{{\\kf{times[timesIdx]}}}#{mark[1][m1]}")
+            timesIdx += 1
             m1 -= 1
         # 计算 余下的时间: (平均分时间 * 份数 - 全部时间) + 平均分时间
-        modTime: int = (avgKfTime * kaNaLen - kfLine.kf) + avgKfTime
-        res.append(f"{{\\kf{modTime}}}{mark[0][0:m0+1]}|<{mark[1][0]}")
+        res.append(f"{{\\kf{times[timesIdx]}}}{mark[0][0:m0+1]}|<{mark[1][0]}")
         res.reverse()
         return "".join(res)
 
     @staticmethod
-    def beikin(kfList: List[KfToken], markList: List[Tuple[str, str]]) -> List[str]:
+    def _markLine(kfList: List[KfToken], markList: List[Tuple[str, str]]) -> List[str]:
+        """把传入的内容进行注音
+
+        Args:
+            kfList (List[KfToken]): k帧
+            markList (List[Tuple[str, str]]): 注音数据
+
+        Returns:
+            List[str]: 注音assStrList
+        """
         res: List[str] = []
         kfLen = len(kfList)
         markLen = len(markList)
@@ -210,13 +141,13 @@ class _AssMark:
             # 有可能 一个 kfToken.str 对应 多个 mark, 此时应该平均分 k, 给 mark (非逐字)
             # 如: |実力至上　=> [(実力, じつりょく), (至上, しじょう)]
             kfToken = kfList[0]
-            avgKfTime = kfToken.kf // markLen  # 平均分时间, 下取整
-            # 计算 余下的时间: (平均分时间 * 份数 - 全部时间) + 平均分时间
-            modTime: int = (avgKfTime * markLen - kfToken.kf) + avgKfTime
-            kfList = [KfToken(modTime, markList[0][0])]
+            times = AssMark._distributeEvenly(kfToken.kf, markLen) # 均分时间
+            timesIdx = 1
+            kfList = [KfToken(times[1], markList[0][0])]
             for i in range(1, markLen):
-                kfList.append(KfToken(avgKfTime, markList[i][0]))
-            res.extend(_AssMark.work("".join([_.str for _ in kfList]), markList, kfList))
+                kfList.append(KfToken(times[timesIdx], markList[i][0]))
+                timesIdx += 1
+            res.extend(AssMark._doMark("".join([_.str for _ in kfList]), markList, kfList))
         elif (kfLen == 1 and markLen == 1):
             # 也可能 一个 kfToken.str 对应 一个 mark, 判断是否注音, 给 合并 add
             # 如: |私 => (私, わたし)
@@ -227,7 +158,7 @@ class _AssMark:
                 res.append(f"{{\\kf{kfToken.kf}}}{kfToken.str}")
             else:
                 # 需要注音
-                res.append(_AssMark.markKanJi(kfToken, mark))
+                res.append(AssMark._markKanJi(kfToken, mark))
         elif (kfLen > 1 and markLen == 1):
             # 还可能 多个 kfToken.str 对应 一个 mark, 判断是否注音, 偏移 k + add
             # 如: |よ|お|こ|そ => (よおこそ, よおこそ)
@@ -244,7 +175,7 @@ class _AssMark:
                 # 然后, 把他们进行二次对齐
                 newMarkList = _MatchPronunciation.matchPronunciation(markList)
                 if (newMarkList != markList):
-                    res.append(_AssMark.work("".join([_.str for _ in kfList]), newMarkList, kfList))
+                    res.append(AssMark._doMark("".join([_.str for _ in kfList]), newMarkList, kfList))
                 else:
                     # 如: |飢|え|た 　 => (飢えた, まえた)
                     # 如: |学|校|生|活 => ('学校生活', 'がっこうせいかつ')
@@ -267,7 +198,7 @@ class _AssMark:
                                 sum([_.kf for _ in kfList]),
                                 "".join([_.str for _ in kfList])
                             )
-                            res.append(_AssMark.markKanJi(kfLink, mark))
+                            res.append(AssMark._markKanJi(kfLink, mark))
                             break
         else:
             # 还可能 多个 kfToken.str 对应 多个 mark, 数据ub!
@@ -276,7 +207,17 @@ class _AssMark:
         return res
 
     @staticmethod
-    def work(lineStr: str, markList: List[Tuple[str, str]], kfTokenList: List[KfToken]) -> str:
+    def _doMark(lineStr: str, markList: List[Tuple[str, str]], kfTokenList: List[KfToken]) -> str:
+        """进行注音
+
+        Args:
+            lineStr (str): 需要注音的文本
+            markList (List[Tuple[str, str]]): _description_
+            kfTokenList (List[KfToken]): _description_
+
+        Returns:
+            str: 带注音Ass
+        """
         res: List[str] = []
 
         i: int = 0
@@ -317,25 +258,42 @@ class _AssMark:
                     baRanSu += kfLen
                     j += 1
                 else: # == 0
-                    res.extend(_AssMark.beikin(eRaBuKfList, eRaBuMarkList))
+                    res.extend(AssMark._markLine(eRaBuKfList, eRaBuMarkList))
                     break
                 flag = False
 
         return "".join(res)
 
-def fk(assLine: str) -> str:
-    mark = JpMark()
-    # 期望输入是逐字歌词
-    lineStr: str = toLinkStr(assLine)
-    markList: List[Tuple[str, str]] = mark.convert(lineStr)    # 飢えた | つま | 先 | が
-    kfTokenList: List[KfToken] = parseKfLine(assLine)  # 飢 | え | た | つ | ま | 先 | が
+    @staticmethod
+    def mark(assLine: str) -> str:
+        """将一行仅带k帧的ass内容, 加上日语注音
 
-    print("[markList]:", markList)
-    print()
-    print("[kfTokenList]:", kfTokenList)
-    print()
-    print("==============================\n")
-    return _AssMark.work(lineStr, markList, kfTokenList)
-    
+        Args:
+            assLine (str): ass文本 (带k帧)
 
-print(fk(assLine))
+        Returns:
+            str: 带注音的ass k帧内容
+        """
+        def parseKfLine(assLine: str) -> List[KfToken]:
+            """
+            将 ASS 注音行解析成 KfToken 列表
+            每个 KfToken 包含 kf 时间和对应字符 (可能多个字符)
+            """
+            pattern = r'\{\\kf(\d+)\}([^\{]+)'
+            tokens = []
+            for match in re.findall(pattern, assLine):
+                kf_time = int(match[0])
+                text = match[1]
+                tokens.append(KfToken(kf_time, text))
+            return tokens
+
+        def toLinkStr(assLine: str) -> str:
+            # 匹配 {\kf数字} 后面的所有非 k 帧标记内容
+            pattern = r'\{\\kf\d+\}([^\{]+)'
+            return "".join(re.findall(pattern, assLine))
+        mark = JpMark()
+        # 期望输入是k帧率歌词
+        lineStr: str = toLinkStr(assLine)
+        markList: List[Tuple[str, str]] = mark.convert(lineStr)
+        kfTokenList: List[KfToken] = parseKfLine(assLine)
+        return AssMark._doMark(lineStr, markList, kfTokenList)
