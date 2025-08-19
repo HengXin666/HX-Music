@@ -7,7 +7,7 @@ class KfToken:
     def __init__(self, kf: int = 0, text: str = "", type: str = "\\kf") -> None:
         self.kf: int = kf
         self.str: str = text
-        self.type: str = type
+        self.type: str = "\\k" # type
 
     def __repr__(self) -> str:
         return f"KfToken(kf={self.kf}, str='{self.str}', type='{self.type}')"
@@ -294,8 +294,7 @@ class AssMark:
         pattern = r"\{\\(?:k|kf|ko)\d+\}([^\{]+)"
         return "".join(re.findall(pattern, assLine))
 
-    @staticmethod
-    def mark(assLine: str) -> str:
+    def mark(self, assLine: str) -> str:
         """将一行仅带k帧的ass内容, 加上日语注音
 
         Args:
@@ -304,10 +303,12 @@ class AssMark:
         Returns:
             str: 带注音的ass k帧内容
         """
-
-        mark = JpMark()
         # 期望输入是k帧率歌词
         lineStr: str = AssMark._toLinkStr(assLine)
-        markList: List[Tuple[str, str]] = mark.convert(lineStr)
+        markList: List[Tuple[str, str]] = self._jpMark.convert(lineStr)
         kfTokenList: List[KfToken] = AssMark._parseKfLine(assLine)
         return AssMark._doMark(lineStr, markList, kfTokenList)
+    
+    def __init__(self) -> None:
+        self._jpMark = JpMark()
+    
