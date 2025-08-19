@@ -4,12 +4,13 @@ from typing import List, Tuple
 from .jpMark import JpMark
 
 class KfToken:
-    def __init__(self, kf: int = 0, text: str = "") -> None:
+    def __init__(self, kf: int = 0, text: str = "", type: str = "\\kf") -> None:
         self.kf: int = kf
         self.str: str = text
+        self.type: str = type
 
     def __repr__(self) -> str:
-        return f"KfToken(kf={self.kf}, str='{self.str}')"
+        return f"KfToken(kf={self.kf}, str='{self.str}', type='{self.type}')"
 
 class _MatchPronunciation:
     @staticmethod
@@ -110,16 +111,16 @@ class AssMark:
         while m1 > 0:
             if (kanJiRight == -1 and mark[0][m0] == mark[1][m1]):
                 # 尾部如果是假名, 那么不是注音
-                res.append(f"{{\\k{times[timesIdx]}}}{mark[1][m1]}")
+                res.append(f"{{{kfLine.type}{times[timesIdx]}}}{mark[1][m1]}")
                 m0 -= 1
             else:
                 # 不相同, 说明当前已经是汉字注音了, 前面的都是
                 kanJiRight = m0
-                res.append(f"{{\\k{times[timesIdx]}}}#|<{mark[1][m1]}")
+                res.append(f"{{{kfLine.type}{times[timesIdx]}}}#|<{mark[1][m1]}")
             timesIdx += 1
             m1 -= 1
         # 计算 余下的时间: (平均分时间 * 份数 - 全部时间) + 平均分时间
-        res.append(f"{{\\k{times[timesIdx]}}}{mark[0][0:m0+1]}|<{mark[1][0]}")
+        res.append(f"{{{kfLine.type}{times[timesIdx]}}}{mark[0][0:m0+1]}|<{mark[1][0]}")
         res.reverse()
         return "".join(res)
 
@@ -155,7 +156,7 @@ class AssMark:
             mark = markList[0]
             if (mark[0] == mark[1]):
                 # 不需要注音
-                res.append(f"{{\\k{kfToken.kf}}}{kfToken.str}")
+                res.append(f"{{{kfToken.type}{kfToken.kf}}}{kfToken.str}")
             else:
                 # 需要注音
                 res.append(AssMark._markKanJi(kfToken, mark))
@@ -168,7 +169,7 @@ class AssMark:
             if (mark[0] == mark[1]):
                 # 不需要注音
                 for it in kfList:
-                    res.append(f"{{\\k{it.kf}}}{it.str}")
+                    res.append(f"{{{it.type}{it.kf}}}{it.str}")
             else:
                 # 需要注音
                 # 注意: 繰り返す, 还需要预处理为 ['繰り', '返す']
@@ -187,7 +188,7 @@ class AssMark:
                         kfToken = kfList[kfIdx]
                         if (mark[1][mIdx] == kfToken.str):
                             # 相同, 即假名; 不需要注音
-                            res.append(f"{{\\k{kfToken.kf}}}{kfToken.str}")
+                            res.append(f"{{{kfToken.type}{kfToken.kf}}}{kfToken.str}")
                             mIdx -= 1
                             kfIdx -= 1
                         else:
@@ -203,7 +204,6 @@ class AssMark:
         else:
             # 还可能 多个 kfToken.str 对应 多个 mark, 数据ub!
             print("非法:", kfList, "->", markList)
-            pass
         return res
 
     @staticmethod
@@ -219,6 +219,11 @@ class AssMark:
             str: 带注音Ass
         """
         res: List[str] = []
+
+        print(lineStr)
+        print(markList)
+        print(kfTokenList)
+        print()
 
         i: int = 0
         j: int = 0
@@ -265,25 +270,32 @@ class AssMark:
         return "".join(res)
 
     @staticmethod
-    def convertKfToK(assText: str, fps: float = 100.0) -> str:
+    def _parseKfLine(assLine: str) -> List[KfToken]:
         """
-        将 ASS 字幕中的 \\kf 标签转换为 \\k 标签
-        Args:
-            assText (str): 原始字幕文本
-            fps (float): 假设的字幕帧率, 默认 100 fps
-        Returns:
-            str: 转换后的字幕文本
+        解析一行 ASS 字幕中的 \\k / \\kf / \\ko 标签,
+        返回 KfToken 列表 (保持顺序)
         """
-        def repl(match):
-            kfValue = int(match.group(1))
-            kValue = round(kfValue * 100 / fps)
-            return f"\\k{kValue}"
+        tokens: List[KfToken] = []
+        # 匹配 {\\k\d+}, {\\kf\d+}, {\\ko\d+}
+        pattern = r"\{\\(k|kf|ko)(\d+)\}([^\{]+)"
+        for match in re.finditer(pattern, assLine):
+            kType = "\\" + match.group(1)   # 标签类型, 如 "\kf"
+            kf_time = int(match.group(2))   # 持续时间
+            text = match.group(3)           # 对应文字
+            tokens.append(KfToken(kf_time, text, kType))
+        return tokens
 
-        # 匹配 {\kf数字} 或 \kf数字
-        return re.sub(r"\\kf(\d+)", repl, assText)
 
     @staticmethod
-    def mark(assLine: str, fps: float = 100.0) -> str:
+    def _toLinkStr(assLine: str) -> str:
+        """
+        提取去掉 k 标签后的纯文字
+        """
+        pattern = r"\{\\(?:k|kf|ko)\d+\}([^\{]+)"
+        return "".join(re.findall(pattern, assLine))
+
+    @staticmethod
+    def mark(assLine: str) -> str:
         """将一行仅带k帧的ass内容, 加上日语注音
 
         Args:
@@ -292,28 +304,10 @@ class AssMark:
         Returns:
             str: 带注音的ass k帧内容
         """
-        def parseKfLine(assLine: str) -> List[KfToken]:
-            """
-            将 ASS 注音行解析成 KfToken 列表
-            每个 KfToken 包含 k 时间和对应字符 (可能多个字符)
-            """
-            pattern = r'\{\\k(\d+)\}([^\{]+)'
-            tokens = []
-            for match in re.findall(pattern, assLine):
-                kf_time = int(match[0])
-                text = match[1]
-                tokens.append(KfToken(kf_time, text))
-            return tokens
 
-        def toLinkStr(assLine: str) -> str:
-            # 匹配 {\k数字} 后面的所有非 k 帧标记内容
-            pattern = r'\{\\k\d+\}([^\{]+)'
-            return "".join(re.findall(pattern, assLine))
         mark = JpMark()
-        # 把 kf 转为 k
-        assLine = AssMark.convertKfToK(assLine, fps)
         # 期望输入是k帧率歌词
-        lineStr: str = toLinkStr(assLine)
+        lineStr: str = AssMark._toLinkStr(assLine)
         markList: List[Tuple[str, str]] = mark.convert(lineStr)
-        kfTokenList: List[KfToken] = parseKfLine(assLine)
+        kfTokenList: List[KfToken] = AssMark._parseKfLine(assLine)
         return AssMark._doMark(lineStr, markList, kfTokenList)
