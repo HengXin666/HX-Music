@@ -42,7 +42,7 @@ class JpMark:
     @staticmethod
     def splitMixedText(text: str) -> list[str]:
         # 日文字符作为单独的 token, 英文单词按空格拆分
-        pattern = r'[A-Za-z]+|[ぁ-んァ-ン一-龯]+|[、。!?]'
+        pattern = r'[A-Za-z]+|[ぁ-んァ-ン一-龯]+|[　 、。!?]'
         return re.findall(pattern, text)
 
     def englishToKatakana(self, word: str, usePhoneme: bool = True) -> str:
