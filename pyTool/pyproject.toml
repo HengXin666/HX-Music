@@ -1,7 +1,12 @@
 [project]
 name = "pytool"
 version = "0.1.0"
-description = "Add your description here"
+description = "一个Ass K 帧 给日语汉字和英语 加上假名注音 并且转换为 卡拉ok 的程序"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "ass>=0.5.4",
+    "e2k>=0.6.2",
+    "g2p-en>=2.1.0",
+    "pykakasi>=2.3.0",
+]

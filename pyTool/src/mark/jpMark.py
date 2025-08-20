@@ -6,9 +6,7 @@ from typing import List, Tuple
 from pathlib import Path
 from g2p_en import G2p  # 音素
 
-# 迁移位置
-sys.path.append(str(Path(__file__).resolve().parents[2]))
-from libs.e2k.src.e2k import C2K, P2K
+from e2k import C2K, P2K
 
 from ..utils.basePath import BasePath
 
@@ -42,7 +40,7 @@ class JpMark:
         self._g2p = G2p()  # 英文->音素
 
         # 加载本地 英语 -> 片假名 词典
-        katakana_dict_path = BasePath.relativePath("./libs/e2k/vendor/katakana_dict.jsonl")
+        katakana_dict_path = BasePath.relativePath("src/data/katakana_dict.jsonl")
         self._katakanaDict = {}
         with open(katakana_dict_path, "r", encoding="utf-8") as f:
             for line in f:

@@ -47,7 +47,7 @@ def applyKaraokeTemplateWithWine(
 assFile = Path("output.ass")
 outputFile = Path("output_ok.ass")
 luaFile = Path("kara-templater.lua")
-aegisubCliExe = "./aegisub-cli"
+aegisubCliExe = "bin/aegisub-cli"
 
 success = applyKaraokeTemplateWithWine(assFile, outputFile, luaFile, aegisubCliExe)
 if success:

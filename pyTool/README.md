@@ -1,5 +1,6 @@
 # Ass 注音工具
 ## 一、安装依赖
+### 1.1 Python 依赖 (基于 UV)
 
 0. 使用 UV 管理 (下载UV)
 
@@ -33,13 +34,15 @@ uv sync
 uv run main.py
 ```
 
-## 二、使用说明
+### 1.2 设置`英语-片假名`词库 (可选)
+
+> [!TIP]
+> 本程序已经自带, 本步骤可跳过
 
 关于英语单词映射, 优先使用词典; 您可以手动安装:
 
 ```bash
-# 在 libs 文件夹
-# 克隆仓库 (已经自带)
+# 克隆仓库
 git clone https://github.com/Patchethium/e2k.git
 cd e2k/vendor
 
@@ -51,12 +54,35 @@ curl -O http://ftp.edrdg.org/pub/Nihongo/edict2.gz
 gzip -d ja-extract.jsonl.gz
 gzip -d edict2.gz
 
+# 在 e2k 目录
 # 生成 katakana_dict.jsonl
 python extract.py
+
+# 然后把 katakana_dict.jsonl 复制到 pyTool/src/data
 ```
 
 词典可能有多个对照, 本程序默认取第一个作为片假名.
 
 如果字典没有, 则通过语素转换到片假名.
 
-如果您认为转换效果不好, 可以自行在 [`katakana_dict.jsonl`](./libs/e2k/vendor/katakana_dict.jsonl) 中添加自己的映射.
+如果您认为转换效果不好, 可以自行在 [`katakana_dict.jsonl`](./src/data/katakana_dict.jsonl) 中添加自己的映射.
+
+### 1.3 安装 Aegisub 和 Aegisub-cli
+
+1. 程序需要使用 Aegisub 以应用 `自动化卡拉ok模板.lua`.
+
+因此需要安装: [Aegisub](https://github.com/TypesettingTools/Aegisub/releases)
+
+2. Aegisub 仅提供了运行GUI 和 Lua 环境, 但是并不能直接通过命令行调用.
+
+因此, 为了从 Python 中调用 Aegisub-Cli 以使用 `自动化卡拉ok模板.lua` 处理 Ass.
+
+需要安装: [aegisub-cli](https://github.com/HengXin666/aegisub-cli)
+
+特别的, 如果是 Windows 用户, 可以直接下载 `aegisub-cli.exe` 到 `pyTool/bin` 目录中
+
+如果 Arch Linux 用户需要手动构建的话. 可以直接 克隆 上面链接的库. 我调整了项目结构以让 `meson` 可以成功构建.
+
+并且, 把项目C++版本升级到 **C++20**, 以适配第三方库依赖的模板需要的特性. 并且调整了 Boost 头文件, 让它不会编译报错.
+
+其他的Linux发行版, 我没有也不想测试.
