@@ -86,3 +86,14 @@ python extract.py
 并且, 把项目C++版本升级到 **C++20**, 以适配第三方库依赖的模板需要的特性. 并且调整了 Boost 头文件, 让它不会编译报错.
 
 其他的Linux发行版, 我没有也不想测试.
+
+### 1.4 安装依赖的 Lua 自动化插件
+
+1. `Aegisub` 自带模板 `Apply karaoke template` (自动化卡拉ok模板)
+
+2. Aegisub自动设置卡拉OK双行字幕样式插件 ([aegisub-set-karaoke-style](https://github.com/MichiyamaKaren/aegisub-set-karaoke-style)) 
+
+> ![TIP]
+> 因为原本项目仅支持GUI, 因此我进行了修改, 添加了命令行的调用方式
+> 
+> 已经放在 [lua/set-karaoke-style.lua](./lua/set-karaoke-style.lua), 应该把他安装到Aegisub安装目录下的`automation/autoload`目录中;

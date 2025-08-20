@@ -131,7 +131,6 @@ def lddcAssToKaraokeAss(inFile: str, outFile: str):
         if evt.TYPE == "Dialogue" and ("\\k" in evt.text or "\\kf" in evt.text):
             evt.TYPE = "Comment"
             evt.effect = "karaoke"
-            evt.style = 'K1'
             evt.text = assMark.mark(evt.text)
             flag = not flag
         newEvents.append(evt)
