@@ -80,5 +80,5 @@ function macro_set_style_cli(subs, sel)
     aegisub.set_undo_point("Set Karaoke Style via CLI")
 end
 
-aegisub.register_macro("Set Karaoke Style CLI", "Set karaoke style using command line arguments", macro_set_style_cli)
-aegisub.register_macro(script_name, script_description, macro_set_style)
+aegisub.register_macro("自动设置卡拉OK双行字幕样式/Set Karaoke Style CLI", "Set karaoke style using command line arguments(命令行使用)", macro_set_style_cli)
+aegisub.register_macro("自动设置卡拉OK双行字幕样式/".. script_name, script_description, macro_set_style)

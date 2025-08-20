@@ -93,7 +93,7 @@ python extract.py
 
 2. Aegisub自动设置卡拉OK双行字幕样式插件 ([aegisub-set-karaoke-style](https://github.com/MichiyamaKaren/aegisub-set-karaoke-style)) 
 
-> ![TIP]
+> [!TIP]
 > 因为原本项目仅支持GUI, 因此我进行了修改, 添加了命令行的调用方式
 > 
 > 已经放在 [lua/set-karaoke-style.lua](./lua/set-karaoke-style.lua), 应该把他安装到Aegisub安装目录下的`automation/autoload`目录中;

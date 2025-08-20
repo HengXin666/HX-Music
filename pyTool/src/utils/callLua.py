@@ -73,4 +73,4 @@ def callSetKaraokeStyleLua(
 ) -> None:
     callLua(inAssPath, outAssPath,
             "set-karaoke-style.lua",
-            'Set Karaoke Style CLI')
+            '自动设置卡拉OK双行字幕样式/Set Karaoke Style CLI')
