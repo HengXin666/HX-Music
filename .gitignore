@@ -134,6 +134,7 @@ fabric.properties
 
 # CMake ================================
 bin/
+!/pyTool/bin/
 build/
 CMakeLists.txt.user
 CMakeCache.txt
