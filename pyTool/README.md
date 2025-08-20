@@ -97,3 +97,28 @@ python extract.py
 > 因为原本项目仅支持GUI, 因此我进行了修改, 添加了命令行的调用方式
 > 
 > 已经放在 [lua/set-karaoke-style.lua](./lua/set-karaoke-style.lua), 应该把他安装到Aegisub安装目录下的`automation/autoload`目录中;
+
+### 1.5 安装歌词爬虫
+
+- [LDDC](https://github.com/chenmozhijin/LDDC) `V0.9.2`
+
+> [!TIP]
+> 无需安装, 已经附带于源码
+
+## 二、使用方式
+
+## 三、存在问题
+### 3.1 日语不准确
+
+```py
+import pykakasi
+print(pykakasi.kakasi().convert("あの日"))
+```
+
+> 不过该库本意是词法分析... あの日 => あの + 日, 也可以理解. 是 方位词 + 名词 ...
+>
+> 但是这个狗蛋 `日`, 此时应该读作 `ひ` 而不是 `にち`
+
+解决方案: [`JpMark._fixReadings`](src/mark/jpMark.py)
+
+- 判断: [あの, 日] 选项; 存在就替换掉. 日后都是这样吧. 特化...

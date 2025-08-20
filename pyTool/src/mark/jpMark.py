@@ -99,10 +99,37 @@ class JpMark:
     @staticmethod
     def _preprocessing(text: str) -> str:
         """
-        如果 text 是映射表里的词，直接返回对应日语
+        如果 text 是映射表里的词, 直接返回对应日语
         否则原样返回
         """
         return CN_TO_JP_MAP.get(text, text)
+    
+    @staticmethod
+    def _fixReadings(tokens: list[dict]) -> list[dict]:
+        """
+        特化处理, 一些分割、注音不正确的, 常见的, 可以手动排除
+        """
+        if len(tokens) == 0:
+            return []
+        fixed = [tokens[0]]
+        i = 1
+        while i < len(tokens):
+            # 检查: あの + 日
+            if tokens[i - 1]["orig"] == "あの" and tokens[i]["orig"] == "日":
+                fixed.pop()
+                fixed.append({
+                    "orig": "あの日",
+                    "hira": "あのひ",
+                    "kana": "アノヒ",
+                    "hepburn": "ano hi",
+                    "kunrei": "ano hi",
+                    "passport": "ano hi"
+                })
+            else:
+                fixed.append(tokens[i])
+            i += 1
+        return fixed
+
     def convert(self, text: str) -> List[Tuple[str, str]]:
         """解析
 
@@ -112,7 +139,11 @@ class JpMark:
         tokens = JpMark.splitMixedText(text)
         convertRes = []
         for token in tokens:
-            convertRes.extend(self._kks.convert(JpMark._preprocessing(token)))
+            convertRes.extend(
+                JpMark._fixReadings(
+                    self._kks.convert(
+                        JpMark._preprocessing(token)
+            )))
         res = []
         for item in convertRes:
             kotoba = item['orig']

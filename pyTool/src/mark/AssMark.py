@@ -182,24 +182,28 @@ class AssMark:
                     # 如: |学|校|生|活 => ('学校生活', 'がっこうせいかつ')
                     # 给定模式为 汉字[假名], 假名是可选的, len(汉字) >= 1
                     # 从后往前
-                    mIdx = len(mark[0]) - 1
+                    markKanJiIdx = len(mark[0]) - 1
+                    markKaNaIdx = len(mark[1]) - 1
                     kfIdx = kfLen - 1
                     while kfIdx >= 0:
                         kfToken = kfList[kfIdx]
-                        if (mark[1][mIdx] == kfToken.str):
+                        if (mark[1][markKaNaIdx] == kfToken.str):
                             # 相同, 即假名; 不需要注音
                             res.append(f"{{{kfToken.type}{kfToken.kf}}}{kfToken.str}")
-                            mIdx -= 1
+                            markKanJiIdx -= 1
+                            markKaNaIdx -= 1
                             kfIdx -= 1
                         else:
                             # 不相同, 表示开始为注音模式
                             # [0, kfIdx] 都是一个汉字词的, 并且读音难分开
-                            kfList = kfList[0:kfIdx+2]
+                            kfList = kfList[0:kfIdx+1]
                             kfLink: KfToken = KfToken(
                                 sum([_.kf for _ in kfList]),
                                 "".join([_.str for _ in kfList])
                             )
-                            res.append(AssMark._markKanJi(kfLink, mark))
+                            ans: List[str] = [AssMark._markKanJi(kfLink, (mark[0][0:markKanJiIdx+1], mark[1][0:markKaNaIdx+1]))]
+                            ans.extend(res)
+                            res = ans
                             break
         else:
             # 还可能 多个 kfToken.str 对应 多个 mark, 数据ub!

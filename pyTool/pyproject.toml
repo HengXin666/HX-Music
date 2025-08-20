@@ -6,7 +6,15 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "ass>=0.5.4",
+    "charset-normalizer>=3.4.3",
+    "diskcache>=5.6.3",
     "e2k>=0.6.2",
     "g2p-en>=2.1.0",
+    "httpx[brotli,http2]>=0.28.1",
+    "mutagen>=1.47.0",
+    "psutil>=7.0.0",
+    "pyaes>=1.6.1",
     "pykakasi>=2.3.0",
+    "pyobjc-framework-cocoa>=11.1 ; sys_platform == 'darwin'",
+    "pyside6-essentials>=6.8.0",
 ]
