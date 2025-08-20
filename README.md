@@ -1,5 +1,10 @@
 # HX-Music
 
+> [!TIP]
+> 仍在绝赞开发中...
+
+- Python 日语注音 并且为 双行 卡拉ok ASS => [pyTool/README.md](pyTool/README.md)
+
 重构!!!
 
 ```cpp
