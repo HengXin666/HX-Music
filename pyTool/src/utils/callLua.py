@@ -37,7 +37,7 @@ def callLua(
     
     command.extend([
         "--video",
-        str(BasePath.relativePath("./data/empty.mp4")), # 必须要加载视频, 否则有bug
+        str(BasePath.relativePath("./src/data/empty.mp4")), # 必须要加载视频, 否则有bug
         "--automation",
         luaScript,
         str(assPath),

@@ -8,7 +8,7 @@ PlayResX: 1920
 PlayResY: 1080
 
 [Aegisub Project Garbage]
-Video File: empty.mp4
+Video File: src/data/empty.mp4
 Video AR Mode: 4
 Video AR Value: 1.777778
 
