@@ -1,2 +1,3 @@
 libs/ linguist-vendored
-LDDC/ linguist-vendored
+**/libs/** linguist-vendored
+pyTool/LDDC/** linguist-vendored
