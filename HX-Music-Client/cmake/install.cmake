@@ -8,22 +8,21 @@ file(GLOB_RECURSE qrc_files CONFIGURE_DEPENDS
     resources/*.qrc
 )
 
-include_directories(include)
-
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Qml Quick)
 
-qt_add_executable(HX-Music
+qt_add_executable(HX-Music-Client
     ${src_files}
     ${qrc_files}
 )
 
+target_compile_features(HX-Music-Client PUBLIC cxx_std_20)
+
+# 本头文件
+target_include_directories(HX-Music-Client PRIVATE include)
+
 # 导入 HXLibs
-add_subdirectory(libs/HXLibs)
-target_link_libraries(HX-Music PRIVATE HXLibs)
-
-target_compile_features(HX-Music PUBLIC cxx_std_20)
-
-target_link_libraries(HX-Music
+target_link_libraries(HX-Music-Client
+    PRIVATE HXLibs
     PRIVATE Qt::Core
     PRIVATE Qt::Widgets
     PRIVATE Qt::Gui
@@ -33,12 +32,12 @@ target_link_libraries(HX-Music
 
 # 添加TBB依赖
 find_package(TBB REQUIRED)
-target_link_libraries(HX-Music PRIVATE TBB::tbb)
+target_link_libraries(HX-Music-Client PRIVATE TBB::tbb)
 
 set(QT_QML_GENERATE_QMLLS_INI ON)
 
 # 添加 QML 文件所在目录作为资源路径
-qt_add_qml_module(HX-Music
+qt_add_qml_module(HX-Music-Client
     URI HX.Music # QML 中 import 的名字
     VERSION 1.0
     QML_FILES
@@ -67,23 +66,23 @@ qt_add_qml_module(HX-Music
 
 # Qt拓展 (音频播放)
 find_package(Qt6 REQUIRED COMPONENTS Multimedia)
-target_link_libraries(HX-Music PRIVATE Qt::Multimedia)
+target_link_libraries(HX-Music-Client PRIVATE Qt::Multimedia)
 
 # Qt拓展 (SVG)
 find_package(Qt6 REQUIRED COMPONENTS Svg)
-target_link_libraries(HX-Music PRIVATE Qt::Svg)
+target_link_libraries(HX-Music-Client PRIVATE Qt::Svg)
 
 # Qt拓展 (XML)
 find_package(Qt6 REQUIRED COMPONENTS Xml)
-target_link_libraries(HX-Music PRIVATE Qt::Xml)
+target_link_libraries(HX-Music-Client PRIVATE Qt::Xml)
 
 # Qt拓展 (编码)
 # find_package(Qt6 REQUIRED COMPONENTS Core5Compat)
-# target_link_libraries(HX-Music PRIVATE Qt::Core5Compat)
+# target_link_libraries(HX-Music-Client PRIVATE Qt::Core5Compat)
 
 # Qt拓展 (并行库)
 # find_package(Qt6 REQUIRED COMPONENTS Concurrent)
-# target_link_libraries(HX-Music PRIVATE Qt6::Concurrent)
+# target_link_libraries(HX-Music-Client PRIVATE Qt6::Concurrent)
 
 if (WIN32)
     # 解决路径问题, 确保 windeployqt.exe 存在
@@ -94,14 +93,14 @@ if (WIN32)
 
     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
         file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/Debug")
-        add_custom_command(TARGET HX-Music POST_BUILD
-            COMMAND "${QT_BIN_DIR}/windeployqt.exe" --debug "$<TARGET_FILE:HX-Music>"
+        add_custom_command(TARGET HX-Music-Client POST_BUILD
+            COMMAND "${QT_BIN_DIR}/windeployqt.exe" --debug "$<TARGET_FILE:HX-Music-Client>"
             WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/Debug"
         )
     elseif (CMAKE_BUILD_TYPE STREQUAL "Release")
         file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/Release")
-        add_custom_command(TARGET HX-Music POST_BUILD
-            COMMAND "${QT_BIN_DIR}/windeployqt.exe" --release "$<TARGET_FILE:HX-Music>"
+        add_custom_command(TARGET HX-Music-Client POST_BUILD
+            COMMAND "${QT_BIN_DIR}/windeployqt.exe" --release "$<TARGET_FILE:HX-Music-Client>"
             WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/Release"
         )
     endif()
@@ -115,13 +114,13 @@ if (WIN32)
     )
 
     # 链接库文件
-    target_link_libraries(HX-Music PRIVATE
+    target_link_libraries(HX-Music-Client PRIVATE
         "${LIB_ROOT}/debug/lib/tag.lib"
         "${LIB_ROOT}/debug/lib/tag_c.lib"
     )
 else()
     find_package(taglib CONFIG REQUIRED)  # 必须小写"taglib"
-    target_link_libraries(HX-Music
+    target_link_libraries(HX-Music-Client
         PRIVATE
         TagLib::TagLib
     )
@@ -135,21 +134,21 @@ if (WIN32)
     )
 
     # 链接库文件
-    target_link_libraries(HX-Music PRIVATE
+    target_link_libraries(HX-Music-Client PRIVATE
         "${LIB_ROOT}/debug/lib/ass.lib"
     )
 else()
     find_package(LibAss REQUIRED)
-    target_link_libraries(HX-Music PRIVATE LibAss)
+    target_link_libraries(HX-Music-Client PRIVATE LibAss)
 endif()
 
 # find_package(Qt6 REQUIRED COMPONENTS WaylandCompositor WaylandClient)
-# target_link_libraries(HX-Music PRIVATE Qt6::WaylandCompositor Qt6::WaylandClient)
+# target_link_libraries(HX-Music-Client PRIVATE Qt6::WaylandCompositor Qt6::WaylandClient)
 
 # find_package(Qt6 REQUIRED COMPONENTS DBus)
-# target_link_libraries(HX-Music PRIVATE Qt6::DBus)
+# target_link_libraries(HX-Music-Client PRIVATE Qt6::DBus)
 
-set_target_properties(HX-Music PROPERTIES
+set_target_properties(HX-Music-Client PROPERTIES
     ${BUNDLE_ID_OPTION}
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
@@ -158,7 +157,7 @@ set_target_properties(HX-Music PROPERTIES
 )
 
 include(GNUInstallDirs)
-install(TARGETS HX-Music
+install(TARGETS HX-Music-Client
     BUNDLE DESTINATION .
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}

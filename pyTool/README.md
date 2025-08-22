@@ -109,6 +109,13 @@ python extract.py
 
 库内部通过 C++ 调用 Python 方式. 无需用户操作. (当然, 用户需要准备对应的环境!)
 
+> [!NOTE]
+> 考虑到配置/安装 极为复杂 *(需要安装 python + uv (pip 第三方库) + Aegisub + Aegisub-cli + Aegisub 加载指定Lua插件)*
+>
+> 所以 Python 部分放到 `C++ 服务端程序` 吧, 这样我直接打包一个 `docker-compose` 就完事了; 反正目标是 NAS 用户 qwq
+>
+> 用户仅需要安装 客户端 即可. 客户端是C++的, 这样我打包比较简单 qwq...
+
 ## 三、存在问题
 ### 3.1 日语不准确
 
