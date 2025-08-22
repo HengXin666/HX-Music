@@ -17,7 +17,13 @@ BorderlessWindow {
     showBorder: false
 
     // === 全局状态 ===
-    property var lyricsState: LyricsState{} // 歌词悬浮窗口状态控制
+    property var lyricsState: LyricsState {} // 歌词悬浮窗口状态控制
+
+    // 屏幕变化监听 (当前窗口屏幕变化)
+    onScreenChanged: {
+        // console.log("当前窗口屏幕已切换:", mainWin.screen.name);
+        lyricsState.setScreen(mainWin.screen);
+    }
 
     onClosing: {
         lyricsState.del();
@@ -115,7 +121,7 @@ BorderlessWindow {
                     Layout.fillHeight: true
                     onTabClicked: (index) => {
                         console.log("点击了标签页:", index);
-                        stackView.currentIndex = index;
+                        stackView.currentIndex = inde; // 属性存储当前屏幕信息
                     }
                 }
 

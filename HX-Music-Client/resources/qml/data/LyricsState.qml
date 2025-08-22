@@ -5,6 +5,11 @@ QtObject {
 
     property var componentLyrics: null    // 存储 Component
     property var windowLyrics: null       // 存储 实际创建的 Window 实例
+    property var windowLyricsScreen: null // 主界面窗口所在屏幕
+
+    function setScreen(screen) {
+        windowLyricsScreen = screen;
+    }
 
     // @todo 应该修改为直接释放, 以便可以附着在活动窗口
     function switchWindow() {
@@ -15,6 +20,7 @@ QtObject {
             // 加载
             if (componentLyrics.status === Component.Ready) {
                 windowLyrics = componentLyrics.createObject(); // 指定父对象, 方便生命周期结束顺便带走子对象
+                windowLyrics.screen = windowLyricsScreen;
                 windowLyrics.reqClose.connect(() => switchWindow());
                 if (windowLyrics !== null) {
                     windowLyrics.show();
@@ -35,6 +41,7 @@ QtObject {
                     windowLyrics.hide();
                 }
             } else {
+                windowLyrics.screen = windowLyricsScreen;
                 windowLyrics.unlock();
                 windowLyrics.show();
                 LyricController.isWindowOpened = true;

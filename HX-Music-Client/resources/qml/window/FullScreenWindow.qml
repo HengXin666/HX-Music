@@ -62,7 +62,7 @@ Window {
 
     // 保证启动时全屏
     Component.onCompleted: {
-        root.showFullScreen()
+        Qt.callLater(() => root.showFullScreen());
     }
 
     // 捕捉用户试图退出全屏的行为
@@ -71,7 +71,7 @@ Window {
             return;
         }
         if (newVisibility !== Window.FullScreen) {
-            Qt.callLater(() => root.showFullScreen())
+            Qt.callLater(() => root.showFullScreen());
         }
     }
 

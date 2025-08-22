@@ -53,11 +53,20 @@
     </qresource>
     <qresource prefix="/qml">
         <file alias="Main.qml">qml/Main.qml</file>
+        <file alias="BorderlessWindow.qml">qml/window/BorderlessWindow.qml</file>
         <file alias="LyricsWindow.qml">qml/window/LyricsWindow.qml</file>
+        <file alias="FullScreenWindow.qml">qml/window/FullScreenWindow.qml</file>
         <file alias="SideBar.qml">qml/widget/SideBar.qml</file>
         <file alias="PlaybackBar.qml">qml/widget/PlaybackBar.qml</file>
         <file alias="MusicProgressBar.qml">qml/widget/MusicProgressBar.qml</file>
+        <file alias="VolumeButton.qml">qml/widget/VolumeButton.qml</file>
+        <file alias="PlayModeButton.qml">qml/widget/PlayModeButton.qml</file>
+        <file alias="LoopingScrollingText.qml">qml/widget/LoopingScrollingText.qml</file>
+        <file alias="MusicListView.qml">qml/widget/MusicListView.qml</file>
+        <file alias="PlayStatusButton.qml">qml/widget/PlayStatusButton.qml</file>
+        <file alias="ProgressBarRect.qml">qml/widget/ProgressBarRect.qml</file>
         <file alias="MusicActionButton.qml">qml/widget/internal/MusicActionButton.qml</file>
+        <file alias="AudioVisualizerBars.qml">qml/widget/internal/AudioVisualizerBars.qml</file>
         <file alias="LyricsState.qml">qml/data/LyricsState.qml</file>
     </qresource>
 </RCC>
