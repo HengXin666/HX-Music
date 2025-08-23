@@ -34,28 +34,24 @@ int _main() {
     return 0;
 }
 
-#include <iostream>
-#include <sqlite3.h>
+#include <db/SQLiteDB.hpp>
+
+using namespace HX;
+
+struct Man {
+    int id;
+    std::string name;
+    double okane;
+};
 
 int main() {
-    sqlite3* db;
-    int rc = sqlite3_open("test.db", &db);
-    if (rc) {
-        std::cerr << "Cannot open database: " << sqlite3_errmsg(db) << std::endl;
-        return 1;
-    }
-    std::cout << "Opened database successfully!" << std::endl;
-
-    const char* sql = "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT);";
-    char* errMsg = nullptr;
-    rc = sqlite3_exec(db, sql, nullptr, nullptr, &errMsg);
-    if (rc != SQLITE_OK) {
-        std::cerr << "SQL error: " << errMsg << std::endl;
-        sqlite3_free(errMsg);
-    } else {
-        std::cout << "Table created successfully!" << std::endl;
-    }
-
-    sqlite3_close(db);
+    auto db = db::open("./test.db");
+    db.createDatabase<Man>("man");
+    Man t {
+        1433223, "战士", 0.721
+    };
+    db.insert("man", t);
+    auto res = db.queryAll<Man>("select * from man");
+    log::hxLog.info("res:", res);
     return 0;
 }
