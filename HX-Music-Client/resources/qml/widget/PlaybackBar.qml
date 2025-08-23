@@ -280,11 +280,6 @@ ProgressBarRect {
 
             // 更新时长
             musicLengthText.text = musicProgressBarLayout.formatTime(song.getLengthInMilliseconds() / 1000);
-
-            // 更新滚动播放状态, 需要延迟一步, 否则有bug, 内部还没有来得及更新
-            Qt.callLater(() => {
-                title.checkWidth(); // 外部长度没有刷新
-            });
         }
     }
 

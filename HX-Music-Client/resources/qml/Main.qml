@@ -19,12 +19,6 @@ BorderlessWindow {
     // === 全局状态 ===
     property var lyricsState: LyricsState {} // 歌词悬浮窗口状态控制
 
-    // 屏幕变化监听 (当前窗口屏幕变化)
-    onScreenChanged: {
-        // console.log("当前窗口屏幕已切换:", mainWin.screen.name);
-        lyricsState.setScreen(mainWin.screen);
-    }
-
     onClosing: {
         lyricsState.del();
         Qt.quit(); // 强制退出应用

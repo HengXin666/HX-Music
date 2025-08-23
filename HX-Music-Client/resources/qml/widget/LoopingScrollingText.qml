@@ -49,6 +49,10 @@ Item {
         }
     }
 
+    on_ContentWidthChanged: {
+        Qt.callLater(() => root.checkWidth());
+    }
+
     // 背景容器
     Rectangle {
         anchors.fill: parent
