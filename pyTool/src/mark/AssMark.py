@@ -7,6 +7,8 @@ class KfToken:
     def __init__(self, kf: int = 0, text: str = "", type: str = "\\kf") -> None:
         self.kf: int = kf
         self.str: str = text
+
+        # @todo 这里暂时不清楚得使用什么. 似乎得 k 帧才可以 卡拉Ok 吗? 不清楚哦
         self.type: str = "\\k" # type
 
     def __repr__(self) -> str:
