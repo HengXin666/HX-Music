@@ -26,6 +26,7 @@
 #include <sqlite3.h>
 
 #include <HXLibs/reflection/MemberName.hpp>
+#include <HXLibs/reflection/TypeName.hpp>
 #include <HXLibs/log/serialize/ToString.hpp>
 
 #include <db/SQLiteStmt.hpp>
@@ -33,6 +34,23 @@
 namespace HX::db {
 
 namespace internal {
+
+enum class SqlOp : uint8_t {
+    Where   = 1 << 0,
+    GroupBy = 1 << 1,
+    Having  = 1 << 2,
+    OrderBy = 1 << 3,
+    Limit   = 1 << 4,
+};
+
+
+inline constexpr uint8_t operator&(uint8_t a, SqlOp b) noexcept {
+    return a & static_cast<uint8_t>(b);
+}
+
+inline constexpr uint8_t& operator|=(uint8_t& a, SqlOp b) noexcept {
+    return a |= static_cast<uint8_t>(b);
+}
 
 template <typename T>
 constexpr std::string_view getSqlTypeStr() {
@@ -48,9 +66,76 @@ constexpr std::string_view getSqlTypeStr() {
     }
 }
 
+inline void execSql(std::string_view sql, ::sqlite3* db) {
+    char* errMsg = nullptr;
+    if (::sqlite3_exec(db, sql.data(), nullptr, nullptr, &errMsg) != SQLITE_OK) {
+        std::string err = errMsg ? errMsg : "unknown error";
+        ::sqlite3_free(errMsg);
+        throw std::runtime_error{err};
+    }
+}
+
+/**
+ * @brief 解析 SQL 的占位符对应的字段名称
+ * @param sql 
+ * @return std::vector<std::string_view> 
+ */
+inline constexpr std::vector<std::string_view> extractFields(std::string_view sql) {
+    std::vector<std::string_view> fields;
+    for (size_t pos = 0; pos != std::string_view::npos; pos = sql.find('?', ++pos)) {
+        auto it = sql.begin() + pos;
+
+        // 向前找非字母数字
+        auto rIt = std::find_if_not(
+            std::make_reverse_iterator(it), sql.rend(),
+            [](unsigned char c) {
+                return std::isspace(c) || std::ispunct(c);
+            });
+
+        // 再向前找空格或特殊字符(即找到字段名的起点)
+        auto lIt = std::find_if(
+            rIt, sql.rend(), [](unsigned char c) {
+                return !std::isalnum(c) && c != '_';
+            });
+
+        if (rIt != sql.rend()) {
+            std::string_view field{lIt.base(), rIt.base()};
+            if (!field.empty()) {
+                fields.push_back(field);
+            }
+        }
+    }
+    return fields;
+}
+
+template <typename T>
+class SqlCallChain {
+    
+public:
+    SqlCallChain(std::string sql)
+        : _sql{std::move(sql)}
+    {}
+
+    SqlCallChain& where(std::string_view sql) {
+        if (_opEd & SqlOp::Where) [[unlikely]] {
+            throw std::runtime_error{"@todo"};
+        }
+        _opEd |= SqlOp::Where;
+        auto fields = extractFields(sql);
+        
+        return *this;
+    }
+private:
+    std::string _sql;
+    uint8_t _opEd;
+};
+
 } // namespace internal
 
 class SQLiteDB {
+    void exec(std::string_view sql) const {
+        internal::execSql(sql, _db);
+    }
 public:
     explicit SQLiteDB(std::string_view filePath) {
         if (::sqlite3_open(filePath.data(), &_db) != SQLITE_OK) [[unlikely]] {
@@ -66,19 +151,10 @@ public:
         }
     }
 
-    void exec(std::string_view sql) const {
-        char* errMsg = nullptr;
-        if (::sqlite3_exec(_db, sql.data(), nullptr, nullptr, &errMsg) != SQLITE_OK) {
-            std::string err = errMsg ? errMsg : "unknown error";
-            ::sqlite3_free(errMsg);
-            throw std::runtime_error{err};
-        }
-    }
-
     template <typename T>
-    void createDatabase(std::string_view tableName) const {
+    void createDatabase() const {
         std::string sql = "CREATE TABLE IF NOT EXISTS ";
-        sql += tableName;
+        sql += reflection::getTypeName<T>();
         sql += " (";
         auto obj = reflection::internal::getStaticObj<T>();
         reflection::forEach(obj, [&] <std::size_t Idx> (
@@ -94,11 +170,12 @@ public:
     }
 
     template <typename T>
-    void insert(std::string_view tableName, T&& t) const {
+    void insert(T&& t) const {
+        using U = meta::remove_cvref_t<T>;
         std::string sql = "INSERT INTO ";
-        sql += tableName;
+        sql += reflection::getTypeName<U>();
         sql += " (";
-        auto obj = reflection::internal::getStaticObj<T>();
+        auto obj = reflection::internal::getStaticObj<U>();
         reflection::forEach(obj, [&] <std::size_t Idx> (
             std::index_sequence<Idx>, std::string_view name, auto&& val
         ) {
@@ -131,7 +208,9 @@ public:
     }
 
     template <typename T>
-    std::vector<T> queryAll(std::string_view sql) const {
+    std::vector<T> queryAll() const {
+        std::string sql = "SELECT * FROM ";
+        sql += reflection::getTypeName<T>();
         SQLiteStmt stmt{sql, _db};
         std::vector<T> res;
         constexpr std::size_t N = reflection::membersCountVal<T>;
@@ -144,6 +223,13 @@ public:
             });
         }
         return res;
+    }
+
+    template <typename T>
+    auto deleteBy() {
+        std::string sql = "DELETE FROM ";
+        sql += reflection::getTypeName<T>();
+        return internal::SqlCallChain<T>{std::move(sql)};
     }
 
 private:

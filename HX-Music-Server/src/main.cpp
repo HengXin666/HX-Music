@@ -45,13 +45,21 @@ struct Man {
 };
 
 int main() {
+    // 明天写一个 反射获取 类名称的. 这样如果不指定表名称, 就使用结构体名称
     auto db = db::open("./test.db");
-    db.createDatabase<Man>("man");
+    db.createDatabase<Man>();
     Man t {
         1433223, "战士", 0.721
     };
-    db.insert("man", t);
-    auto res = db.queryAll<Man>("select * from man");
+    // db.insert(t);
+    auto res = db.queryAll<Man>();
     log::hxLog.info("res:", res);
+
+    // db.deleteBy<Man>().where("id = ? or name = ?");
+
+    std::string sql = "UPDATE users SET score = ?, (level >= ?) WHERE +[-age_aA1 <= ?] AND x.name != ?";
+    auto fields = db::internal::extractFields(sql);
+
+    log::hxLog.info(fields);
     return 0;
 }
