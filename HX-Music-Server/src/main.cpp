@@ -35,6 +35,9 @@ int _main() {
 }
 
 #include <db/SQLiteDB.hpp>
+#include <db/SQLiteMeta.hpp>
+#include <HXLibs/reflection/json/JsonRead.hpp>
+#include <HXLibs/reflection/json/JsonWrite.hpp>
 
 using namespace HX;
 
@@ -44,10 +47,6 @@ struct Man {
     double okane;
     std::vector<std::string> arr;
 };
-
-#include <db/SQLiteMeta.hpp>
-#include <HXLibs/reflection/json/JsonRead.hpp>
-#include <HXLibs/reflection/json/JsonWrite.hpp>
 
 namespace HX::db {
 
@@ -70,7 +69,6 @@ struct SQLiteSqlType<std::vector<U>> {
 } // namespace HX::db
 
 int main() {
-    // 明天写一个 反射获取 类名称的. 这样如果不指定表名称, 就使用结构体名称
     auto db = db::open("./test.db");
     db.createDatabase<Man>();
     Man t {
@@ -80,12 +78,12 @@ int main() {
     auto res = db.queryAll<Man>();
     log::hxLog.info("res:", res);
 
-    db.deleteBy<Man>("where id = ?").bind(2233, std::string{"战士"}).exec();
+    db.deleteBy<Man>("where id = ?").bind(2233).exec();
     db.updateBy(Man{
         2233, "xxbb", 6.66, {"在", "あの場所"}
-    }, "").bind(1, std::string{"战士"}).exec();
+    }, "").exec();
 
     res = db.queryAll<Man>();
-    log::hxLog.info("res:", res);
+    log::hxLog.warning("res:", res);
     return 0;
 }

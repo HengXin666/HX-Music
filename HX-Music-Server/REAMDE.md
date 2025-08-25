@@ -35,9 +35,13 @@
 
 4. 歌单
 
-存储在 `file/musicList/${歌单名称}.json
+存储在 `file/musicList/${歌单名称}.json`
 
 内部直接存储歌曲引用即可.
+
+5. 数据库内容
+
+存储在 `file/db/${数据库名称}.db`
 
 ### 1.3 数据设计
 
@@ -53,7 +57,7 @@
 
 ```cpp
 struct MusicIndexData {
-    std::string url;
+    std::string path;
     std::string musicName;
     std::vector<std::string> singers;
     std::string album;

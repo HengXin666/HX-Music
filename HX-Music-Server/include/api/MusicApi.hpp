@@ -18,17 +18,19 @@
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <string>
-#include <vector>
+#include <api/ApiMacro.hpp>
 
 namespace HX {
 
-// 歌曲数据
-struct MusicDAO {
-    std::string path;                   // 歌曲存放路径 (相对于 ~/file/music/)
-    std::string musicName;              // 歌名
-    std::vector<std::string> singers;   // 歌手
-    std::string musicAlbum;             // 专辑
-};
+/**
+ * @brief 音乐服务 API
+ */
+HX_ServerApiBegin(MusicApi) {
+    HX_EndpointBegin<GET>("/", [] ENDPOINT {
+        co_return;
+    })HX_EndpointEnd;
+} HX_ServerApiEnd;
 
 } // namespace HX
+
+#include <api/UnApiMacro.hpp>
