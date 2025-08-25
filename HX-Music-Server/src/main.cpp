@@ -51,15 +51,13 @@ int main() {
     Man t {
         1433223, "战士", 0.721
     };
-    // db.insert(t);
+    db.insert(t);
     auto res = db.queryAll<Man>();
     log::hxLog.info("res:", res);
 
-    // db.deleteBy<Man>().where("id = ? or name = ?");
+    db.deleteBy<Man>("").bind(1, std::string{"战士"}).exec();
 
-    std::string sql = "UPDATE users SET score = ?, (level >= ?) WHERE +[-age_aA1 <= ?] AND x.name != ?";
-    auto fields = db::internal::extractFields(sql);
-
-    log::hxLog.info(fields);
+    res = db.queryAll<Man>();
+    log::hxLog.info("res:", res);
     return 0;
 }

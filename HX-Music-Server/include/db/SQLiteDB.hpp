@@ -25,7 +25,11 @@
 
 #include <sqlite3.h>
 
+#include <meta/StaticConstexpr.hpp>
+#include <meta/FixedString.hpp>
+
 #include <HXLibs/reflection/MemberName.hpp>
+#include <HXLibs/reflection/EnumName.hpp>
 #include <HXLibs/reflection/TypeName.hpp>
 #include <HXLibs/log/serialize/ToString.hpp>
 
@@ -43,6 +47,7 @@ enum class SqlOp : uint8_t {
     Limit   = 1 << 4,
 };
 
+constexpr auto SqlOpCnt = reflection::getValidEnumValueCnt<SqlOp>();
 
 inline constexpr uint8_t operator&(uint8_t a, SqlOp b) noexcept {
     return a & static_cast<uint8_t>(b);
@@ -75,59 +80,159 @@ inline void execSql(std::string_view sql, ::sqlite3* db) {
     }
 }
 
+constexpr bool isSpace(char c) noexcept {
+    return c == ' ' || c == '\t' || c == '\n' || c == '\r';
+}
+
+constexpr bool isPunct(char c) noexcept {
+    // https://en.cppreference.com/w/cpp/string/byte/isalnum
+    constexpr auto arr = meta::StaticConstexpr<decltype([]{
+        std::array<bool, 127> arr{};
+        for (char c : R"(!"#$%&'()*+,-./ 	:;<=>?@[\]^_`{|}~)") {
+            arr[c] = true;
+        }
+        return arr;
+    })>::get();
+    return c >= 0 && arr[c];
+}
+
+constexpr bool isAlnumOrUnderscore(char c) noexcept {
+    return (c >= 'a' && c <= 'z') ||
+           (c >= 'A' && c <= 'Z') ||
+           (c >= '0' && c <= '9') ||
+            c == '_';
+}
+
 /**
  * @brief 解析 SQL 的占位符对应的字段名称
- * @param sql 
- * @return std::vector<std::string_view> 
+ * @param sql
+ * @return std::vector<std::string_view>
  */
-inline constexpr std::vector<std::string_view> extractFields(std::string_view sql) {
-    std::vector<std::string_view> fields;
-    for (size_t pos = 0; pos != std::string_view::npos; pos = sql.find('?', ++pos)) {
-        auto it = sql.begin() + pos;
+template <meta::FixedString Sql>
+inline constexpr auto extractFields() {
+    constexpr auto view = meta::ToCharPack<Sql>::view();
+    constexpr auto len = Sql.size();
 
-        // 向前找非字母数字
-        auto rIt = std::find_if_not(
-            std::make_reverse_iterator(it), sql.rend(),
-            [](unsigned char c) {
-                return std::isspace(c) || std::ispunct(c);
-            });
+    // 先扫描问号数量
+    constexpr std::size_t MaxFields = [&]() constexpr {
+        std::size_t count = 0;
+        for (std::size_t i = 0; i < len; ++i) {
+            count += view[i] == '?';
+        }
+        return count;
+    }();
 
-        // 再向前找空格或特殊字符(即找到字段名的起点)
-        auto lIt = std::find_if(
-            rIt, sql.rend(), [](unsigned char c) {
-                return !std::isalnum(c) && c != '_';
-            });
+    std::array<std::string_view, MaxFields> fields{};
+    std::size_t found = 0;
 
-        if (rIt != sql.rend()) {
-            std::string_view field{lIt.base(), rIt.base()};
-            if (!field.empty()) {
-                fields.push_back(field);
-            }
+    for (std::size_t pos = 0; pos < len; ++pos) {
+        if (view[pos] != '?') {
+            continue;
+        }
+
+        // 向前找到字段名末尾 (第一个非空格非标点)
+        std::size_t r = pos;
+        while (r > 0 && (isSpace(view[r - 1]) || isPunct(view[r - 1]))) {
+            --r;
+        }
+
+        // 再向前找到字段名起点 (非字母数字且非下划线)
+        std::size_t l = r;
+        while (l > 0 && (isAlnumOrUnderscore(view[l - 1]))) {
+            --l;
+        }
+
+        if (r > l) {
+            fields[found++] = view.substr(l, r - l);
         }
     }
-    return fields;
+
+    // 截断数组
+    std::array<std::string_view, MaxFields> res{};
+    for (std::size_t i = 0; i < found; ++i) {
+        res[i] = fields[i];
+    }
+    return res;
 }
 
 template <typename T>
 class SqlCallChain {
-    
 public:
     SqlCallChain(std::string sql)
         : _sql{std::move(sql)}
     {}
 
-    SqlCallChain& where(std::string_view sql) {
+    template <meta::FixedString Str>
+    constexpr SqlCallChain& where() {
         if (_opEd & SqlOp::Where) [[unlikely]] {
             throw std::runtime_error{"@todo"};
         }
         _opEd |= SqlOp::Where;
-        auto fields = extractFields(sql);
-        
+
+        [[maybe_unused]] constexpr auto fields = extractFields<Str>();
+
+        constexpr auto nameMap = reflection::getMembersNamesMap<T>();
+
+        [&] <std::size_t... Is> (std::index_sequence<Is...>) {
+            constexpr auto tp = reflection::internal::getStaticObjPtrTuple<T>();
+            (([&] <std::size_t Idx> (std::index_sequence<Idx>) {
+                constexpr auto I = nameMap.at(fields[Idx]);
+                using Type = decltype(*std::get<I>(tp));
+                // 完全没必要... 仅仅只是为了编译时判断类型吗? 没用
+            }(std::index_sequence<Is>{})), ...);
+        } (std::make_index_sequence<fields.size()>{});
+
+        _sql += meta::ToCharPack<Str>::view();
         return *this;
     }
 private:
     std::string _sql;
     uint8_t _opEd;
+    std::size_t _idx = 0;
+};
+
+struct [[nodiscard]] StmtCallChain {
+    StmtCallChain(std::string_view sql, ::sqlite3* db)
+        : _db{db}
+        , _stmt{sql, _db}
+    {}
+
+    template <typename... Args>
+    StmtCallChain& bind(Args&&... args) noexcept {
+        auto tp = std::make_tuple(std::forward<Args>(args)...);
+        [&] <std::size_t... Is> (std::index_sequence<Is...>) {
+            (([&] <std::size_t Idx> (std::index_sequence<Idx>) {
+                auto& t = std::get<Idx>(tp);
+                using T = meta::remove_cvref_t<decltype(t)>;
+                if constexpr (std::is_integral_v<T>) {
+                    ::sqlite3_bind_int64(_stmt, Idx + 1, t); 
+                } else if constexpr (std::is_floating_point_v<T>) {
+                    ::sqlite3_bind_double(_stmt, Idx + 1, t); 
+                } else if constexpr (meta::StringType<T>) {
+                    ::sqlite3_bind_text(_stmt, Idx + 1, t.data(), t.size(), SQLITE_TRANSIENT);
+                } else {
+                    // 不支持该类型
+                    static_assert(!sizeof(T), "type is not sql type");
+                }
+            }(std::index_sequence<Is>{})), ...);
+        } (std::make_index_sequence<std::tuple_size_v<decltype(tp)>>{});
+        return *this;
+    }
+
+    // 执行
+    bool exec() const noexcept {
+        return _stmt.step() == SQLITE_DONE;
+    }
+
+    // 带异常的
+    void execOnThrow() const {
+        if (!exec()) [[unlikely]] {
+            throw std::runtime_error{"SQL Error: " + std::string{::sqlite3_errmsg(_db)}};
+        }
+    }
+private:
+    ::sqlite3* _db;
+    SQLiteStmt _stmt;
 };
 
 } // namespace internal
@@ -140,7 +245,7 @@ public:
     explicit SQLiteDB(std::string_view filePath) {
         if (::sqlite3_open(filePath.data(), &_db) != SQLITE_OK) [[unlikely]] {
             throw std::runtime_error{
-                "Failed to open database: " + std::string(sqlite3_errmsg(_db))
+                "Failed to open database: " + std::string(::sqlite3_errmsg(_db))
             };
         }
     }
@@ -163,6 +268,8 @@ public:
             if constexpr (Idx > 0) {
                 sql += ", ";
             }
+            sql += name;
+            sql += ' ';
             sql += internal::getSqlTypeStr<meta::remove_cvref_t<decltype(val)>>();
         });
         sql += ");";
@@ -182,7 +289,7 @@ public:
             if constexpr (Idx > 0) {
                 sql += ", ";
             }
-            sql += internal::getSqlTypeStr<meta::remove_cvref_t<decltype(val)>>();
+            sql += name;
         });
         sql += ") VALUES (";
         reflection::forEach(std::forward<T>(t), [&] <std::size_t Idx> (
@@ -226,10 +333,12 @@ public:
     }
 
     template <typename T>
-    auto deleteBy() {
+    internal::StmtCallChain deleteBy(std::string sqlBody) {
         std::string sql = "DELETE FROM ";
         sql += reflection::getTypeName<T>();
-        return internal::SqlCallChain<T>{std::move(sql)};
+        sql += ' ';
+        sql += std::move(sqlBody);
+        return {sql, _db};
     }
 
 private:

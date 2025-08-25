@@ -33,14 +33,20 @@ public:
     explicit SQLiteStmt(std::string_view sql, ::sqlite3* db)
         : _stmt{nullptr}
     {
-        if (::sqlite3_prepare_v2(db, sql.data(), sql.size(), &_stmt, nullptr) != SQLITE_OK) {
+        // 预编译
+        if (::sqlite3_prepare_v2(
+            db, sql.data(), sql.size(),
+            &_stmt, nullptr) != SQLITE_OK
+        ) [[unlikely]] {
             throw std::runtime_error{
-                "Failed to prepare statement: " + std::string(::sqlite3_errmsg(db))
+                "Failed to prepare statement: " 
+                + std::string(::sqlite3_errmsg(db))
+                + "\n In: " + std::string{sql}
             };
         }
     }
 
-    int step() const {
+    int step() const noexcept {
         return ::sqlite3_step(_stmt);
     }
 
@@ -56,6 +62,10 @@ public:
             // 不支持该类型
             static_assert(!sizeof(T), "type is not sql type");
         }
+    }
+
+    operator ::sqlite3_stmt*() noexcept {
+        return _stmt;
     }
 
     ~SQLiteStmt() noexcept {
