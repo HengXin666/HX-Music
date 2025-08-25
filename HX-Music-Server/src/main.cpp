@@ -42,14 +42,39 @@ struct Man {
     int id;
     std::string name;
     double okane;
+    std::vector<std::string> arr;
 };
+
+#include <db/SQLiteMeta.hpp>
+#include <HXLibs/reflection/json/JsonRead.hpp>
+#include <HXLibs/reflection/json/JsonWrite.hpp>
+
+namespace HX::db {
+
+template <typename U>
+struct SQLiteSqlType<std::vector<U>> {
+    using T = std::vector<U>;
+    static constexpr std::string bind(T const& t) noexcept {
+        std::string res;
+        reflection::toJson(t, res);
+        return res;
+    }
+
+    static constexpr T columnType(std::string_view str) {
+        T t{};
+        reflection::fromJson(t, str);
+        return t;
+    }
+};
+
+} // namespace HX::db
 
 int main() {
     // 明天写一个 反射获取 类名称的. 这样如果不指定表名称, 就使用结构体名称
     auto db = db::open("./test.db");
     db.createDatabase<Man>();
     Man t {
-        1433223, "战士", 0.721
+        1433223, "战士", 0.721, {"1", "a", "#"}
     };
     db.insert(t);
     auto res = db.queryAll<Man>();
@@ -57,7 +82,7 @@ int main() {
 
     db.deleteBy<Man>("where id = ?").bind(2233, std::string{"战士"}).exec();
     db.updateBy(Man{
-        2233, "xxbb", 6.66
+        2233, "xxbb", 6.66, {"在", "あの場所"}
     }, "").bind(1, std::string{"战士"}).exec();
 
     res = db.queryAll<Man>();

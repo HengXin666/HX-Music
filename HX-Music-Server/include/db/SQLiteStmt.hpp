@@ -24,6 +24,7 @@
 
 #include <sqlite3.h>
 
+#include <db/SQLiteMeta.hpp>
 #include <HXLibs/meta/ContainerConcepts.hpp>
 
 namespace HX::db {
@@ -56,8 +57,16 @@ public:
             return static_cast<T>(::sqlite3_column_int64(_stmt, static_cast<int>(index)));
         } else if constexpr (std::is_floating_point_v<T>) {
             return static_cast<T>(::sqlite3_column_double(_stmt, static_cast<int>(index)));
-        } else if constexpr (meta::StringType<T>) {
-            return T{reinterpret_cast<const char *>(::sqlite3_column_text(_stmt, static_cast<int>(index)))};
+        } else if constexpr (meta::StringType<T> || isSQLiteSqlTypeVal<T>) {
+            auto* str = reinterpret_cast<const char *>(
+                ::sqlite3_column_text(_stmt, static_cast<int>(index))
+            );
+            auto len = ::sqlite3_column_bytes(_stmt, static_cast<int>(index));
+            if constexpr (isSQLiteSqlTypeVal<T>) {
+                return SQLiteSqlType<T>::columnType({str, static_cast<std::size_t>(len)});
+            } else {
+                return T{str, static_cast<std::size_t>(len)};
+            }
         } else {
             // 不支持该类型
             static_assert(!sizeof(T), "type is not sql type");

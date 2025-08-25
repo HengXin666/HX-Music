@@ -33,6 +33,7 @@
 #include <HXLibs/reflection/TypeName.hpp>
 #include <HXLibs/log/serialize/ToString.hpp>
 
+#include <db/SQLiteMeta.hpp>
 #include <db/SQLiteStmt.hpp>
 
 namespace HX::db {
@@ -63,7 +64,7 @@ constexpr std::string_view getSqlTypeStr() {
         return "INTEGER";
     } else if constexpr (std::is_floating_point_v<T>) {
         return "REAL";
-    } else if constexpr (meta::StringType<T>) {
+    } else if constexpr (meta::StringType<T> || isSQLiteSqlTypeVal<T>) {
         return "TEXT";
     } else {
         // 不支持该类型
@@ -79,6 +80,9 @@ inline void execSql(std::string_view sql, ::sqlite3* db) {
         throw std::runtime_error{err};
     }
 }
+
+
+#if 0
 
 constexpr bool isSpace(char c) noexcept {
     return c == ' ' || c == '\t' || c == '\n' || c == '\r';
@@ -191,6 +195,8 @@ private:
     std::size_t _idx = 0;
 };
 
+#endif
+
 struct [[nodiscard]] StmtCallChain {
     StmtCallChain(std::string_view sql, ::sqlite3* db)
         : _db{db}
@@ -208,8 +214,13 @@ struct [[nodiscard]] StmtCallChain {
                     ::sqlite3_bind_int64(_stmt, Idx + 1, t); 
                 } else if constexpr (std::is_floating_point_v<T>) {
                     ::sqlite3_bind_double(_stmt, Idx + 1, t); 
-                } else if constexpr (meta::StringType<T>) {
-                    ::sqlite3_bind_text(_stmt, Idx + 1, t.data(), t.size(), SQLITE_TRANSIENT);
+                } else if constexpr (meta::StringType<T> || isSQLiteSqlTypeVal<T>) {
+                    if constexpr (isSQLiteSqlTypeVal<T>) {
+                        auto str = SQLiteSqlType<T>::bind(t);
+                        ::sqlite3_bind_text(_stmt, Idx + 1, str.data(), str.size(), SQLITE_TRANSIENT);
+                    } else {
+                        ::sqlite3_bind_text(_stmt, Idx + 1, t.data(), t.size(), SQLITE_TRANSIENT);
+                    }
                 } else {
                     // 不支持该类型
                     static_assert(!sizeof(T), "type is not sql type");
@@ -301,9 +312,13 @@ public:
             }
             if constexpr (std::is_arithmetic_v<ValType>) {
                 log::toString(val, sql);
-            } else if constexpr (meta::StringType<ValType>) {
+            } else if constexpr (meta::StringType<ValType> || isSQLiteSqlTypeVal<ValType>) {
                 sql += '\'';
-                log::toString(static_cast<const char*>(val.data()), sql);
+                if constexpr (isSQLiteSqlTypeVal<ValType>) {
+                    sql += SQLiteSqlType<ValType>::bind(val);
+                } else {
+                    log::toString(static_cast<const char*>(val.data()), sql);
+                }
                 sql += '\'';
             } else {
                 // 不支持该类型
@@ -357,9 +372,13 @@ public:
             sql += "=";
             if constexpr (std::is_arithmetic_v<ValType>) {
                 log::toString(val, sql);
-            } else if constexpr (meta::StringType<ValType>) {
+            } else if constexpr (meta::StringType<ValType> || isSQLiteSqlTypeVal<ValType>) {
                 sql += '\'';
-                log::toString(static_cast<const char*>(val.data()), sql);
+                if constexpr (isSQLiteSqlTypeVal<ValType>) {
+                    sql += SQLiteSqlType<ValType>::bind(val);
+                } else {
+                    log::toString(static_cast<const char*>(val.data()), sql);
+                }
                 sql += '\'';
             } else {
                 // 不支持该类型
