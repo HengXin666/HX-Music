@@ -55,7 +55,10 @@ int main() {
     auto res = db.queryAll<Man>();
     log::hxLog.info("res:", res);
 
-    db.deleteBy<Man>("").bind(1, std::string{"战士"}).exec();
+    db.deleteBy<Man>("where id = ?").bind(2233, std::string{"战士"}).exec();
+    db.updateBy(Man{
+        2233, "xxbb", 6.66
+    }, "").bind(1, std::string{"战士"}).exec();
 
     res = db.queryAll<Man>();
     log::hxLog.info("res:", res);

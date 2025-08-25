@@ -341,6 +341,36 @@ public:
         return {sql, _db};
     }
 
+    template <typename T>
+    internal::StmtCallChain updateBy(T&& t, std::string sqlBody) {
+        std::string sql = "UPDATE ";
+        sql += reflection::getTypeName<T>();
+        sql += " SET ";
+        reflection::forEach(std::forward<T>(t), [&] <std::size_t Idx> (
+            std::index_sequence<Idx>, std::string_view name, auto& val
+        ) {
+            using ValType = meta::remove_cvref_t<decltype(val)>;
+            if constexpr (Idx > 0) {
+                sql += ", ";
+            }
+            sql += name;
+            sql += "=";
+            if constexpr (std::is_arithmetic_v<ValType>) {
+                log::toString(val, sql);
+            } else if constexpr (meta::StringType<ValType>) {
+                sql += '\'';
+                log::toString(static_cast<const char*>(val.data()), sql);
+                sql += '\'';
+            } else {
+                // 不支持该类型
+                static_assert(!sizeof(T), "type is not sql type");
+            }
+        });
+        sql += ' ';
+        sql += std::move(sqlBody);
+        return {sql, _db};
+    }
+
 private:
     ::sqlite3* _db{};
 };
