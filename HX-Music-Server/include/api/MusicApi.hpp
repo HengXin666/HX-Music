@@ -26,9 +26,29 @@ namespace HX {
  * @brief 音乐服务 API
  */
 HX_ServerApiBegin(MusicApi) {
-    HX_EndpointBegin<GET>("/", [] ENDPOINT {
-        co_return;
-    })HX_EndpointEnd;
+    HX_EndpointBegin
+        .addEndpoint<GET, HEAD>("/music/download/**", [] ENDPOINT {
+            using namespace std::string_literals;
+            bool isErr = false;
+            try {
+                co_await res.useRangeTransferFile(
+                     req.getRangeRequestView(),
+                     "./file/music/"s += req.getUniversalWildcardPath()
+                );
+            } catch (...) {
+                isErr = true;
+            }
+            if (isErr) [[unlikely]] {
+                co_await res.setStatusAndContent(Status::CODE_500, "文件不存在!")
+                            .sendRes();
+            }
+            co_return;
+        })
+        .addEndpoint<GET>("/", [] ENDPOINT {
+            co_await res.setStatusAndContent(Status::CODE_200, "Hi! HX-Music-Server!")
+                        .sendRes();
+        })
+    HX_EndpointEnd;
 } HX_ServerApiEnd;
 
 } // namespace HX

@@ -68,7 +68,7 @@ struct SQLiteSqlType<std::vector<U>> {
 
 } // namespace HX::db
 
-int main() {
+int _tx_main() {
     auto db = db::open("./test.db");
     db.createDatabase<Man>();
     Man t {
@@ -85,5 +85,14 @@ int main() {
 
     res = db.queryAll<Man>();
     log::hxLog.warning("res:", res);
+    return 0;
+}
+
+#include <api/MusicApi.hpp>
+
+int main() {
+    net::HttpServer server{"0.0.0.0", "28205"};
+    MusicApi {server};
+    server.syncRun();
     return 0;
 }

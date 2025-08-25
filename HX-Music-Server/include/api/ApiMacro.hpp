@@ -25,7 +25,7 @@
  * @brief 定义服务器端点 BEGIN
  */
 #define HX_EndpointBegin bool HX_JOIN(_hx_EndpointName_, __LINE__) = [this]() {  \
-        _server.addEndpoint
+        _server
 /**
  * @brief 定义服务器端点 END
  */
