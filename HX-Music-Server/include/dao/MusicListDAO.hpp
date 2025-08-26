@@ -18,22 +18,15 @@
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <dao/MusicDAO.hpp>
-#include <dao/MusicListDAO.hpp>
+#include <dao/ThreadSafeInMemoryDAO.hpp>
+#include <pojo/do/MusicListDO.hpp>
 
 namespace HX {
 
-struct DAOSingleton {
-    static DAOSingleton& get() noexcept {
-        static DAOSingleton s{};
-        return s;
-    }
-
-    MusicDAO musicDAO {db::SQLiteDB{"./file/db/music.db"}};
-    MusicListDAO musicListDAO {db::SQLiteDB{"./file/db/musicList.db"}};
-private:
-    DAOSingleton() = default;
-    DAOSingleton& operator=(DAOSingleton&&) noexcept = delete;
+struct MusicListDAO : public dao::ThreadSafeInMemoryDAO<MusicListDO> {
+    using T = MusicDO;
+    using Base = dao::ThreadSafeInMemoryDAO<MusicListDO>;
+    using Base::Base;
 };
 
 } // namespace HX

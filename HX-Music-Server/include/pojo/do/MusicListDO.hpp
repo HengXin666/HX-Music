@@ -18,22 +18,14 @@
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <dao/MusicDAO.hpp>
-#include <dao/MusicListDAO.hpp>
+#include <pojo/do/MusicDO.hpp>
 
 namespace HX {
 
-struct DAOSingleton {
-    static DAOSingleton& get() noexcept {
-        static DAOSingleton s{};
-        return s;
-    }
-
-    MusicDAO musicDAO {db::SQLiteDB{"./file/db/music.db"}};
-    MusicListDAO musicListDAO {db::SQLiteDB{"./file/db/musicList.db"}};
-private:
-    DAOSingleton() = default;
-    DAOSingleton& operator=(DAOSingleton&&) noexcept = delete;
+struct MusicListDO {
+    db::PrimaryKey<uint64_t> id;            // 歌单id (唯一), 定义本地歌单为默认, 为 `localPlaylist`
+    std::string description;                // 歌单描述
+    std::vector<uint64_t> songList;         // 歌曲列表
 };
 
 } // namespace HX

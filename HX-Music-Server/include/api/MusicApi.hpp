@@ -27,7 +27,7 @@
 namespace HX {
 
 /**
- * @brief 音乐服务 API
+ * @brief 音乐播放 相关服务 API
  */
 HX_ServerApiBegin(MusicApi) {
     HX_EndpointBegin
@@ -53,10 +53,6 @@ HX_ServerApiBegin(MusicApi) {
                             .sendRes();
             }
             co_return;
-        })
-        .addEndpoint<GET>("/", [] ENDPOINT {
-            co_await res.setStatusAndContent(Status::CODE_200, "Hi! HX-Music-Server!")
-                        .sendRes();
         })
         .addEndpoint<GET>("/music/runScan", [] ENDPOINT {
             std::size_t cnt = 0;

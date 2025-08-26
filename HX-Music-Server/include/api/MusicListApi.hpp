@@ -18,22 +18,19 @@
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <dao/MusicDAO.hpp>
-#include <dao/MusicListDAO.hpp>
+#include <api/ApiMacro.hpp>
 
 namespace HX {
 
-struct DAOSingleton {
-    static DAOSingleton& get() noexcept {
-        static DAOSingleton s{};
-        return s;
-    }
-
-    MusicDAO musicDAO {db::SQLiteDB{"./file/db/music.db"}};
-    MusicListDAO musicListDAO {db::SQLiteDB{"./file/db/musicList.db"}};
-private:
-    DAOSingleton() = default;
-    DAOSingleton& operator=(DAOSingleton&&) noexcept = delete;
-};
+/**
+ * @brief 音乐列表 相关服务 API
+ */
+HX_ServerApiBegin(MusicListApi) {
+    HX_EndpointBegin
+        .addEndpoint<GET>("/", [] ENDPOINT {
+            co_return ;
+        })
+    HX_EndpointEnd;
+} HX_ServerApiEnd;
 
 } // namespace HX
