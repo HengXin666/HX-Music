@@ -71,26 +71,34 @@ struct SQLiteSqlType<std::vector<U>> {
 #include <dao/ThreadSafeInMemoryDAO.hpp>
 
 int main() {
-    auto db = db::open("./test.db");
-    db.createDatabase<Man>();
-    auto id = db.insert<Man>({
-        {}, "战士", 0.721, {"1", "a", "#"}
-    });
-    auto res = db.queryAll<Man>();
-    log::hxLog.info("res:", res);
-
-    db.deleteBy<Man>("where id = ?").bind(2).exec();
-    db.updateBy<Man>({
-        {}, "xxbb", 6.66, {"在", "あの場所"}
-    }, "").exec();
-
-    res = db.queryAll<Man>();
-    log::hxLog.warning("res:", res);
+    if (0) {
+        auto db = db::open("./test.db");
+        db.createDatabase<Man>();
+        auto id = db.insert<Man>({
+            {}, "战士", 0.721, {"1", "a", "#"}
+        });
+        auto res = db.queryAll<Man>();
+        log::hxLog.info("res:", res);
+    
+        db.deleteBy<Man>("where id = ?").bind(2).exec();
+        db.updateBy<Man>({
+            {}, "xxbb", 6.66, {"在", "あの場所"}
+        }, "").exec();
+    
+        res = db.queryAll<Man>();
+        log::hxLog.warning("res:", res);
+    }
 
     // ===
     dao::ThreadSafeInMemoryDAO<Man> manDao{db::open("./test.db")};
-    Man man{};
-    manDao.add(man);
+    auto const& man = manDao.add<Man>({
+        {}, "张三", 123.456, {"这", "实际上", "是", "std::vector"}
+    });
+
+    log::hxLog.debug(man);
+
+    manDao.del(man.id);
+
     return 0;
 }
 

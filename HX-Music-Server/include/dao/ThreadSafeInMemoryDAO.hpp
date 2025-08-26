@@ -35,29 +35,67 @@ namespace HX::dao {
  */
 template <typename T>
 struct ThreadSafeInMemoryDAO {
+    using PrimaryKeyType = db::RemovePrimaryKeyType<decltype(
+        std::get<
+            db::GetFirstPrimaryKeyIndex<T>
+        >(reflection::internal::getObjTie(std::declval<T>()))
+    )>;
+
     ThreadSafeInMemoryDAO(db::SQLiteDB db)
         : _db{std::move(db)}
         , _map{}
         , _mtx{}
-    {}
-
-    void init() {
+    {
+        _db.createDatabase<T>();
         auto res = _db.queryAll<T>();
-        _map.clear();
-        _map.insert(res.begin(), res.end());
+        for (auto&& it : res) {
+            auto id = db::getFirstPrimaryKeyRef<T>(it);
+            _map.emplace(id, std::move(it));
+        }
     }
 
-    void add(T& t) {
+    template <typename U>
+    const T& add(U&& t) {
         std::unique_lock _{_mtx};
         auto id = _db.insert(t);
         db::getFirstPrimaryKeyRef<T>(t) = id;
-        _map.insert({id, std::forward<T>(t)});
+        auto [it, ok] = _map.emplace(id, std::forward<U>(t));
+        return it->second;
+    }
+
+    template <typename U>
+    const T& update(U&& t) {
+        using namespace std::string_literals;
+        std::unique_lock _{_mtx};
+        auto id = db::getFirstPrimaryKeyRef<T>(t);
+        _db.updateBy(t, ("where "s
+                        += reflection::getMembersNames<T>()[db::GetFirstPrimaryKeyIndex<T>])
+                        += " = ?")
+            .bind(id)
+            .exec();
+        return _map[id] = std::forward<U>(t);
+    }
+
+    void del(PrimaryKeyType id) {
+        using namespace std::string_literals;
+        std::unique_lock _{_mtx};
+        _db.deleteBy<T>(("where "s
+                        += reflection::getMembersNames<T>()[db::GetFirstPrimaryKeyIndex<T>])
+                        += " = ?")
+            .bind(id)
+            .exec();
+        _map.erase(id);
+    }
+
+    const T& at(PrimaryKeyType id) const {
+        std::shared_lock _{_mtx};
+        return _map.at(id);
     }
 
 private:
     db::SQLiteDB _db;
     std::map<db::GetFirstPrimaryKeyType<T>, T> _map;
-    std::shared_mutex _mtx;
+    mutable std::shared_mutex _mtx;
 };
 
 } // namespace HX::dao

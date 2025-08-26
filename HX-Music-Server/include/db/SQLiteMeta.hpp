@@ -60,7 +60,7 @@ struct PrimaryKey {
     T val;
 
     operator T&() noexcept { return val; }
-    operator T&() const noexcept { return val; }
+    operator const T&() const noexcept { return val; }
 };
 
 template <typename T>

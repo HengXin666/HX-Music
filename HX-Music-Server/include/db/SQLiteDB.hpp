@@ -208,7 +208,7 @@ struct [[nodiscard]] StmtCallChain {
         [&] <std::size_t... Is> (std::index_sequence<Is...>) {
             (([&] <std::size_t Idx> (std::index_sequence<Idx>) {
                 auto& t = std::get<Idx>(tp);
-                using T = meta::remove_cvref_t<decltype(t)>;
+                using T = RemovePrimaryKeyType<meta::remove_cvref_t<decltype(t)>>;
                 if constexpr (std::is_integral_v<T>) {
                     ::sqlite3_bind_int64(_stmt, Idx + 1, t); 
                 } else if constexpr (std::is_floating_point_v<T>) {
