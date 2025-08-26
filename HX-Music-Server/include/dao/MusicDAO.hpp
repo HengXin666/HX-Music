@@ -30,6 +30,15 @@ struct MusicDAO : public dao::ThreadSafeInMemoryDAO<MusicDO> {
     using Base = dao::ThreadSafeInMemoryDAO<MusicDO>;
     using Base::Base;
 
+    MusicDAO(db::SQLiteDB db)
+        : Base{std::move(db)}
+    {
+        auto const& map = Base::getMap();
+        for (auto const& it: map) {
+            _pathSet.insert(it.second.path);
+        }
+    }
+
     template <typename U>
     const T& add(U&& u) {
         const auto& t = Base::add(std::forward<U>(u));

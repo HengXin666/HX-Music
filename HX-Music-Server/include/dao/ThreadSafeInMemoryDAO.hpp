@@ -106,6 +106,10 @@ struct ThreadSafeInMemoryDAO {
         return lambda();
     }
 
+    const auto& getMap() const noexcept {
+        return _map;
+    }
+
 private:
     db::SQLiteDB _db;
     std::map<db::GetFirstPrimaryKeyType<T>, T> _map;
