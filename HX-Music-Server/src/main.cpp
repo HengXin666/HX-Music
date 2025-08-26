@@ -68,10 +68,12 @@ struct SQLiteSqlType<std::vector<U>> {
 
 } // namespace HX::db
 
+#include <dao/ThreadSafeInMemoryDAO.hpp>
+
 int main() {
     auto db = db::open("./test.db");
     db.createDatabase<Man>();
-    db.insert<Man>({
+    auto id = db.insert<Man>({
         {}, "战士", 0.721, {"1", "a", "#"}
     });
     auto res = db.queryAll<Man>();
@@ -84,6 +86,11 @@ int main() {
 
     res = db.queryAll<Man>();
     log::hxLog.warning("res:", res);
+
+    // ===
+    dao::ThreadSafeInMemoryDAO<Man> manDao{db::open("./test.db")};
+    Man man{};
+    manDao.add(man);
     return 0;
 }
 

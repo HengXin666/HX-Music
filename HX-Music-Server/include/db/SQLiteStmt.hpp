@@ -51,6 +51,15 @@ public:
         return ::sqlite3_step(_stmt);
     }
 
+    /**
+     * @brief 获取最后一次成功插入的 主键 Id
+     * @param db 
+     * @return auto 
+     */
+    auto getLastInsertPrimaryKeyId(::sqlite3* db) const noexcept {
+        return ::sqlite3_last_insert_rowid(db);;
+    }
+
     template <typename U>
     U getColumnByIndex(std::size_t index) {
         using T = RemovePrimaryKeyType<U>;

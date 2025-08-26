@@ -18,6 +18,15 @@
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <map>
+#include <mutex>
+#include <shared_mutex>
+
+#include <HXLibs/reflection/MemberName.hpp>
+
+#include <db/SQLiteMeta.hpp>
+#include <db/SQLiteDB.hpp>
+
 namespace HX::dao {
 
 /**
@@ -26,7 +35,29 @@ namespace HX::dao {
  */
 template <typename T>
 struct ThreadSafeInMemoryDAO {
+    ThreadSafeInMemoryDAO(db::SQLiteDB db)
+        : _db{std::move(db)}
+        , _map{}
+        , _mtx{}
+    {}
 
+    void init() {
+        auto res = _db.queryAll<T>();
+        _map.clear();
+        _map.insert(res.begin(), res.end());
+    }
+
+    void add(T& t) {
+        std::unique_lock _{_mtx};
+        auto id = _db.insert(t);
+        db::getFirstPrimaryKeyRef<T>(t) = id;
+        _map.insert({id, std::forward<T>(t)});
+    }
+
+private:
+    db::SQLiteDB _db;
+    std::map<db::GetFirstPrimaryKeyType<T>, T> _map;
+    std::shared_mutex _mtx;
 };
 
 } // namespace HX::dao

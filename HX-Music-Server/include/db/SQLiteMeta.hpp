@@ -21,6 +21,8 @@
 #include <string>
 #include <string_view>
 
+#include <HXLibs/reflection/MemberName.hpp>
+
 namespace HX::db {
 
 /**
@@ -57,9 +59,8 @@ struct PrimaryKey {
 
     T val;
 
-    operator T&() noexcept {
-        return val;
-    }
+    operator T&() noexcept { return val; }
+    operator T&() const noexcept { return val; }
 };
 
 template <typename T>
@@ -77,6 +78,30 @@ struct RemovePrimaryKeyTypeImpl<PrimaryKey<T>> {
     using Type = typename PrimaryKey<T>::PrimaryKeyType;
 };
 
+template <typename T, typename... Args>
+struct GetFirstPrimaryKeyTypeImpl {
+    using Type = GetFirstPrimaryKeyTypeImpl<Args...>::Type;
+};
+
+template <typename T, typename... Args>
+struct GetFirstPrimaryKeyTypeImpl<db::PrimaryKey<T>, Args...> {
+    using Type = db::PrimaryKey<T>::PrimaryKeyType;
+};
+
+template <typename Idx, typename... Args>
+struct GetFirstPrimaryKeyIndex;
+
+template <std::size_t I, std::size_t... Is, typename T, typename... Args>
+struct GetFirstPrimaryKeyIndex<std::index_sequence<I, Is...>, T, Args...> {
+    inline static constexpr std::size_t Val 
+        = GetFirstPrimaryKeyIndex<std::index_sequence<Is...>, Args...>::Val;
+};
+
+template <std::size_t I, std::size_t... Is, typename T, typename... Args>
+struct GetFirstPrimaryKeyIndex<std::index_sequence<I, Is...>, db::PrimaryKey<T>, Args...> {
+    inline static constexpr std::size_t Val = I;
+};
+
 } // namespace internal
 
 /**
@@ -85,5 +110,46 @@ struct RemovePrimaryKeyTypeImpl<PrimaryKey<T>> {
  */
 template <typename T>
 using RemovePrimaryKeyType = internal::RemovePrimaryKeyTypeImpl<T>::Type;
+
+/**
+ * @brief 获取 T 类 中的表示主键成员的类型
+ * @tparam T 
+ */
+template <typename T>
+using GetFirstPrimaryKeyType = decltype([]() constexpr {
+    constexpr auto tp = reflection::internal::getStaticObjPtrTuple<T>();
+    return [&] <std::size_t... Is> (std::index_sequence<Is...>) {
+        return typename internal::GetFirstPrimaryKeyTypeImpl<
+            meta::remove_cvref_t<decltype(*std::get<Is>(tp))>...
+        >::Type {};
+    }(std::make_index_sequence<std::tuple_size_v<decltype(tp)>>{});
+}());
+
+/**
+ * @brief 获取主键在类对象中的索引 (从 0 开始)
+ * @tparam T 
+ */
+template <typename T>
+constexpr std::size_t GetFirstPrimaryKeyIndex = [](){
+    constexpr auto tp = reflection::internal::getStaticObjPtrTuple<T>();
+    return [&] <std::size_t... Is> (std::index_sequence<Is...>) {
+        return internal::GetFirstPrimaryKeyIndex<
+            std::make_index_sequence<std::tuple_size_v<decltype(tp)>>,
+            meta::remove_cvref_t<decltype(*std::get<Is>(tp))>...
+        >::Val;
+    }(std::make_index_sequence<std::tuple_size_v<decltype(tp)>>{});
+}();
+
+/**
+ * @brief 获取主键引用
+ * @tparam T 
+ * @param t 
+ * @return constexpr auto& 
+ */
+template <typename T>
+inline constexpr auto& getFirstPrimaryKeyRef(T& t) noexcept {
+    auto tr = reflection::internal::getObjTie(t);
+    return std::get<GetFirstPrimaryKeyIndex<T>>(tr).val;
+}
 
 } // namespace HX::db

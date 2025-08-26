@@ -252,12 +252,29 @@ class SQLiteDB {
         internal::execSql(sql, _db);
     }
 public:
-    explicit SQLiteDB(std::string_view filePath) {
+    SQLiteDB() : _db{} {}
+
+    SQLiteDB(std::string_view filePath) 
+        : SQLiteDB{}
+    {
         if (::sqlite3_open(filePath.data(), &_db) != SQLITE_OK) [[unlikely]] {
             throw std::runtime_error{
-                "Failed to open database: " + std::string(::sqlite3_errmsg(_db))
+                "Failed to open database: " + std::string{::sqlite3_errmsg(_db)}
             };
         }
+    }
+
+    SQLiteDB(SQLiteDB const&) = delete;
+    SQLiteDB(SQLiteDB&& that) noexcept 
+        : _db{that._db}
+    {
+        that._db = nullptr;
+    }
+
+    SQLiteDB& operator=(SQLiteDB const&) noexcept = delete;
+    SQLiteDB& operator=(SQLiteDB&& that) noexcept {
+        std::swap(_db, that._db);
+        return *this;
     }
 
     ~SQLiteDB() noexcept {
@@ -293,7 +310,7 @@ public:
     }
 
     template <typename T>
-    void insert(T&& t) const {
+    auto insert(T&& t) const {
         using U = meta::remove_cvref_t<T>;
         std::string sql = "INSERT INTO ";
         sql += reflection::getTypeName<U>();
@@ -341,7 +358,20 @@ public:
         });
         sql.pop_back();
         sql += ");";
-        exec(sql);
+        SQLiteStmt stmt(sql, _db);
+        if (stmt.step() == SQLITE_DONE) [[likely]] {
+            if constexpr (requires {
+                GetFirstPrimaryKeyType<T> {};
+            }) {
+                return static_cast<GetFirstPrimaryKeyType<T>>(
+                    stmt.getLastInsertPrimaryKeyId(_db)
+                );
+            } else {
+                return stmt.getLastInsertPrimaryKeyId(_db);
+            }
+        } else [[unlikely]] {
+            throw std::runtime_error{"Insert failed: " + std::string{::sqlite3_errmsg(_db)}};
+        }
     }
 
     template <typename T>
