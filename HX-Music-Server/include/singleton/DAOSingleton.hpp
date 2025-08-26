@@ -18,21 +18,20 @@
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <cstdint>
-#include <string>
-#include <vector>
-
-#include <db/SQLiteMeta.hpp>
+#include <dao/MusicDAO.hpp>
 
 namespace HX {
 
-// 歌曲数据
-struct MusicDO {
-    db::PrimaryKey<uint64_t> id;        // 歌曲唯一ID
-    std::string path;                   // 歌曲存放路径 (相对于 ~/file/music/)
-    std::string musicName;              // 歌名
-    std::vector<std::string> singers;   // 歌手
-    std::string musicAlbum;             // 专辑
+struct DAOSingleton {
+    static DAOSingleton& get() noexcept {
+        static DAOSingleton s{};
+        return s;
+    }
+
+    MusicDAO musicDAO {db::SQLiteDB{"./file/db/HX-Music.db"}};
+private:
+    DAOSingleton() = default;
+    DAOSingleton& operator=(DAOSingleton&&) noexcept = delete;
 };
 
 } // namespace HX

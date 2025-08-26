@@ -35,11 +35,11 @@ namespace HX::dao {
  */
 template <typename T>
 struct ThreadSafeInMemoryDAO {
-    using PrimaryKeyType = db::RemovePrimaryKeyType<decltype(
+    using PrimaryKeyType = db::RemovePrimaryKeyType<meta::remove_cvref_t<decltype(
         std::get<
             db::GetFirstPrimaryKeyIndex<T>
         >(reflection::internal::getObjTie(std::declval<T>()))
-    )>;
+    )>>;
 
     ThreadSafeInMemoryDAO(db::SQLiteDB db)
         : _db{std::move(db)}
@@ -54,26 +54,28 @@ struct ThreadSafeInMemoryDAO {
         }
     }
 
+    ThreadSafeInMemoryDAO& operator=(ThreadSafeInMemoryDAO&&) noexcept = delete;
+
     template <typename U>
-    const T& add(U&& t) {
+    const T& add(U&& u) {
         std::unique_lock _{_mtx};
-        auto id = _db.insert(t);
-        db::getFirstPrimaryKeyRef<T>(t) = id;
-        auto [it, ok] = _map.emplace(id, std::forward<U>(t));
+        auto id = _db.insert(u);
+        db::getFirstPrimaryKeyRef<T>(u) = id;
+        auto [it, ok] = _map.emplace(id, std::forward<U>(u));
         return it->second;
     }
 
     template <typename U>
-    const T& update(U&& t) {
+    const T& update(U&& u) {
         using namespace std::string_literals;
         std::unique_lock _{_mtx};
-        auto id = db::getFirstPrimaryKeyRef<T>(t);
-        _db.updateBy(t, ("where "s
+        auto id = db::getFirstPrimaryKeyRef<T>(u);
+        _db.updateBy(u, ("where "s
                         += reflection::getMembersNames<T>()[db::GetFirstPrimaryKeyIndex<T>])
                         += " = ?")
             .bind(id)
             .exec();
-        return _map[id] = std::forward<U>(t);
+        return _map[id] = std::forward<U>(u);
     }
 
     void del(PrimaryKeyType id) {
@@ -90,6 +92,18 @@ struct ThreadSafeInMemoryDAO {
     const T& at(PrimaryKeyType id) const {
         std::shared_lock _{_mtx};
         return _map.at(id);
+    }
+
+    template <typename Lambda>
+    decltype(auto) uniqueLock(Lambda&& lambda) const {
+        std::unique_lock _{_mtx};
+        return lambda();
+    }
+
+    template <typename Lambda>
+    decltype(auto) sharedLock(Lambda&& lambda) const {
+        std::shared_lock _{_mtx};
+        return lambda();
     }
 
 private:

@@ -57,6 +57,7 @@
 
 ```cpp
 struct MusicIndexData {
+    uint64_t id;
     std::string path;
     std::string musicName;
     std::vector<std::string> singers;
@@ -101,6 +102,15 @@ std::map<std::string, decltype(std::list<MusicIndexData>)::iterator> 歌名;
 
 > 接口描述: 断点续传下载音乐接口
 - 请求方式: `GET`/`HEAD`
-- 接口URL: `/music/download/**`
-- 参数描述: `**` 为路径
+- 接口URL: `/music/download/{id}`
+- 参数描述: `id` 为音乐的唯一id
 - 返回值描述: `文件`
+
+#### 2.1.2 扫描音乐
+
+> 接口描述: 如果用户手动在目录下添加了音乐; 而不是通过程序上传. 那么就需要扫描!
+- 请求方式: `GET`
+- 接口URL: `/music/runScan`
+- 参数描述: 无
+- 返回值描述: ok
+- `@todo`: 日后换为 WebSocket, 可以支持进度显示...完成通知...

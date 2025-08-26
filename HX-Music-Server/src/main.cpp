@@ -70,7 +70,7 @@ struct SQLiteSqlType<std::vector<U>> {
 
 #include <dao/ThreadSafeInMemoryDAO.hpp>
 
-int main() {
+int _x_main() {
     if (0) {
         auto db = db::open("./test.db");
         db.createDatabase<Man>();
@@ -111,7 +111,7 @@ void ininDir() {
     std::filesystem::create_directories("file/db");
 }
 
-int _x_main() {
+int main() {
     ininDir();
     net::HttpServer server{"0.0.0.0", "28205"};
     HX_ServerAddApi(server, MusicApi);

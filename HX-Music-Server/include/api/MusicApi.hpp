@@ -19,6 +19,10 @@
  */
 
 #include <api/ApiMacro.hpp>
+#include <singleton/DAOSingleton.hpp>
+#include <utils/DirFor.hpp>
+
+#include <HXLibs/reflection/json/JsonRead.hpp>
 
 namespace HX {
 
@@ -27,26 +31,50 @@ namespace HX {
  */
 HX_ServerApiBegin(MusicApi) {
     HX_EndpointBegin
-        .addEndpoint<GET, HEAD>("/music/download/**", [] ENDPOINT {
+        .addEndpoint<GET, HEAD>("/music/download/{id}", [] ENDPOINT {
             using namespace std::string_literals;
             bool isErr = false;
-            log::hxLog.debug("请求 Path:", req.getUniversalWildcardPath());
+            log::hxLog.debug("请求 Path:", req.getReqPath());
             try {
+                auto idStrView = req.getPathParam(0);
+                MusicDAO::PrimaryKeyType id{};
+                reflection::fromJson(id, idStrView);
+                std::string_view path;
+                path = DAOSingleton::get().musicDAO.at(id).path;
                 co_await res.useRangeTransferFile(
                      req.getRangeRequestView(),
-                     "./file/music/"s += req.getUniversalWildcardPath()
+                     "./file/music/"s += path
                 );
             } catch (...) {
                 isErr = true;
             }
             if (isErr) [[unlikely]] {
-                co_await res.setStatusAndContent(Status::CODE_500, "文件不存在!")
+                co_await res.setStatusAndContent(Status::CODE_500, "id 不正确!")
                             .sendRes();
             }
             co_return;
         })
         .addEndpoint<GET>("/", [] ENDPOINT {
             co_await res.setStatusAndContent(Status::CODE_200, "Hi! HX-Music-Server!")
+                        .sendRes();
+        })
+        .addEndpoint<GET>("/music/runScan", [] ENDPOINT {
+            std::size_t cnt = 0;
+            utils::traverseDirectory("./file/music", {},
+                [&](const std::filesystem::path& relativePath) {
+                std::string path = relativePath.string();
+                log::hxLog.info(path);
+                if (!DAOSingleton::get().musicDAO.isExist(path)) {
+                    DAOSingleton::get().musicDAO.add<MusicDO>({
+                        {},
+                        std::move(path)
+                    });
+                    ++cnt;
+                }
+            });
+            co_await res.setStatusAndContent(
+                Status::CODE_200,
+                "OK: 扫描完成, 新增 " + std::to_string(cnt) + " 首音乐!")
                         .sendRes();
         })
     HX_EndpointEnd;
