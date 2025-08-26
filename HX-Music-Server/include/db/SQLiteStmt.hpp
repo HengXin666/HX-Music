@@ -51,10 +51,11 @@ public:
         return ::sqlite3_step(_stmt);
     }
 
-    template <typename T>
-    T getColumnByIndex(std::size_t index) {
+    template <typename U>
+    U getColumnByIndex(std::size_t index) {
+        using T = RemovePrimaryKeyType<U>;
         if constexpr (std::is_integral_v<T>) {
-            return static_cast<T>(::sqlite3_column_int64(_stmt, static_cast<int>(index)));
+            return U{static_cast<T>(::sqlite3_column_int64(_stmt, static_cast<int>(index)))};
         } else if constexpr (std::is_floating_point_v<T>) {
             return static_cast<T>(::sqlite3_column_double(_stmt, static_cast<int>(index)));
         } else if constexpr (meta::StringType<T> || isSQLiteSqlTypeVal<T>) {

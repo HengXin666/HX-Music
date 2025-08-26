@@ -58,3 +58,8 @@
     }                                                                          \
     ();                                                                        \
     }
+
+/**
+ * @brief 注册 API 到服务端
+ */
+#define HX_ServerAddApi(__Server__, __ApiName__) __ApiName__{__Server__};

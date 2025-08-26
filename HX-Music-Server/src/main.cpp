@@ -11,7 +11,7 @@ auto hx_init = []{
     try {
         auto cwd = std::filesystem::current_path();
         log::hxLog.debug("当前工作路径是:", cwd);
-        std::filesystem::current_path("../../");
+        std::filesystem::current_path("../../data");
         log::hxLog.debug("切换到路径:", std::filesystem::current_path());
     } catch (const std::filesystem::filesystem_error& e) {
         log::hxLog.error("Error:", e.what());
@@ -42,7 +42,7 @@ int _main() {
 using namespace HX;
 
 struct Man {
-    int id;
+    db::PrimaryKey<int> id;
     std::string name;
     double okane;
     std::vector<std::string> arr;
@@ -68,19 +68,18 @@ struct SQLiteSqlType<std::vector<U>> {
 
 } // namespace HX::db
 
-int _tx_main() {
+int main() {
     auto db = db::open("./test.db");
     db.createDatabase<Man>();
-    Man t {
-        1433223, "战士", 0.721, {"1", "a", "#"}
-    };
-    db.insert(t);
+    db.insert<Man>({
+        {}, "战士", 0.721, {"1", "a", "#"}
+    });
     auto res = db.queryAll<Man>();
     log::hxLog.info("res:", res);
 
-    db.deleteBy<Man>("where id = ?").bind(2233).exec();
-    db.updateBy(Man{
-        2233, "xxbb", 6.66, {"在", "あの場所"}
+    db.deleteBy<Man>("where id = ?").bind(2).exec();
+    db.updateBy<Man>({
+        {}, "xxbb", 6.66, {"在", "あの場所"}
     }, "").exec();
 
     res = db.queryAll<Man>();
@@ -90,9 +89,17 @@ int _tx_main() {
 
 #include <api/MusicApi.hpp>
 
-int main() {
+#include <filesystem>
+
+void ininDir() {
+    std::filesystem::create_directories("file/music");
+    std::filesystem::create_directories("file/db");
+}
+
+int _x_main() {
+    ininDir();
     net::HttpServer server{"0.0.0.0", "28205"};
-    MusicApi {server};
+    HX_ServerAddApi(server, MusicApi);
     server.syncRun();
     return 0;
 }

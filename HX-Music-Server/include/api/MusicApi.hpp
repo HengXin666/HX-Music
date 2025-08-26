@@ -30,6 +30,7 @@ HX_ServerApiBegin(MusicApi) {
         .addEndpoint<GET, HEAD>("/music/download/**", [] ENDPOINT {
             using namespace std::string_literals;
             bool isErr = false;
+            log::hxLog.debug("请求 Path:", req.getUniversalWildcardPath());
             try {
                 co_await res.useRangeTransferFile(
                      req.getRangeRequestView(),

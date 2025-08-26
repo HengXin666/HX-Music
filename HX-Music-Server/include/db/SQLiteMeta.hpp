@@ -23,14 +23,20 @@
 
 namespace HX::db {
 
+/**
+ * @brief 自定义序列化类型
+ * @tparam T 
+ */
 template <typename T>
 struct SQLiteSqlType {
     inline static constexpr bool _hx_Val = true;
 
+    // 序列化方法
     static constexpr std::string bind(T const& t) noexcept {
         return {};
     }
 
+    // 反序列化方法
     static constexpr T columnType(std::string_view str) {
         return {};
     }
@@ -38,5 +44,46 @@ struct SQLiteSqlType {
 
 template <typename T>
 constexpr bool isSQLiteSqlTypeVal = !requires { SQLiteSqlType<T>::_hx_Val; };
+
+/**
+ * @brief 设置为主键
+ * @tparam T 
+ */
+template <typename T>
+struct PrimaryKey {
+    // 主键期望为整数
+    static_assert(std::is_integral_v<T>, "The expected primary key is an integer");
+    using PrimaryKeyType = T;
+
+    T val;
+
+    operator T&() noexcept {
+        return val;
+    }
+};
+
+template <typename T>
+constexpr bool isPrimaryKeyVal = requires { typename T::PrimaryKeyType; };
+
+namespace internal {
+
+template <typename T>
+struct RemovePrimaryKeyTypeImpl {
+    using Type = T;
+};
+
+template <typename T>
+struct RemovePrimaryKeyTypeImpl<PrimaryKey<T>> {
+    using Type = typename PrimaryKey<T>::PrimaryKeyType;
+};
+
+} // namespace internal
+
+/**
+ * @brief 去除主键类型包装
+ * @tparam T 
+ */
+template <typename T>
+using RemovePrimaryKeyType = internal::RemovePrimaryKeyTypeImpl<T>::Type;
 
 } // namespace HX::db

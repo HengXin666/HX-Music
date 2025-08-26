@@ -18,17 +18,15 @@
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <string>
-#include <vector>
+namespace HX::dao {
 
-namespace HX {
+/**
+ * @brief 线程安全访问的, 数据缓存; 启动时候会把所有数据加载到内存, 日后全部访问基于内存; 仅增删改会同步一次到数据库.
+ * @tparam T 
+ */
+template <typename T>
+struct ThreadSafeInMemoryDAO {
 
-// 歌曲数据
-struct MusicDAO {
-    std::string path;                   // 歌曲存放路径 (相对于 ~/file/music/)
-    std::string musicName;              // 歌名
-    std::vector<std::string> singers;   // 歌手
-    std::string musicAlbum;             // 专辑
 };
 
-} // namespace HX
+} // namespace HX::dao

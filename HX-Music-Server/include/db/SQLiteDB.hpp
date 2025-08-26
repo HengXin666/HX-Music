@@ -81,7 +81,6 @@ inline void execSql(std::string_view sql, ::sqlite3* db) {
     }
 }
 
-
 #if 0
 
 constexpr bool isSpace(char c) noexcept {
@@ -276,12 +275,18 @@ public:
         reflection::forEach(obj, [&] <std::size_t Idx> (
             std::index_sequence<Idx>, std::string_view name, auto&& val
         ) {
+            using U = meta::remove_cvref_t<decltype(val)>;
             if constexpr (Idx > 0) {
                 sql += ", ";
             }
             sql += name;
             sql += ' ';
-            sql += internal::getSqlTypeStr<meta::remove_cvref_t<decltype(val)>>();
+            if constexpr (isPrimaryKeyVal<U>) {
+                sql += internal::getSqlTypeStr<typename U::PrimaryKeyType>();
+                sql += " PRIMARY KEY";
+            } else {
+                sql += internal::getSqlTypeStr<U>();
+            }
         });
         sql += ");";
         exec(sql);
@@ -297,34 +302,44 @@ public:
         reflection::forEach(obj, [&] <std::size_t Idx> (
             std::index_sequence<Idx>, std::string_view name, auto&& val
         ) {
-            if constexpr (Idx > 0) {
-                sql += ", ";
+            using Type = meta::remove_cvref_t<decltype(val)>;
+            if constexpr (isPrimaryKeyVal<Type>) {
+                // 主键不会进行指定
+                return;
+            } else {
+                sql += name;
+                sql += ',';
             }
-            sql += name;
         });
+        sql.pop_back();
         sql += ") VALUES (";
         reflection::forEach(std::forward<T>(t), [&] <std::size_t Idx> (
             std::index_sequence<Idx>, std::string_view name, auto& val
         ) {
-            using ValType = meta::remove_cvref_t<decltype(val)>;
-            if constexpr (Idx > 0) {
-                sql += ", ";
-            }
-            if constexpr (std::is_arithmetic_v<ValType>) {
-                log::toString(val, sql);
-            } else if constexpr (meta::StringType<ValType> || isSQLiteSqlTypeVal<ValType>) {
-                sql += '\'';
-                if constexpr (isSQLiteSqlTypeVal<ValType>) {
-                    sql += SQLiteSqlType<ValType>::bind(val);
-                } else {
-                    log::toString(static_cast<const char*>(val.data()), sql);
-                }
-                sql += '\'';
+            using Type = meta::remove_cvref_t<decltype(val)>;
+            if constexpr (isPrimaryKeyVal<Type>) {
+                // 主键不会进行指定
+                return;
             } else {
-                // 不支持该类型
-                static_assert(!sizeof(T), "type is not sql type");
+                using ValType = RemovePrimaryKeyType<Type>;
+                if constexpr (std::is_arithmetic_v<ValType>) {
+                    log::toString(val, sql);
+                } else if constexpr (meta::StringType<ValType> || isSQLiteSqlTypeVal<ValType>) {
+                    sql += '\'';
+                    if constexpr (isSQLiteSqlTypeVal<ValType>) {
+                        sql += SQLiteSqlType<ValType>::bind(val);
+                    } else {
+                        log::toString(static_cast<const char*>(val.data()), sql);
+                    }
+                    sql += '\'';
+                } else {
+                    // 不支持该类型
+                    static_assert(!sizeof(T), "type is not sql type");
+                }
+                sql += ',';
             }
         });
+        sql.pop_back();
         sql += ");";
         exec(sql);
     }
@@ -364,28 +379,32 @@ public:
         reflection::forEach(std::forward<T>(t), [&] <std::size_t Idx> (
             std::index_sequence<Idx>, std::string_view name, auto& val
         ) {
-            using ValType = meta::remove_cvref_t<decltype(val)>;
-            if constexpr (Idx > 0) {
-                sql += ", ";
-            }
-            sql += name;
-            sql += "=";
-            if constexpr (std::is_arithmetic_v<ValType>) {
-                log::toString(val, sql);
-            } else if constexpr (meta::StringType<ValType> || isSQLiteSqlTypeVal<ValType>) {
-                sql += '\'';
-                if constexpr (isSQLiteSqlTypeVal<ValType>) {
-                    sql += SQLiteSqlType<ValType>::bind(val);
-                } else {
-                    log::toString(static_cast<const char*>(val.data()), sql);
-                }
-                sql += '\'';
+            using Type = meta::remove_cvref_t<decltype(val)>;
+            if constexpr (isPrimaryKeyVal<Type>) {
+                // 主键不会进行指定
+                return;
             } else {
-                // 不支持该类型
-                static_assert(!sizeof(T), "type is not sql type");
+                using ValType = RemovePrimaryKeyType<Type>;
+                sql += name;
+                sql += "=";
+                if constexpr (std::is_arithmetic_v<ValType>) {
+                    log::toString(val, sql);
+                } else if constexpr (meta::StringType<ValType> || isSQLiteSqlTypeVal<ValType>) {
+                    sql += '\'';
+                    if constexpr (isSQLiteSqlTypeVal<ValType>) {
+                        sql += SQLiteSqlType<ValType>::bind(val);
+                    } else {
+                        log::toString(static_cast<const char*>(val.data()), sql);
+                    }
+                    sql += '\'';
+                } else {
+                    // 不支持该类型
+                    static_assert(!sizeof(T), "type is not sql type");
+                }
+                sql += ',';
             }
         });
-        sql += ' ';
+        sql.back() = ' ';
         sql += std::move(sqlBody);
         return {sql, _db};
     }
