@@ -109,13 +109,12 @@ BorderlessWindow {
 
             // 多个标签页面
             RowLayout {
-                SideBar {
-                    itemWidth: 100
-                    Layout.preferredWidth: 100
+                MainSideBar {
+                    Layout.preferredWidth: 200
                     Layout.fillHeight: true
                     onTabClicked: (index) => {
                         console.log("点击了标签页:", index);
-                        stackView.currentIndex = inde; // 属性存储当前屏幕信息
+                        stackView.currentIndex = index; // 属性存储当前标签索引
                     }
                 }
 

@@ -56,7 +56,7 @@
         <file alias="BorderlessWindow.qml">qml/window/BorderlessWindow.qml</file>
         <file alias="LyricsWindow.qml">qml/window/LyricsWindow.qml</file>
         <file alias="FullScreenWindow.qml">qml/window/FullScreenWindow.qml</file>
-        <file alias="SideBar.qml">qml/widget/SideBar.qml</file>
+        <file alias="MainSideBar.qml">qml/widget/MainSideBar.qml</file>
         <file alias="PlaybackBar.qml">qml/widget/PlaybackBar.qml</file>
         <file alias="MusicProgressBar.qml">qml/widget/MusicProgressBar.qml</file>
         <file alias="VolumeButton.qml">qml/widget/VolumeButton.qml</file>

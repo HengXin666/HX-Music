@@ -52,7 +52,7 @@ qt_add_qml_module(HX-Music-Client
         resources/qml/window/FullScreenWindow.qml
         # 控件
         resources/qml/widget/PlaybackBar.qml
-        resources/qml/widget/SideBar.qml
+        resources/qml/widget/MainSideBar.qml
         resources/qml/widget/MusicProgressBar.qml
         resources/qml/widget/VolumeButton.qml
         resources/qml/widget/PlayModeButton.qml

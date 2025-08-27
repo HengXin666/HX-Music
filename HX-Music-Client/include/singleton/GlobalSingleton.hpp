@@ -25,6 +25,8 @@
 #include <utils/PlayQueue.hpp>
 #include <pojo/MusicList.hpp>
 
+#include <HXLibs/net/client/HttpClient.hpp>
+
 namespace HX {
 
 /**
@@ -51,6 +53,12 @@ struct GlobalSingleton {
 
     /// @brief 播放队列
     PlayQueue playQueue{};
+
+    /// @brief 后端 URL
+    std::string backendUrl{"http://127.0.0.1"};
+
+    /// @brief Http 客户端
+    decltype(net::HttpClient {}) _client{net::HttpClientOptions{}, 4};
 
     void saveConfig() {
         ConfigManager config;
