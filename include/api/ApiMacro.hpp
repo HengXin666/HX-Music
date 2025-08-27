@@ -1,4 +1,3 @@
-#pragma once
 /*
  * Copyright (C) 2025 Heng_Xin. All rights reserved.
  *
@@ -19,9 +18,7 @@
  */
 
 #include <HXLibs/net/Api.hpp>
-#include <HXLibs/reflection/json/JsonRead.hpp>
 #include <HXLibs/reflection/json/JsonWrite.hpp>
-#include <HXLibs/macro/Join.hpp>
 
 /**
  * @brief 定义服务器端点 BEGIN
@@ -66,42 +63,4 @@
  */
 #define HX_ServerAddApi(__Server__, __ApiName__) __ApiName__{__Server__};
 
-namespace HX::api {
-    
-template <typename T,typename Body>
-    requires (requires (Body const& body) {
-        { body.getBody() } -> std::convertible_to<std::string_view>;
-    })
-T getVO(Body const& body) {
-    T t{};
-    reflection::fromJson(t, body.getBody());
-    return t;
-}
-
-template <typename T,typename Body>
-    requires (requires (Body& body, std::string s) {
-        { body.setBody(std::move(s)) };
-    })
-void setVO(T const& t, Body& body) {
-    std::string s;
-    reflection::toJson(t, s);
-    body.setBody(std::move(s));
-}
-
-/**
- * @brief 自动化的把 VO 转换为 DO
- * @warning 要求 VO 内部实现了对应的转换
- * @note 考虑到一般 VO 是 DO 的子集, 这样的自动转换是安全的; 但是反之就可能会泄漏. 因此 DO -> VO 得显式写明.
- * @tparam T 
- * @tparam U 
- * @return T 
- */
-template <typename T, typename U>
-    requires (requires (U&& u) {
-        { std::forward<U>(u).operator T() } -> std::convertible_to<T>;
-    })
-T toDO(U&& u) noexcept {
-    return T{std::forward<U>(u)};
-}
-
-} // namespace HX::api
+#define CO_FUNC () -> coroutine::Task<>

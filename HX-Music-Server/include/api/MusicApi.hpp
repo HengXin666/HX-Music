@@ -19,6 +19,7 @@
  */
 
 #include <api/ApiMacro.hpp>
+#include <api/Api.hpp>
 #include <singleton/DAOSingleton.hpp>
 #include <utils/DirFor.hpp>
 
@@ -31,11 +32,11 @@ namespace HX {
  */
 HX_ServerApiBegin(MusicApi) {
     HX_EndpointBegin
+        // 断点续传下载音乐
         .addEndpoint<GET, HEAD>("/music/download/{id}", [] ENDPOINT {
             using namespace std::string_literals;
-            bool isErr = false;
             log::hxLog.debug("请求 Path:", req.getReqPath());
-            try {
+            co_await api::coTryCatch([&] CO_FUNC {
                 auto idStrView = req.getPathParam(0);
                 MusicDAO::PrimaryKeyType id{};
                 reflection::fromJson(id, idStrView);
@@ -45,15 +46,12 @@ HX_ServerApiBegin(MusicApi) {
                      req.getRangeRequestView(),
                      "./file/music/"s += path
                 );
-            } catch (...) {
-                isErr = true;
-            }
-            if (isErr) [[unlikely]] {
+            }, [&] CO_FUNC {
                 co_await res.setStatusAndContent(Status::CODE_500, "id 不正确!")
                             .sendRes();
-            }
-            co_return;
+            });
         })
+        // 扫描服务端音乐
         .addEndpoint<GET>("/music/runScan", [] ENDPOINT {
             std::size_t cnt = 0;
             utils::traverseDirectory("./file/music", {},

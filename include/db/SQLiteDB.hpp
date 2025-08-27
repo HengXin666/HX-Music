@@ -404,7 +404,7 @@ public:
     template <typename T>
     internal::StmtCallChain updateBy(T&& t, std::string sqlBody) {
         std::string sql = "UPDATE ";
-        sql += reflection::getTypeName<T>();
+        sql += reflection::getTypeName<meta::remove_cvref_t<T>>();
         sql += " SET ";
         reflection::forEach(std::forward<T>(t), [&] <std::size_t Idx> (
             std::index_sequence<Idx>, std::string_view name, auto& val

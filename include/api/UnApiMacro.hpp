@@ -1,4 +1,3 @@
-#pragma once
 /*
  * Copyright (C) 2025 Heng_Xin. All rights reserved.
  *
@@ -22,3 +21,4 @@
 #undef HX_EndpointEnd
 #undef HX_ServerApiBegin
 #undef HX_ServerApiEnd
+#undef CO_FUNC

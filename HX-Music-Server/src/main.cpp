@@ -103,6 +103,7 @@ int _x_main() {
 }
 
 #include <api/MusicApi.hpp>
+#include <api/MusicListApi.hpp>
 
 #include <filesystem>
 
@@ -115,6 +116,7 @@ int main() {
     ininDir();
     net::HttpServer server{"0.0.0.0", "28205"};
     HX_ServerAddApi(server, MusicApi);
+    HX_ServerAddApi(server, MusicListApi);
     server.syncRun();
     return 0;
 }
