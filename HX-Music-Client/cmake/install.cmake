@@ -20,6 +20,9 @@ target_compile_features(HX-Music-Client PUBLIC cxx_std_20)
 # 本头文件
 target_include_directories(HX-Music-Client PRIVATE include)
 
+# 公共头文件
+target_include_directories(HX-Music-Client PRIVATE ../include)
+
 # 导入 HXLibs
 target_link_libraries(HX-Music-Client
     PRIVATE HXLibs

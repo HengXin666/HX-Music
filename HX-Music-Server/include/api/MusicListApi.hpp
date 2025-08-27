@@ -20,6 +20,9 @@
 
 #include <api/ApiMacro.hpp>
 
+#include <pojo/vo/MusicListVO.hpp>
+#include <singleton/DAOSingleton.hpp>
+
 namespace HX {
 
 /**
@@ -27,7 +30,40 @@ namespace HX {
  */
 HX_ServerApiBegin(MusicListApi) {
     HX_EndpointBegin
-        .addEndpoint<GET>("/", [] ENDPOINT {
+        // 创建歌单
+        .addEndpoint<POST>("/musicList/make", [] ENDPOINT {
+            auto listDO = api::toDO<MusicListDO>(api::getVO<MusicListVO>(req));
+            auto const& newDO = DAOSingleton::get().musicListDAO.add(listDO);
+            co_await res.setStatusAndContent(Status::CODE_200, log::toString(newDO.id))
+                        .sendRes();
+        })
+        // 编辑歌单
+        .addEndpoint<POST>("/musicList/update", [] ENDPOINT {
+            auto vo = api::getVO<MusicListVO>(req);
+            co_return ;
+        })
+        // 删除歌单
+        .addEndpoint<POST, DEL>("/musicList/del/{id}", [] ENDPOINT {
+            co_return ;
+        })
+        // 获取歌单
+        .addEndpoint<GET>("/musicList/select/{id}", [] ENDPOINT {
+            co_return ;
+        })
+        // 获取全部歌单
+        .addEndpoint<GET>("/musicList/selectAll", [] ENDPOINT {
+            co_return ;
+        })
+        // 为歌单添加歌曲
+        .addEndpoint<POST>("/musicList/{id}/addMusic/{musicId}", [] ENDPOINT {
+            co_return ;
+        })
+        // 为歌单删除歌曲
+        .addEndpoint<POST, DEL>("/musicList/{id}/delMusic/{musicId}", [] ENDPOINT {
+            co_return ;
+        })
+        // 为歌单交换歌曲位置
+        .addEndpoint<POST>("/musicList/{id}/swapMusic", [] ENDPOINT {
             co_return ;
         })
     HX_EndpointEnd;

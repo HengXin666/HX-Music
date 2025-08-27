@@ -164,7 +164,7 @@ struct MusicListDO {
 ### 2.2 歌单相关接口
 #### 2.2.1 创建歌单
 
-> 接口描述:
+> 接口描述: 创建歌单
 - 请求方式: `POST`
 - 接口URL: `/musicList/make`
 - 参数描述: 在 `Body` 中传递 `Json`
@@ -172,7 +172,7 @@ struct MusicListDO {
 
 #### 2.2.2 编辑歌单
 
-> 接口描述:
+> 接口描述: 编辑歌单
 - 请求方式: `POST`
 - 接口URL: `/musicList/update`
 - 参数描述: 在 `Body` 中传递 `Json`, 需要明确填写 `歌单ID`
@@ -180,31 +180,47 @@ struct MusicListDO {
 
 #### 2.2.3 删除歌单
 
-> 接口描述:
+> 接口描述: 删除歌单
 - 请求方式: `POST`/`DEL`
 - 接口URL: `/musicList/del/{id}`
 - 参数描述: `id` 为 `歌单ID`
 - 返回值描述: `ok`
 
-#### 2.2.4 为歌单添加歌曲
+#### 2.2.4 获取歌单
 
-> 接口描述:
+> 接口描述: 获取歌单
+- 请求方式: `GET`
+- 接口URL: `/musicList/select/{id}`
+- 参数描述: `歌单ID`
+- 返回值描述: 歌单数据`Json`
+
+#### 2.2.5 获取所有歌单
+
+> 接口描述: 获取所有歌单
+- 请求方式: `GET`
+- 接口URL: `/musicList/selectAll`
+- 参数描述: 无
+- 返回值描述: 歌单数据`Json`List
+
+#### 2.2.6 为歌单添加歌曲
+
+> 接口描述: 为歌单添加歌曲
 - 请求方式: `POST`
 - 接口URL: `/musicList/{id}/addMusic/{musicId}`
 - 参数描述: `id`-`歌单ID`; `musicId`-`歌曲ID`
 - 返回值描述: `ok`
 
-#### 2.2.5 为歌单删除歌曲
+#### 2.2.7 为歌单删除歌曲
 
-> 接口描述:
+> 接口描述: 为歌单删除歌曲
 - 请求方式: `POST`/`DEL`
 - 接口URL: `/musicList/{id}/delMusic/{musicId}`
 - 参数描述: `id`-`歌单ID`; `musicId`-`歌曲ID`
 - 返回值描述: `ok`
 
-#### 2.2.6 为歌单交换歌曲位置
+#### 2.2.8 为歌单交换歌曲位置
 
-> 接口描述:
+> 接口描述: 为歌单交换歌曲位置
 - 请求方式: `POST`
 - 接口URL: `/musicList/{id}/swapMusic`
 - 参数描述: `Body` 传递 `Json` (@todo)
