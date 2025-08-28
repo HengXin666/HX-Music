@@ -17,8 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef _HX_THEME_H_
-#define _HX_THEME_H_
 
 #include <QObject>
 #include <QColor>
@@ -83,4 +81,3 @@ public:
 
 } // namespace HX
 
-#endif // !_HX_THEME_H_

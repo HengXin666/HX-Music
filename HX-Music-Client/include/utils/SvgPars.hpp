@@ -17,8 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef _HX_SVG_PARS_H_
-#define _HX_SVG_PARS_H_
 
 #include <QFile>
 #include <QDomDocument>
@@ -151,4 +149,3 @@ public:
 
 } // namespace HX
 
-#endif // !_HX_SVG_PARS_H_

@@ -274,6 +274,7 @@ Item {
         MenuItem {
             text: "播放"
             onTriggered: {
+                listView.currentIndex = menu.index;
                 MusicController.playMusic(musicListModel.getUrl(menu.index));
             }
         }

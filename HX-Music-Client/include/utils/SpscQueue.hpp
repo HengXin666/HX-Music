@@ -17,8 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef _HX_SPSC_QUEUE_H_
-#define _HX_SPSC_QUEUE_H_
 
 #include <atomic>
 #include <vector>
@@ -76,4 +74,3 @@ private:
 
 } // namespace HX
 
-#endif // !_HX_SPSC_QUEUE_H_

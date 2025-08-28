@@ -17,8 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef _HX_PLAY_QUEUE_H_
-#define _HX_PLAY_QUEUE_H_
 
 #include <QString>
 #include <QVariant>
@@ -81,4 +79,3 @@ private:
 
 } // namespace HX
 
-#endif // !_HX_PLAY_QUEUE_H_

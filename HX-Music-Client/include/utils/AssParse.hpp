@@ -17,8 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef _HX_ASS_PARSE_H_
-#define _HX_ASS_PARSE_H_
 
 #include <ass/ass.h>
 
@@ -176,4 +174,3 @@ private:
 
 } // namespace HX
 
-#endif // !_HX_ASS_PARSE_H_

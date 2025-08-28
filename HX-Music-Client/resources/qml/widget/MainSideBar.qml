@@ -13,16 +13,16 @@ Item {
     property int currentIndex: 0
     property int currentPlaylistIndex: -1
     signal tabClicked(int index)
-    signal playlistClicked(int index)
+    signal playListClicked(int index)
 
     // 歌单数据
-    property var playlists: [
-        {
-            name: "我最喜欢的歌",
-            count: 128,
-            type: "created"
-        },
-    ]
+    // property var playlists: [
+    //     {
+    //         name: "我最喜欢的歌",
+    //         count: 128,
+    //         type: "created"
+    //     },
+    // ]
 
     // 整个侧边栏使用ScrollView实现滚动
     ScrollView {
@@ -50,7 +50,8 @@ Item {
                     text: "音乐"
                     isSelected: root.currentIndex === 0
                     onClicked: {
-                        root.currentPlaylistIndex = -1;
+                        createdPlayListView.resetIndex();
+                        favoritePlayListView.resetIndex();
                         root.currentIndex = 0;
                         root.tabClicked(0);
                     }
@@ -62,7 +63,8 @@ Item {
                     text: "我的收藏"
                     isSelected: root.currentIndex === 1
                     onClicked: {
-                        root.currentPlaylistIndex = -1;
+                        createdPlayListView.resetIndex();
+                        favoritePlayListView.resetIndex();
                         root.currentIndex = 1;
                         root.tabClicked(1);
                     }
@@ -74,7 +76,8 @@ Item {
                     text: "本地下载"
                     isSelected: root.currentIndex === 2
                     onClicked: {
-                        root.currentPlaylistIndex = -1;
+                        createdPlayListView.resetIndex();
+                        favoritePlayListView.resetIndex();
                         root.currentIndex = 2;
                         root.tabClicked(2);
                     }
@@ -127,32 +130,52 @@ Item {
             }
 
             // 歌单列表
-            Repeater {
-                model: root.playlists
+            // Repeater {
+            //     model: root.playlists
+            //     delegate: PlaylistItem {
+            //         required property var modelData
+            //         required property int index
+            //         Layout.fillWidth: true
+            //         name: modelData.name
+            //         songCount: modelData.count
+            //         isSelected: root.currentPlaylistIndex === index
+            //         visible: (playlistOperationBar.currentIndex === 0 && modelData.type === "created") 
+            //               || (playlistOperationBar.currentIndex === 1 && modelData.type === "favorite")
+            //         onClicked: {
+            //             root.currentIndex = -1;
+            //             root.currentPlaylistIndex = index;
+            //             root.playListClicked(index);
+            //         }
+            //     }
+            // }
 
-                delegate: PlaylistItem {
-                    required property var modelData
-                    required property int index
-                    Layout.fillWidth: true
-                    name: modelData.name
-                    songCount: modelData.count
-                    isSelected: root.currentPlaylistIndex === index
-                    visible: (playlistOperationBar.currentIndex === 0 && modelData.type === "created") 
-                          || (playlistOperationBar.currentIndex === 1 && modelData.type === "favorite")
+            PlayListView {
+                id: createdPlayListView
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                visible: playlistOperationBar.currentIndex === 0
+                onPlayListClicked: function(id: int) {
+                    root.currentIndex = -1;
+                    favoritePlayListView.resetIndex();
+                }
+            }
 
-                    onClicked: {
-                        root.currentIndex = -1;
-                        root.currentPlaylistIndex = index;
-                        root.playlistClicked(index);
-                    }
+            PlayListView {
+                id: favoritePlayListView
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                visible: playlistOperationBar.currentIndex === 1
+                onPlayListClicked: function(id: int) {
+                    root.currentIndex = -1;
+                    createdPlayListView.resetIndex();
                 }
             }
 
             // 底部填充空间
-            Item {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-            }
+            // Item {
+            //     Layout.fillWidth: true
+            //     Layout.fillHeight: true
+            // }
         }
     }
 

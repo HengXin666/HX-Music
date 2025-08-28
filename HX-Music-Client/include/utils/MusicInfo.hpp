@@ -17,8 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef _HX_MUSIC_INFO_H_
-#define _HX_MUSIC_INFO_H_
 
 #include <taglib/fileref.h>
 #include <taglib/flacfile.h>
@@ -255,4 +253,3 @@ private:
 // 反射, 以便在 qml 中使用 (因为传参需要)
 Q_DECLARE_METATYPE(HX::MusicInfo)
 
-#endif // !_HX_MUSIC_INFO_H_

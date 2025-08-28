@@ -17,8 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef _HX_MUSIC_COMMAND_H_
-#define _HX_MUSIC_COMMAND_H_
 
 #include <singleton/GlobalSingleton.hpp>
 #include <singleton/SignalBusSingleton.h>
@@ -117,4 +115,3 @@ struct MusicCommand {
 
 } // namespace HX
 
-#endif // !_HX_MUSIC_COMMAND_H_

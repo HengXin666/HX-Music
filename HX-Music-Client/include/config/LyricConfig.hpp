@@ -17,8 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef _HX_LYRIC_CONFIG_H_
-#define _HX_LYRIC_CONFIG_H_
 
 namespace HX {
 
@@ -53,4 +51,3 @@ struct LyricConfig {
 
 } // namespace HX
 
-#endif // !_HX_LYRIC_CONFIG_H_

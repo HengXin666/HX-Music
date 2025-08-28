@@ -17,8 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef _HX_GLOBAL_SINGLETON_H_
-#define _HX_GLOBAL_SINGLETON_H_
 
 #include <config/ConfigManager.hpp>
 #include <utils/MusicPlayer.h>
@@ -75,4 +73,3 @@ private:
 
 } // namespace HX
 
-#endif // !_HX_GLOBAL_SINGLETON_H_

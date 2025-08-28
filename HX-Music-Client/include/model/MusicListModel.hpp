@@ -17,8 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef _HX_MUSIC_LIST_MODEL_H_
-#define _HX_MUSIC_LIST_MODEL_H_
 
 #include <QAbstractListModel>
 #include <cmd/MusicCommand.hpp>
@@ -219,7 +217,7 @@ public:
         const QModelIndex& destinationParent,
         int destinationRow
     ) override {
-        qDebug() << sourceParent << "-->" << destinationParent;
+        // qDebug() << sourceParent << "-->" << destinationParent;
         if (count != 1 || sourceParent.isValid() || destinationParent.isValid())
             return false;
         if (sourceRow < 0 || sourceRow >= static_cast<int>(_musicArr.size()))
@@ -321,4 +319,3 @@ private:
 
 } // namespace HX
 
-#endif // !_HX_MUSIC_LIST_MODEL_H_

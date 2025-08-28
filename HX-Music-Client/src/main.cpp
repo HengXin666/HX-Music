@@ -14,6 +14,7 @@
 #include <utils/SvgPars.hpp>
 #include <utils/WindowMaskUtil.h>
 #include <model/MusicListModel.hpp>
+#include <model/PlayListModel.hpp>
 
 int main(int argc, char* argv[]) {
     QGuiApplication app(argc, argv);
@@ -29,7 +30,7 @@ int main(int argc, char* argv[]) {
 
     // 注册枚举
     qmlRegisterUncreatableMetaObject(
-        HX::PlayModeWrapper::staticMetaObject,
+        HX::PlayListTypeWrapper::staticMetaObject,
         "HX.Music", // QML import 名称
         1, 0,
         "PlayMode", // QML 中使用名
@@ -57,6 +58,13 @@ int main(int argc, char* argv[]) {
         "HX.Music",
         1, 0,
         "MusicListModel"
+    );
+
+    // 注册 歌单列表视图 到 qml
+    qmlRegisterType<HX::PlayListModel>(
+        "HX.Music",
+        1, 0,
+        "PlayListModel"
     );
 
     // 注册 音频信息

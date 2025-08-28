@@ -17,15 +17,13 @@
  * You should have received a copy of the GNU General Public License
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef _HX_MUSIC_CONFIG_H_
-#define _HX_MUSIC_CONFIG_H_
 
 #include <QString>
 #include <QObject>
 
 namespace HX {
 
-class PlayModeWrapper {
+class PlayListTypeWrapper {
     Q_GADGET
 
 public:
@@ -38,7 +36,7 @@ public:
     Q_ENUM(PlayMode)
 };
 
-using PlayMode = PlayModeWrapper::PlayMode;
+using PlayMode = PlayListTypeWrapper::PlayMode;
 
 /**
  * @brief 音乐配置
@@ -54,4 +52,3 @@ struct MusicConfig {
 
 } // namespace HX
 
-#endif // !_HX_MUSIC_CONFIG_H_

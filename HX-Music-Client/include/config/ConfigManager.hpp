@@ -17,8 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef _HX_CONFIG_MANAGER_H_
-#define _HX_CONFIG_MANAGER_H_
 
 #include <config/MusicConfig.hpp>
 
@@ -69,4 +67,3 @@ public:
 
 } // namespace HX
 
-#endif // !_HX_CONFIG_MANAGER_H_

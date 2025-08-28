@@ -17,8 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef _HX_FILE_INFO_H_
-#define _HX_FILE_INFO_H_
 
 #include <QString>
 #include <QStringList>
@@ -54,4 +52,3 @@ struct FileInfo {
 
 } // namespace HX
 
-#endif // !_HX_FILE_INFO_H_
