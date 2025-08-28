@@ -14,8 +14,8 @@ Item {
 
     property int currentIndex: 0
     property int currentPlaylistIndex: -1
-    signal tabClicked(int index)
-    signal playListClicked(int index)
+    signal tabClicked(int index);
+    signal playListClicked(int id);
 
     // 整个侧边栏使用ScrollView实现滚动
     ScrollView {
@@ -127,7 +127,7 @@ Item {
             }
 
             // 歌单列表 (个人创建)
-            PlayListView {
+            PlaylistView {
                 id: createdPlayListView
                 Layout.fillWidth: true
                 Layout.fillHeight: true
@@ -135,11 +135,12 @@ Item {
                 onPlayListClicked: function(id: int) {
                     root.currentIndex = -1;
                     favoritePlayListView.resetIndex();
+                    root.playListClicked(id);
                 }
             }
 
             // 歌单列表 (收藏他人)
-            PlayListView {
+            PlaylistView {
                 id: favoritePlayListView
                 Layout.fillWidth: true
                 Layout.fillHeight: true
@@ -147,6 +148,7 @@ Item {
                 onPlayListClicked: function(id: int) {
                     root.currentIndex = -1;
                     createdPlayListView.resetIndex();
+                    root.playListClicked(id);
                 }
             }
         }

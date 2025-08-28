@@ -19,6 +19,7 @@
  */
 
 #include <config/MusicConfig.hpp>
+#include <pojo/Playlist.hpp>
 
 #include <HXLibs/reflection/json/JsonRead.hpp>
 #include <HXLibs/reflection/json/JsonWrite.hpp>
@@ -42,26 +43,26 @@ public:
     }
 
     MusicConfig loadConfig() {
-        MusicConfig config;
-        std::string json;
         try {
             coroutine::EventLoop loop;
             utils::AsyncFile file{loop};
+            MusicConfig config;
+            std::string json;
             file.syncOpen("./hxMusicConfig.json", utils::OpenMode::Read);
             json = file.syncReadAll();
             file.syncClose();
+            reflection::fromJson(config, json);
+            return config;
         } catch (...) {
-            json = R"({
-"volume": 100,
-"playMode": "ListLoop",
-"position": 0,
-"musicListId": "localPlaylist",
-"listIndex": -1,
-"isPlay": false
-})";
+            return {
+                100,
+                PlayMode::ListLoop,
+                0,
+                Playlist::kLocalPlaylist,
+                -1,
+                false
+            };
         }
-        reflection::fromJson(config, json);
-        return config;
     }
 };
 

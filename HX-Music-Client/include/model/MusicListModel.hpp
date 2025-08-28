@@ -143,9 +143,10 @@ public:
             &SignalBusSingleton::playlistChanged,
             this,
             [this]() {
-            auto& playlist = GlobalSingleton::get().musicList;
+            auto& playlist = GlobalSingleton::get().playlist;
             clear();
             _isActiveUpdate = true;
+            bool isNet = playlist.id != 0;
             for (auto const& songData : playlist.songList) {
                 auto const& url = songData.url;
                 addFromPath(QString::fromStdString(url));
@@ -264,6 +265,10 @@ public:
         }
     }
 
+    void addFromNet() {
+
+    }
+
     Q_INVOKABLE void addMusic(
         QString title,
         QStringList artist,
@@ -282,7 +287,7 @@ public:
         Q_EMIT endInsertRows();
         if (!_isActiveUpdate) {
             // 非主动更新, 即用户更新! 主动更新是对于本类来说的        
-            GlobalSingleton::get().musicList.songList.push_back({
+            GlobalSingleton::get().playlist.songList.push_back({
                 url.toStdString()
             });
             Q_EMIT SignalBusSingleton::get().savePlaylistSignal();
@@ -294,14 +299,14 @@ public:
      * @return Q_INVOKABLE 
      */
     Q_INVOKABLE void savePlaylist() {
-        decltype(GlobalSingleton::get().musicList.songList) newSongList;
+        decltype(GlobalSingleton::get().playlist.songList) newSongList;
         newSongList.reserve(_musicArr.size());
         for (auto const& it : _musicArr) {
             newSongList.push_back({
                 it.url.toStdString()
             });
         }
-        GlobalSingleton::get().musicList.songList = std::move(newSongList);
+        GlobalSingleton::get().playlist.songList = std::move(newSongList);
         Q_EMIT SignalBusSingleton::get().savePlaylistSignal();
     }
 

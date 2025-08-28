@@ -35,7 +35,7 @@
 
 4. 歌单
 
-存储在 `file/db/musicList.db`
+存储在 `file/db/playlist.db`
 
 内部直接存储歌曲引用即可.
 
@@ -91,7 +91,7 @@ std::map<std::string, decltype(std::list<MusicIndexData>)::iterator> 歌名;
 #### 1.3.2 歌单数据
 
 ```cpp
-struct MusicListDO {
+struct playlistDO {
     db::PrimaryKey<uint64_t> id;            // 歌单id (唯一), 定义本地歌单为默认, 为 `localPlaylist`
     std::string description;                // 歌单描述
     std::vector<uint64_t> songList;         // 歌曲列表
@@ -166,7 +166,7 @@ struct MusicListDO {
 
 > 接口描述: 创建歌单
 - 请求方式: `POST`
-- 接口URL: `/musicList/make`
+- 接口URL: `/playlist/make`
 - 参数描述: 在 `Body` 中传递 `Json`
 - 返回值描述: `歌单ID`
 
@@ -174,7 +174,7 @@ struct MusicListDO {
 
 > 接口描述: 编辑歌单
 - 请求方式: `POST`
-- 接口URL: `/musicList/update`
+- 接口URL: `/playlist/update`
 - 参数描述: 在 `Body` 中传递 `Json`, 需要明确填写 `歌单ID`
 - 返回值描述: `ok`
 
@@ -182,7 +182,7 @@ struct MusicListDO {
 
 > 接口描述: 删除歌单
 - 请求方式: `POST`/`DEL`
-- 接口URL: `/musicList/del/{id}`
+- 接口URL: `/playlist/del/{id}`
 - 参数描述: `id` 为 `歌单ID`
 - 返回值描述: `ok`
 
@@ -190,7 +190,7 @@ struct MusicListDO {
 
 > 接口描述: 获取歌单
 - 请求方式: `GET`
-- 接口URL: `/musicList/select/{id}`
+- 接口URL: `/playlist/select/{id}`
 - 参数描述: `歌单ID`
 - 返回值描述: 歌单数据`Json`
 
@@ -198,7 +198,7 @@ struct MusicListDO {
 
 > 接口描述: 获取所有歌单
 - 请求方式: `GET`
-- 接口URL: `/musicList/selectAll`
+- 接口URL: `/playlist/selectAll`
 - 参数描述: 无
 - 返回值描述: 歌单数据`Json`List
 
@@ -206,7 +206,7 @@ struct MusicListDO {
 
 > 接口描述: 为歌单添加歌曲
 - 请求方式: `POST`
-- 接口URL: `/musicList/{id}/addMusic/{musicId}`
+- 接口URL: `/playlist/{id}/addMusic/{musicId}`
 - 参数描述: `id`-`歌单ID`; `musicId`-`歌曲ID`
 - 返回值描述: `ok`
 
@@ -214,7 +214,7 @@ struct MusicListDO {
 
 > 接口描述: 为歌单删除歌曲
 - 请求方式: `POST`/`DEL`
-- 接口URL: `/musicList/{id}/delMusic/{musicId}`
+- 接口URL: `/playlist/{id}/delMusic/{musicId}`
 - 参数描述: `id`-`歌单ID`; `musicId`-`歌曲ID`
 - 返回值描述: `ok`
 
@@ -222,7 +222,7 @@ struct MusicListDO {
 
 > 接口描述: 为歌单交换歌曲位置
 - 请求方式: `POST`
-- 接口URL: `/musicList/{id}/swapMusic`
+- 接口URL: `/playlist/{id}/swapMusic`
 - 参数描述: `Body` 传递 `Json` (@todo)
 - 返回值描述: `ok`
 

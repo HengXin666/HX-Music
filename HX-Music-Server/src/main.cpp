@@ -103,20 +103,31 @@ int _x_main() {
 }
 
 #include <api/MusicApi.hpp>
-#include <api/MusicListApi.hpp>
+#include <api/PlaylistApi.hpp>
 
 #include <filesystem>
 
 void ininDir() {
     std::filesystem::create_directories("file/music");
     std::filesystem::create_directories("file/db");
+
+    // 测试数据
+    [&] {
+        auto db = db::open("./file/db/playlist.db");
+        db.createDatabase<PlaylistDO>();
+        db.insert<PlaylistDO>({
+            {}, "HX-测试歌单", "测试没有描述...", {
+                1, 2, 3, 4, 5
+            }
+        });
+    }();
 }
 
 int main() {
     ininDir();
     net::HttpServer server{"0.0.0.0", "28205"};
     HX_ServerAddApi(server, MusicApi);
-    HX_ServerAddApi(server, MusicListApi);
+    HX_ServerAddApi(server, PlaylistApi);
     server.syncRun();
     return 0;
 }

@@ -116,6 +116,10 @@ BorderlessWindow {
                         console.log("点击了标签页:", index);
                         stackView.currentIndex = index; // 属性存储当前标签索引
                     }
+
+                    onPlayListClicked: (id) => {
+                        console.log("点击了歌单:", id);
+                    }
                 }
 
                 StackLayout {

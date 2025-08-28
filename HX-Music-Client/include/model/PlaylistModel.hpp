@@ -29,7 +29,7 @@
 
 namespace HX {
 
-class PlayListModel : public QAbstractListModel {
+class PlaylistModel : public QAbstractListModel {
     Q_OBJECT
 
     enum PlayListRoles {
@@ -45,7 +45,7 @@ class PlayListModel : public QAbstractListModel {
         uint32_t cnt;      // 歌单歌曲数量
     };
 public:
-    explicit PlayListModel(QObject* parent = nullptr)
+    explicit PlaylistModel(QObject* parent = nullptr)
         : QAbstractListModel(parent)
     {
     }
@@ -92,10 +92,11 @@ public:
      * @return bool 是否成功进行交换 
      */
     Q_INVOKABLE bool swapRow(int from, int to) {
+        // 第 0 个不能被移动
         if (from != to
-            && from >= 0
+            && from > 0
             && from < _playListArr.count()
-            && to >= 0
+            && to > 0
             && to < _playListArr.count()
         ) {
             beginMoveRows(
@@ -157,7 +158,9 @@ private:
     QVector<PlayListData> _playListArr{{
         "我喜欢", 114514, 2233
     }, {
-        "你喜欢", 114514, 2233
+        "你喜欢", 2233, 123
+    }, {
+        "她喜欢", 721, 666
     }};
 };
 

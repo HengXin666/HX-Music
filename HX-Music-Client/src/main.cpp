@@ -14,7 +14,7 @@
 #include <utils/SvgPars.hpp>
 #include <utils/WindowMaskUtil.h>
 #include <model/MusicListModel.hpp>
-#include <model/PlayListModel.hpp>
+#include <model/PlaylistModel.hpp>
 
 int main(int argc, char* argv[]) {
     QGuiApplication app(argc, argv);
@@ -61,10 +61,10 @@ int main(int argc, char* argv[]) {
     );
 
     // 注册 歌单列表视图 到 qml
-    qmlRegisterType<HX::PlayListModel>(
+    qmlRegisterType<HX::PlaylistModel>(
         "HX.Music",
         1, 0,
-        "PlayListModel"
+        "PlaylistModel"
     );
 
     // 注册 音频信息

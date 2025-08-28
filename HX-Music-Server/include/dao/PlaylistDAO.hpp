@@ -19,13 +19,13 @@
  */
 
 #include <dao/ThreadSafeInMemoryDAO.hpp>
-#include <pojo/do/MusicListDO.hpp>
+#include <pojo/do/PlaylistDO.hpp>
 
 namespace HX {
 
-struct MusicListDAO : public dao::ThreadSafeInMemoryDAO<MusicListDO> {
+struct PlaylistDAO : public dao::ThreadSafeInMemoryDAO<PlaylistDO> {
     using T = MusicDO;
-    using Base = dao::ThreadSafeInMemoryDAO<MusicListDO>;
+    using Base = dao::ThreadSafeInMemoryDAO<PlaylistDO>;
     using Base::Base;
 };
 

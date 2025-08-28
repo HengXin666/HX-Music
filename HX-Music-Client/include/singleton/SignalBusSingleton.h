@@ -111,7 +111,7 @@ Q_SIGNALS:
      * @brief 加载歌单信号
      * @param id 歌单id
      */
-    void loadPlaylistSignal(std::string const& id);
+    void loadPlaylistSignal(uint64_t id);
 
     /**
      * @brief 歌单更新信号 (加载完毕) (通过全局单例查看)

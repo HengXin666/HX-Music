@@ -19,7 +19,7 @@
  */
 
 #include <dao/MusicDAO.hpp>
-#include <dao/MusicListDAO.hpp>
+#include <dao/PlaylistDAO.hpp>
 
 namespace HX {
 
@@ -30,7 +30,7 @@ struct DAOSingleton {
     }
 
     MusicDAO musicDAO {db::SQLiteDB{"./file/db/music.db"}};
-    MusicListDAO musicListDAO {db::SQLiteDB{"./file/db/musicList.db"}};
+    PlaylistDAO playlistDAO {db::SQLiteDB{"./file/db/playlist.db"}};
 private:
     DAOSingleton() = default;
     DAOSingleton& operator=(DAOSingleton&&) noexcept = delete;

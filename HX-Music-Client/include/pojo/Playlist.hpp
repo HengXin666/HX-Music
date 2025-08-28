@@ -18,16 +18,23 @@
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <pojo/do/MusicDO.hpp>
+#include <pojo/SongInformation.hpp>
+
+#include <cstdint>
+#include <vector>
 
 namespace HX {
 
-// 歌单数据
-struct MusicListDO {
-    db::PrimaryKey<uint64_t> id;            // 歌单id (唯一), 定义本地歌单为默认, 为 `localPlaylist`
-    std::string name;                       // 歌单名称
-    std::string description;                // 歌单描述
-    std::vector<uint64_t> songList;         // 歌曲列表
+/**
+ * @brief 歌单
+ */
+struct Playlist {
+    inline static constexpr uint64_t kLocalPlaylist = 0;
+
+    uint64_t id;                    // 歌单id (唯一), 定义本地歌单为默认, 为 `0`
+    std::string description;        // 歌单描述
+    std::vector<SongInformation> songList;  // 歌曲列表
 };
 
 } // namespace HX
+

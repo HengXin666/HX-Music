@@ -151,7 +151,7 @@ struct MusicConfig {
     float volume;            // 音量大小
     PlayMode playMode;       // 播放模式
     qint64 position;         // 播放位置
-    std::string musicListId; // 处于歌单id
+    std::string playlistId; // 处于歌单id
     int listIndex;           // 处于歌单的索引
     bool isPlay{false};      // 是正在播放
 };
@@ -205,13 +205,13 @@ Pojo:
 /**
  * @brief 歌单
  */
-struct MusicList {
-    std::string playlistId;                 // 歌单id (唯一), 定义本地歌单为默认, 为 `localPlaylist`
-    std::string playlistDescription;        // 歌单描述
-    std::vector<SongInformation> songList;  // 歌曲列表
-    // @todo 封面 url
-};
+struct Playlist {
+    inline static constexpr uint64_t kLocalPlaylist = 0;
 
+    uint64_t id;                    // 歌单id (唯一), 定义本地歌单为默认, 为 `0`
+    std::string description;        // 歌单描述
+    std::vector<SongInformation> songList;  // 歌曲列表
+};
 /**
  * @brief 歌曲信息
  */

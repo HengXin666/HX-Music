@@ -21,6 +21,7 @@ Item {
         onDropped: drop => {
             for (const urlStr of drop.urls) {
                 let path = decodeURIComponent(urlStr).replace("file://", "");
+                // @todo 要实现上传
                 musicListModel.addFromPath(path);
             }
         }

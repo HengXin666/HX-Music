@@ -45,7 +45,7 @@ struct MusicConfig {
     float volume;            // 音量大小
     PlayMode playMode;       // 播放模式
     qint64 position;         // 播放位置
-    std::string musicListId; // 处于歌单id
+    uint64_t playlistId;     // 处于歌单id
     int listIndex;           // 处于歌单的索引
     bool isPlay{false};      // 是正在播放
 };

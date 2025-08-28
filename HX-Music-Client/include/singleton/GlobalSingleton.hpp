@@ -21,7 +21,7 @@
 #include <config/ConfigManager.hpp>
 #include <utils/MusicPlayer.h>
 #include <utils/PlayQueue.hpp>
-#include <pojo/MusicList.hpp>
+#include <pojo/Playlist.hpp>
 
 #include <HXLibs/net/client/HttpClient.hpp>
 
@@ -44,7 +44,7 @@ struct GlobalSingleton {
     MusicConfig musicConfig{};
 
     /// @brief 当前加载的歌单
-    MusicList musicList{};
+    Playlist playlist{};
 
     /// @brief 音频播放实例
     MusicPlayer music{};

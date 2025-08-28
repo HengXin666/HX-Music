@@ -17,8 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef _HX_PLAYLIST_CONTROLLER_H_
-#define _HX_PLAYLIST_CONTROLLER_H_
 
 #include <singleton/SignalBusSingleton.h>
 #include <singleton/GlobalSingleton.hpp>
@@ -41,26 +39,24 @@ public:
             &SignalBusSingleton::get(),
             &SignalBusSingleton::loadPlaylistSignal,
             this,
-            [this](std::string const& id) {
-                if (id == "localPlaylist") {
+            [this](uint64_t id) {
+                if (id == Playlist::kLocalPlaylist) {
                     // 加载本地
-                    coroutine::EventLoop loop;
-                    utils::AsyncFile file{loop};
-                    std::string json;
                     try {
+                        coroutine::EventLoop loop;
+                        utils::AsyncFile file{loop};
+                        std::string json;
                         file.syncOpen("./localPlaylist.json", platform::OpenMode::Read);
                         json = file.syncReadAll();
                         file.syncClose();
+                        reflection::fromJson(GlobalSingleton::get().playlist, json);
                     } catch (...) {
-                        json = R"({
-    "playlistId": "localPlaylist",
-    "playlistDescription": "本地歌单",
-    "songList": []
-})";
+                        GlobalSingleton::get().playlist = {
+                            Playlist::kLocalPlaylist,
+                            "本地歌单",
+                            {}
+                        };
                     }
-                    MusicList musicList;
-                    reflection::fromJson(musicList, json);
-                    GlobalSingleton::get().musicList = std::move(musicList);
                 } else {
                     // @todo 网络
                     log::hxLog.warning("网络版本没有实现!, ErrId:", id);
@@ -76,30 +72,28 @@ public:
             &SignalBusSingleton::savePlaylistSignal,
             this,
             [this]() {
-            auto& musicList = GlobalSingleton::get().musicList;
-            if (musicList.playlistId == "localPlaylist") {
+            auto& playlist = GlobalSingleton::get().playlist;
+            if (playlist.id == Playlist::kLocalPlaylist) {
                 // 保存本地
                 coroutine::EventLoop loop;
                 utils::AsyncFile file{loop};
                 file.syncOpen("./localPlaylist.json");
                 std::string json;
-                reflection::toJson<true>(musicList, json);
+                reflection::toJson<true>(playlist, json);
                 file.syncWrite(json);
                 file.syncClose();
             } else {
                 // @todo 网络
-                log::hxLog.warning("网络版本没有实现!, ErrId:", musicList.playlistId);
+                log::hxLog.warning("网络版本没有实现!, ErrId:", playlist.id);
             }
         });
 
         // === init ===
         // 加载配置歌单
         Q_EMIT SignalBusSingleton::get().loadPlaylistSignal(
-            GlobalSingleton::get().musicConfig.musicListId
+            GlobalSingleton::get().musicConfig.playlistId
         );
     }
 };
 
 } // namespace HX
-
-#endif // !_HX_PLAYLIST_CONTROLLER_H_

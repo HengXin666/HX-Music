@@ -9,8 +9,8 @@ Item {
     id: root
     focus: true
 
-    PlayListModel {
-        id: playListModel
+    PlaylistModel {
+        id: playlistModel
     }
 
     signal playListClicked(int id);
@@ -25,7 +25,7 @@ Item {
         id: listView
         property bool isSwaped: false // 是否进行了交换
 
-        model: playListModel
+        model: playlistModel
         anchors.fill: parent
         anchors.leftMargin: 10
         anchors.rightMargin: 10
@@ -67,7 +67,7 @@ Item {
                 onClicked: (mouse) => {
                     if (mouse.button === Qt.LeftButton) {
                         listView.currentIndex = delegateRoot.index;
-                        root.playListClicked(playListModel.getId(listView.currentIndex));
+                        root.playListClicked(playlistModel.getId(listView.currentIndex));
                     }
                 }
 
@@ -87,7 +87,7 @@ Item {
                     let p = mouseArea.mapToItem(listView, mouse.x, mouse.y);
                     let to = listView.indexAt(p.x, p.y);
                     if (to !== -1 && to !== from) {
-                        listView.isSwaped |= playListModel.swapRow(from, to);
+                        listView.isSwaped |= playlistModel.swapRow(from, to);
                     }
                 }
 
