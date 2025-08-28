@@ -15,127 +15,12 @@ Item {
     signal tabClicked(int index)
     signal playlistClicked(int index)
 
-    // 模拟歌单数据
+    // 歌单数据
     property var playlists: [
         {
             name: "我最喜欢的歌",
             count: 128,
             type: "created"
-        },
-        {
-            name: "Workout音乐",
-            count: 45,
-            type: "created"
-        },
-        {
-            name: "开车必备",
-            count: 42,
-            type: "created"
-        },
-        {
-            name: "睡前音乐",
-            count: 28,
-            type: "created"
-        },
-        {
-            name: "我最喜欢的歌",
-            count: 128,
-            type: "created"
-        },
-        {
-            name: "Workout音乐",
-            count: 45,
-            type: "created"
-        },
-        {
-            name: "开车必备",
-            count: 42,
-            type: "created"
-        },
-        {
-            name: "睡前音乐",
-            count: 28,
-            type: "created"
-        },
-        {
-            name: "我最喜欢的歌",
-            count: 128,
-            type: "created"
-        },
-        {
-            name: "Workout音乐",
-            count: 45,
-            type: "created"
-        },
-        {
-            name: "开车必备",
-            count: 42,
-            type: "created"
-        },
-        {
-            name: "睡前音乐",
-            count: 28,
-            type: "created"
-        },
-        {
-            name: "我最喜欢的歌",
-            count: 128,
-            type: "created"
-        },
-        {
-            name: "Workout音乐",
-            count: 45,
-            type: "created"
-        },
-        {
-            name: "开车必备",
-            count: 42,
-            type: "created"
-        },
-        {
-            name: "睡前音乐",
-            count: 28,
-            type: "created"
-        },
-        {
-            name: "我最喜欢的歌",
-            count: 128,
-            type: "created"
-        },
-        {
-            name: "Workout音乐",
-            count: 45,
-            type: "created"
-        },
-        {
-            name: "开车必备",
-            count: 42,
-            type: "created"
-        },
-        {
-            name: "睡前音乐",
-            count: 28,
-            type: "created"
-        },
-        {
-            name: "放松心情",
-            count: 32,
-            type: "created"
-        },
-        {
-            name: "华语金曲",
-            count: 89,
-            type: "favorite"
-        },
-        {
-            name: "欧美流行",
-            count: 67,
-            type: "favorite"
-        },
-        {
-            name: "90年代经典",
-            count: 56,
-            type: "favorite"
         },
     ]
 
@@ -144,6 +29,8 @@ Item {
         id: scrollView
         anchors.fill: parent
         clip: true
+
+        ScrollBar.horizontal.policy: ScrollBar.AlwaysOff // 隐藏横向滚动条
 
         ColumnLayout {
             width: scrollView.width
@@ -163,6 +50,7 @@ Item {
                     text: "音乐"
                     isSelected: root.currentIndex === 0
                     onClicked: {
+                        root.currentPlaylistIndex = -1;
                         root.currentIndex = 0;
                         root.tabClicked(0);
                     }
@@ -174,6 +62,7 @@ Item {
                     text: "我的收藏"
                     isSelected: root.currentIndex === 1
                     onClicked: {
+                        root.currentPlaylistIndex = -1;
                         root.currentIndex = 1;
                         root.tabClicked(1);
                     }
@@ -185,6 +74,7 @@ Item {
                     text: "本地下载"
                     isSelected: root.currentIndex === 2
                     onClicked: {
+                        root.currentPlaylistIndex = -1;
                         root.currentIndex = 2;
                         root.tabClicked(2);
                     }
@@ -206,7 +96,7 @@ Item {
                     anchors.fill: parent
                     anchors.leftMargin: 16
                     anchors.rightMargin: 16
-                    spacing: 10
+                    spacing: 16
 
                     // 自建歌单按钮
                     TextButton {
@@ -222,23 +112,16 @@ Item {
                         onClicked: playlistOperationBar.currentIndex = 1
                     }
 
-                    // 添加按钮
-                    Item {
-                        Layout.fillWidth: true
-                    }
-
-                    RoundButton {
+                    TextButton {
                         text: "+"
-                        radius: 4
-                        implicitWidth: 28
-                        implicitHeight: 28
-                        font.pixelSize: 18
-                        font.bold: true
-                        Material.background: "transparent"
-                        Material.foreground: Theme.paratextColor
+                        textSize: 20
                         onClicked: {
                             console.log("添加歌单按钮点击");
                         }
+                    }
+
+                    Item {
+                        Layout.fillWidth: true
                     }
                 }
             }
@@ -254,9 +137,11 @@ Item {
                     name: modelData.name
                     songCount: modelData.count
                     isSelected: root.currentPlaylistIndex === index
-                    visible: (playlistOperationBar.currentIndex === 0 && modelData.type === "created") || (playlistOperationBar.currentIndex === 1 && modelData.type === "favorite")
+                    visible: (playlistOperationBar.currentIndex === 0 && modelData.type === "created") 
+                          || (playlistOperationBar.currentIndex === 1 && modelData.type === "favorite")
 
                     onClicked: {
+                        root.currentIndex = -1;
                         root.currentPlaylistIndex = index;
                         root.playlistClicked(index);
                     }
@@ -350,12 +235,13 @@ Item {
     // 文本按钮组件
     component TextButton: Item {
         id: textBtn
-        implicitWidth: buttonText.implicitWidth + 16
+        implicitWidth: buttonText.implicitWidth
         implicitHeight: 28
 
         property string text: ""
         property bool isSelected: false
-        signal clicked
+        property alias textSize: buttonText.font.pixelSize
+        signal clicked()
 
         Text {
             id: buttonText
@@ -382,13 +268,13 @@ Item {
         property string name: ""
         property int songCount: 0
         property bool isSelected: false
-        signal clicked
+        signal clicked()
 
         Rectangle {
             anchors.fill: parent
             anchors.leftMargin: 8
             anchors.rightMargin: 8
-            color: playlistItem.isSelected ? "#e3f2fd" : "transparent"
+            color: playlistItem.isSelected ? "#1bffffff" : "transparent"
             radius: 6
 
             RowLayout {
@@ -419,7 +305,7 @@ Item {
 
                     Text {
                         text: playlistItem.name
-                        color: "#212121"
+                        color: playlistItem.isSelected ? Theme.highlightingColor  : Theme.paratextColor
                         font.pixelSize: 13
                         elide: Text.ElideRight
                         Layout.fillWidth: true
@@ -427,7 +313,7 @@ Item {
 
                     Text {
                         text: playlistItem.songCount + "首"
-                        color: "#757575"
+                        color: playlistItem.isSelected ? Theme.textColor : Theme.paratextColor
                         font.pixelSize: 11
                     }
                 }
