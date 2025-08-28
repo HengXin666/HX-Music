@@ -27,6 +27,9 @@ Item {
 
         model: playListModel
         anchors.fill: parent
+        anchors.leftMargin: 10
+        anchors.rightMargin: 10
+        spacing: 5   // 元素之间的上下间距
         clip: true
         interactive: true
         // snapMode: ListView.SnapToItem   // 松手自动对齐
@@ -51,7 +54,7 @@ Item {
             property bool isSelected: listView.currentIndex == delegateRoot.index
             
             width: listView.width
-            height: 60
+            height: 48
             z: mouseArea.pressed ? 10 : 1
 
             MouseArea {
@@ -110,13 +113,8 @@ Item {
 
             Rectangle {
                 anchors.fill: parent
-                color: {
-                    if (delegateRoot.isSelected)
-                        return "#2bffffff";
-                    else if (mouseArea._hovered)
-                        return "#3fffffff";
-                    return "transparent";
-                }
+                radius: 8
+                color: delegateRoot.isSelected || mouseArea._hovered ? "#1bffffff" : "transparent"
 
                 RowLayout {
                     anchors.fill: parent
@@ -146,6 +144,7 @@ Item {
                         Rectangle {
                             Layout.preferredWidth: 36
                             Layout.preferredHeight: 36
+                            Layout.leftMargin: 8
                             radius: 4
                             color: "#e0e0e0"
 

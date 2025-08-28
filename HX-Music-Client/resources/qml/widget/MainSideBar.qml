@@ -4,10 +4,12 @@ import QtQuick.Controls
 import QtQuick.Controls.Material
 import QtQuick.Layouts
 import QtQuick.Window
+import "./internal"
 
 Item {
     id: root
-    width: 240
+
+    width: 200
     height: parent.height
 
     property int currentIndex: 0
@@ -15,25 +17,20 @@ Item {
     signal tabClicked(int index)
     signal playListClicked(int index)
 
-    // 歌单数据
-    // property var playlists: [
-    //     {
-    //         name: "我最喜欢的歌",
-    //         count: 128,
-    //         type: "created"
-    //     },
-    // ]
-
     // 整个侧边栏使用ScrollView实现滚动
     ScrollView {
         id: scrollView
         anchors.fill: parent
         clip: true
-
-        ScrollBar.horizontal.policy: ScrollBar.AlwaysOff // 隐藏横向滚动条
+        contentWidth: availableWidth
+        ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
         ColumnLayout {
-            width: scrollView.width
+            id: contentColumn
+            width: root.width
+            Layout.preferredWidth: width
+            anchors.left: parent.left
+            anchors.right: parent.right
             spacing: 0
 
             // 顶部功能区域
@@ -115,9 +112,9 @@ Item {
                         onClicked: playlistOperationBar.currentIndex = 1
                     }
 
-                    TextButton {
-                        text: "+"
-                        textSize: 20
+                    // 新建歌单 / 导入歌单
+                    MusicActionButton {
+                        url: "qrc://icons/add.svg"
                         onClicked: {
                             console.log("添加歌单按钮点击");
                         }
@@ -129,26 +126,7 @@ Item {
                 }
             }
 
-            // 歌单列表
-            // Repeater {
-            //     model: root.playlists
-            //     delegate: PlaylistItem {
-            //         required property var modelData
-            //         required property int index
-            //         Layout.fillWidth: true
-            //         name: modelData.name
-            //         songCount: modelData.count
-            //         isSelected: root.currentPlaylistIndex === index
-            //         visible: (playlistOperationBar.currentIndex === 0 && modelData.type === "created") 
-            //               || (playlistOperationBar.currentIndex === 1 && modelData.type === "favorite")
-            //         onClicked: {
-            //             root.currentIndex = -1;
-            //             root.currentPlaylistIndex = index;
-            //             root.playListClicked(index);
-            //         }
-            //     }
-            // }
-
+            // 歌单列表 (个人创建)
             PlayListView {
                 id: createdPlayListView
                 Layout.fillWidth: true
@@ -160,6 +138,7 @@ Item {
                 }
             }
 
+            // 歌单列表 (收藏他人)
             PlayListView {
                 id: favoritePlayListView
                 Layout.fillWidth: true
@@ -170,19 +149,13 @@ Item {
                     createdPlayListView.resetIndex();
                 }
             }
-
-            // 底部填充空间
-            // Item {
-            //     Layout.fillWidth: true
-            //     Layout.fillHeight: true
-            // }
         }
     }
 
     // 侧边栏项组件
     component SidebarItem: Rectangle {
         id: sidebarItem
-        width: 200
+        width: 200 - 12 * 3
         height: 40
 
         // 属性定义
@@ -279,74 +252,6 @@ Item {
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
             onClicked: textBtn.clicked()
-        }
-    }
-
-    // 歌单项组件
-    component PlaylistItem: Item {
-        id: playlistItem
-        implicitWidth: parent.width
-        implicitHeight: visible ? 50 : 0
-
-        property string name: ""
-        property int songCount: 0
-        property bool isSelected: false
-        signal clicked()
-
-        Rectangle {
-            anchors.fill: parent
-            anchors.leftMargin: 8
-            anchors.rightMargin: 8
-            color: playlistItem.isSelected ? "#1bffffff" : "transparent"
-            radius: 6
-
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: 12
-                anchors.rightMargin: 12
-                spacing: 10
-
-                // 歌单图标
-                Rectangle {
-                    Layout.preferredWidth: 36
-                    Layout.preferredHeight: 36
-                    radius: 4
-                    color: "#e0e0e0"
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: "♪"
-                        color: "#757575"
-                        font.pixelSize: 16
-                    }
-                }
-
-                // 歌单信息
-                ColumnLayout {
-                    spacing: 2
-                    Layout.fillWidth: true
-
-                    Text {
-                        text: playlistItem.name
-                        color: playlistItem.isSelected ? Theme.highlightingColor  : Theme.paratextColor
-                        font.pixelSize: 13
-                        elide: Text.ElideRight
-                        Layout.fillWidth: true
-                    }
-
-                    Text {
-                        text: playlistItem.songCount + "首"
-                        color: playlistItem.isSelected ? Theme.textColor : Theme.paratextColor
-                        font.pixelSize: 11
-                    }
-                }
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: playlistItem.clicked()
-            }
         }
     }
 }

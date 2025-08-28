@@ -123,15 +123,22 @@ BorderlessWindow {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
 
+                    Rectangle { 
+                        color: "transparent"
+                        Text {
+                            anchors.centerIn: parent
+                            text: "HX-Music"
+                            color: Theme.highlightingColor 
+                            font.pixelSize: 20
+                        }
+                    }
+                    Rectangle { color: "#d0eaff" }
                     Rectangle {
                         color: "transparent"
                         MusicListView {
                             anchors.fill: parent
                         }
                     }
-                    Rectangle { color: "#d0eaff" }
-                    Rectangle { color: "#cdeccd" }
-                    Rectangle { color: "#ffe0b2" }
                 }
             }
 

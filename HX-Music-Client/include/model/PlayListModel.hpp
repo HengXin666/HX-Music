@@ -39,17 +39,10 @@ class PlayListModel : public QAbstractListModel {
         PlayListTypeRole,
     };
 
-    // 歌单类型
-    enum class PlayListType {
-        Created,   // 我创建的
-        Favorite,  // 我收藏的
-    };
-
     struct PlayListData {
         QString name;      // 歌单名称
         uint64_t id;       // 歌单id
         uint32_t cnt;      // 歌单歌曲数量
-        PlayListType type; // 歌单类型
     };
 public:
     explicit PlayListModel(QObject* parent = nullptr)
@@ -71,7 +64,6 @@ public:
         case NameRole: return playList.name;
         case IdRole: return QString{"%1"}.arg(playList.id);
         case CntRole: return playList.cnt;
-        case PlayListTypeRole: return QString{reflection::toEnumName(playList.type).data()};
         default: return {};
         }
     }
@@ -81,7 +73,6 @@ public:
             { NameRole, "name" },
             { IdRole, "id" },
             { CntRole, "cnt" },
-            { PlayListTypeRole, "type" },
         };
     }
 
@@ -164,9 +155,9 @@ public:
 
 private:
     QVector<PlayListData> _playListArr{{
-        "我喜欢", 114514, 2233, PlayListType::Created
+        "我喜欢", 114514, 2233
     }, {
-        "你喜欢", 114514, 2233, PlayListType::Created
+        "你喜欢", 114514, 2233
     }};
 };
 

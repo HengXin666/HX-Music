@@ -44,6 +44,7 @@
         <file alias="playmode_single_loop.svg">icons/playmode_single_loop.svg</file>
         <file alias="lyrics.svg">icons/lyrics.svg</file>
         <file alias="reset.svg">icons/reset.svg</file>
+        <file alias="add.svg">icons/add.svg</file>
     </qresource>
     <qresource prefix="/logo">
         <file alias="HXMusic_logo.png">logo/HXMusic_logo.png</file>
