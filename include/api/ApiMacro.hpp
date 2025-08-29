@@ -23,12 +23,12 @@
 /**
  * @brief 定义服务器端点 BEGIN
  */
-#define HX_EndpointBegin bool HX_JOIN(_hx_EndpointName_, __LINE__) = [this]() {  \
+#define HX_ENDPOINT_BEGIN bool HX_JOIN(_hx_EndpointName_, __LINE__) = [&]() {  \
         _server
 /**
  * @brief 定义服务器端点 END
  */
-#define HX_EndpointEnd                                                         \
+#define HX_ENDPOINT_END                                                        \
     ;                                                                          \
     return false;                                                              \
     }                                                                          \
@@ -37,7 +37,7 @@
 /**
  * @brief 定义服务器端点类 BEGIN
  */
-#define HX_ServerApiBegin(__ApiName__)                                         \
+#define HX_SERVER_API_BEGIN(__ApiName__)                                       \
     class __ApiName__ {                                                        \
     public:                                                                    \
         __ApiName__(net::HttpServer& server) : _server{server} {               \
@@ -51,16 +51,11 @@
 /**
  * @brief 定义服务器端点类 END
  */
-#define HX_ServerApiEnd                                                        \
+#define HX_SERVER_API_END                                                      \
     ();                                                                        \
     return false;                                                              \
     }                                                                          \
     ();                                                                        \
     }
-
-/**
- * @brief 注册 API 到服务端
- */
-#define HX_ServerAddApi(__Server__, __ApiName__) __ApiName__{__Server__};
 
 #define CO_FUNC () -> coroutine::Task<>

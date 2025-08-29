@@ -126,8 +126,8 @@ void ininDir() {
 int main() {
     ininDir();
     net::HttpServer server{"0.0.0.0", "28205"};
-    HX_ServerAddApi(server, MusicApi);
-    HX_ServerAddApi(server, PlaylistApi);
+    api::addApi<MusicApi>(server);
+    api::addApi<PlaylistApi>(server);
     server.syncRun();
     return 0;
 }

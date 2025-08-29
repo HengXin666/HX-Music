@@ -20,7 +20,7 @@
 
 #include <api/ApiMacro.hpp>
 #include <api/Api.hpp>
-#include <singleton/DAOSingleton.hpp>
+#include <dao/MusicDAO.hpp>
 #include <utils/DirFor.hpp>
 
 #include <HXLibs/reflection/json/JsonRead.hpp>
@@ -30,10 +30,13 @@ namespace HX {
 /**
  * @brief 音乐播放 相关服务 API
  */
-HX_ServerApiBegin(MusicApi) {
-    HX_EndpointBegin
+HX_SERVER_API_BEGIN(MusicApi) {
+    auto musicDAO = std::make_shared<MusicDAO>(
+        db::SQLiteDB{"./file/db/music.db"}
+    );
+    HX_ENDPOINT_BEGIN
         // 断点续传下载音乐
-        .addEndpoint<GET, HEAD>("/music/download/{id}", [] ENDPOINT {
+        .addEndpoint<GET, HEAD>("/music/download/{id}", [=] ENDPOINT {
             using namespace std::string_literals;
             log::hxLog.debug("请求 Path:", req.getReqPath());
             co_await api::coTryCatch([&] CO_FUNC {
@@ -41,7 +44,7 @@ HX_ServerApiBegin(MusicApi) {
                 MusicDAO::PrimaryKeyType id{};
                 reflection::fromJson(id, idStrView);
                 std::string_view path;
-                path = DAOSingleton::get().musicDAO.at(id).path;
+                path = musicDAO->at(id).path;
                 co_await res.useRangeTransferFile(
                      req.getRangeRequestView(),
                      "./file/music/"s += path
@@ -52,14 +55,14 @@ HX_ServerApiBegin(MusicApi) {
             });
         })
         // 扫描服务端音乐
-        .addEndpoint<GET>("/music/runScan", [] ENDPOINT {
+        .addEndpoint<GET>("/music/runScan", [=] ENDPOINT {
             std::size_t cnt = 0;
             utils::traverseDirectory("./file/music", {},
                 [&](const std::filesystem::path& relativePath) {
                 std::string path = relativePath.string();
-                if (!DAOSingleton::get().musicDAO.isExist(path)) {
+                if (!musicDAO->isExist(path)) {
                     log::hxLog.info("新增歌曲:", path);
-                    DAOSingleton::get().musicDAO.add<MusicDO>({
+                    musicDAO->add<MusicDO>({
                         {},
                         std::move(path)
                     });
@@ -71,8 +74,8 @@ HX_ServerApiBegin(MusicApi) {
                 "OK: 扫描完成, 新增 " + std::to_string(cnt) + " 首音乐!")
                         .sendRes();
         })
-    HX_EndpointEnd;
-} HX_ServerApiEnd;
+    HX_ENDPOINT_END;
+} HX_SERVER_API_END;
 
 } // namespace HX
 

@@ -23,7 +23,19 @@
 #include <HXLibs/macro/Join.hpp>
 
 namespace HX::api {
-    
+
+/**
+ * @brief 注册 Api 到服务端
+ * @tparam T Api 类
+ * @param server 
+ * @return auto& 
+ */
+template <typename T>
+inline auto& addApi(net::HttpServer& server) {
+    T {server};
+    return server;
+}
+
 template <typename T, typename Body>
     requires (requires (Body const& body) {
         { body.getBody() } -> std::convertible_to<std::string_view>;

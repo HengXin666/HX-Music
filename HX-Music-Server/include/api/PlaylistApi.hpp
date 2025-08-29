@@ -22,20 +22,23 @@
 #include <api/Api.hpp>
 
 #include <pojo/vo/PlaylistVO.hpp>
-#include <singleton/DAOSingleton.hpp>
+#include <dao/PlaylistDAO.hpp>
 
 namespace HX {
 
 /**
  * @brief 音乐列表 相关服务 API
  */
-HX_ServerApiBegin(PlaylistApi) {
-    HX_EndpointBegin
+HX_SERVER_API_BEGIN(PlaylistApi) {
+    auto playlistDAO = std::make_shared<PlaylistDAO>(
+        db::SQLiteDB{"./file/db/playlist.db"}
+    );
+    HX_ENDPOINT_BEGIN
         // 创建歌单
-        .addEndpoint<POST>("/playlist/make", [] ENDPOINT {
+        .addEndpoint<POST>("/playlist/make", [=] ENDPOINT {
             co_await api::coTryCatch([&] CO_FUNC {
                 auto listDO = api::toDO<PlaylistDO>(api::getVO<PlaylistVO>(req));
-                auto const& newDO = DAOSingleton::get().playlistDAO.add(listDO);
+                auto const& newDO = playlistDAO->add(listDO);
                 co_await res.setStatusAndContent(Status::CODE_200, log::toString(newDO.id))
                             .sendRes();
             }, [&] CO_FUNC {
@@ -44,9 +47,9 @@ HX_ServerApiBegin(PlaylistApi) {
             });
         })
         // 编辑歌单
-        .addEndpoint<POST>("/playlist/update", [] ENDPOINT {
+        .addEndpoint<POST>("/playlist/update", [=] ENDPOINT {
             co_await api::coTryCatch([&] CO_FUNC {
-                auto const& newDO = DAOSingleton::get().playlistDAO.update(
+                auto const& newDO = playlistDAO->update(
                     api::toDO<PlaylistDO>(api::getVO<PlaylistVO>(req))
                 );
                 co_await res.setStatusAndContent(Status::CODE_200, log::toString(newDO.id))
@@ -57,11 +60,11 @@ HX_ServerApiBegin(PlaylistApi) {
             });
         })
         // 删除歌单
-        .addEndpoint<POST, DEL>("/playlist/del/{id}", [] ENDPOINT {
+        .addEndpoint<POST, DEL>("/playlist/del/{id}", [=] ENDPOINT {
             co_await api::coTryCatch([&] CO_FUNC {
                 uint64_t id;
                 reflection::fromJson(id, req.getPathParam(0));
-                DAOSingleton::get().playlistDAO.del(id);
+                playlistDAO->del(id);
                 co_await res.setStatusAndContent(Status::CODE_200, "ok")
                             .sendRes();
             }, [&] CO_FUNC {
@@ -70,11 +73,11 @@ HX_ServerApiBegin(PlaylistApi) {
             });
         })
         // 获取歌单
-        .addEndpoint<GET>("/playlist/select/{id}", [] ENDPOINT {
+        .addEndpoint<GET>("/playlist/select/{id}", [=] ENDPOINT {
             co_await api::coTryCatch([&] CO_FUNC {
                 uint64_t id;
                 reflection::fromJson(id, req.getPathParam(0));
-                auto const& listDO = DAOSingleton::get().playlistDAO.at(id);
+                auto const& listDO = playlistDAO->at(id);
                 PlaylistVO vo {
                     listDO.id,
                     listDO.name,
@@ -94,14 +97,14 @@ HX_ServerApiBegin(PlaylistApi) {
             co_return ;
         })
         // 为歌单添加歌曲
-        .addEndpoint<POST>("/playlist/{id}/addMusic/{musicId}", [] ENDPOINT {
+        .addEndpoint<POST>("/playlist/{id}/addMusic/{musicId}", [=] ENDPOINT {
             co_await api::coTryCatch([&] CO_FUNC {
                 uint64_t id, musicId;
                 reflection::fromJson(id, req.getPathParam(0));
                 reflection::fromJson(musicId, req.getPathParam(1));
-                auto listDO = DAOSingleton::get().playlistDAO.at(id);
+                auto listDO = playlistDAO->at(id);
                 listDO.songList.push_back(musicId);
-                DAOSingleton::get().playlistDAO.update(std::move(listDO));
+                playlistDAO->update(std::move(listDO));
                 co_await res.setStatusAndContent(Status::CODE_200, "ok")
                             .sendRes();
             }, [&] CO_FUNC {
@@ -117,8 +120,8 @@ HX_ServerApiBegin(PlaylistApi) {
         .addEndpoint<POST>("/playlist/{id}/swapMusic", [] ENDPOINT {
             co_return ;
         })
-    HX_EndpointEnd;
-} HX_ServerApiEnd;
+    HX_ENDPOINT_END;
+} HX_SERVER_API_END;
 
 } // namespace HX
 

@@ -17,8 +17,8 @@
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#undef HX_EndpointBegin
-#undef HX_EndpointEnd
-#undef HX_ServerApiBegin
-#undef HX_ServerApiEnd
+#undef HX_ENDPOINT_BEGIN
+#undef HX_ENDPOINT_END
+#undef HX_SERVER_API_BEGIN
+#undef HX_SERVER_API_END
 #undef CO_FUNC

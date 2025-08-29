@@ -28,9 +28,6 @@ struct DAOSingleton {
         static DAOSingleton s{};
         return s;
     }
-
-    MusicDAO musicDAO {db::SQLiteDB{"./file/db/music.db"}};
-    PlaylistDAO playlistDAO {db::SQLiteDB{"./file/db/playlist.db"}};
 private:
     DAOSingleton() = default;
     DAOSingleton& operator=(DAOSingleton&&) noexcept = delete;
