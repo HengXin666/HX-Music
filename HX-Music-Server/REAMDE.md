@@ -91,10 +91,12 @@ std::map<std::string, decltype(std::list<MusicIndexData>)::iterator> 歌名;
 #### 1.3.2 歌单数据
 
 ```cpp
-struct playlistDO {
-    db::PrimaryKey<uint64_t> id;            // 歌单id (唯一), 定义本地歌单为默认, 为 `localPlaylist`
+// 歌单数据
+struct PlaylistDO {
+    db::PrimaryKey<uint64_t> id;            // 歌单id (唯一), 定义本地歌单为默认, 为 `0`
+    std::string name;                       // 歌单名称
     std::string description;                // 歌单描述
-    std::vector<uint64_t> songList;         // 歌曲列表
+    std::vector<uint64_t> songIdList;       // 歌曲Id列表
 };
 ```
 

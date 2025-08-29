@@ -20,10 +20,12 @@
 
 #include <api/ApiMacro.hpp>
 #include <api/Api.hpp>
-#include <dao/MusicDAO.hpp>
-#include <utils/DirFor.hpp>
+#include <dao/MemoryDAOPool.hpp>
 
 #include <HXLibs/reflection/json/JsonRead.hpp>
+
+#include <dao/MusicDAO.hpp>
+#include <utils/DirFor.hpp>
 
 namespace HX {
 
@@ -31,9 +33,8 @@ namespace HX {
  * @brief 音乐播放 相关服务 API
  */
 HX_SERVER_API_BEGIN(MusicApi) {
-    auto musicDAO = std::make_shared<MusicDAO>(
-        db::SQLiteDB{"./file/db/music.db"}
-    );
+    auto musicDAO 
+        = dao::MemoryDAOPool::get<MusicDAO, "./file/db/music.db">();
     HX_ENDPOINT_BEGIN
         // 断点续传下载音乐
         .addEndpoint<GET, HEAD>("/music/download/{id}", [=] ENDPOINT {

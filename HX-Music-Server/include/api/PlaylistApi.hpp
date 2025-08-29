@@ -20,8 +20,10 @@
 
 #include <api/ApiMacro.hpp>
 #include <api/Api.hpp>
+#include <dao/MemoryDAOPool.hpp>
 
 #include <pojo/vo/PlaylistVO.hpp>
+#include <dao/MusicDAO.hpp>
 #include <dao/PlaylistDAO.hpp>
 
 namespace HX {
@@ -30,9 +32,10 @@ namespace HX {
  * @brief 音乐列表 相关服务 API
  */
 HX_SERVER_API_BEGIN(PlaylistApi) {
-    auto playlistDAO = std::make_shared<PlaylistDAO>(
-        db::SQLiteDB{"./file/db/playlist.db"}
-    );
+    auto musicDAO 
+        = dao::MemoryDAOPool::get<MusicDAO, "./file/db/music.db">();
+    auto playlistDAO 
+        = dao::MemoryDAOPool::get<PlaylistDAO, "./file/db/playlist.db">();
     HX_ENDPOINT_BEGIN
         // 创建歌单
         .addEndpoint<POST>("/playlist/make", [=] ENDPOINT {
@@ -82,7 +85,20 @@ HX_SERVER_API_BEGIN(PlaylistApi) {
                     listDO.id,
                     listDO.name,
                     listDO.description,
-                    listDO.songList
+                    [&] {
+                        std::vector<MusicVO> songList;
+                        for (auto const id : listDO.songIdList) {
+                            auto& musicDO = musicDAO->at(id);
+                            songList.emplace_back(
+                                musicDO.id,
+                                musicDO.path,
+                                musicDO.musicName,
+                                musicDO.singers,
+                                musicDO.musicAlbum
+                            );
+                        }
+                        return songList;
+                    }()
                 };
                 api::setVO(vo, res);
                 co_await res.setResLine(Status::CODE_200)
@@ -103,7 +119,7 @@ HX_SERVER_API_BEGIN(PlaylistApi) {
                 reflection::fromJson(id, req.getPathParam(0));
                 reflection::fromJson(musicId, req.getPathParam(1));
                 auto listDO = playlistDAO->at(id);
-                listDO.songList.push_back(musicId);
+                listDO.songIdList.push_back(musicId);
                 playlistDAO->update(std::move(listDO));
                 co_await res.setStatusAndContent(Status::CODE_200, "ok")
                             .sendRes();

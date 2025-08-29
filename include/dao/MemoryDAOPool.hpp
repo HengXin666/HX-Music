@@ -18,19 +18,20 @@
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <cstdint>
-#include <string>
-#include <vector>
+#include <dao/ThreadSafeInMemoryDAO.hpp>
 
-namespace HX {
+namespace HX::dao {
 
-// 歌曲数据
-struct MusicVO {
-    uint64_t id;                        // 歌曲唯一ID
-    std::string path;                   // 歌曲存放路径 (相对于 ~/file/music/)
-    std::string musicName;              // 歌名
-    std::vector<std::string> singers;   // 歌手
-    std::string musicAlbum;             // 专辑
+/**
+ * @brief DAO 池
+ */
+struct MemoryDAOPool {
+    template <typename T, meta::FixedString Path>
+    static std::shared_ptr<T> get() {
+        using PathStr = meta::ToCharPack<Path>;
+        static auto dao = std::make_shared<T>(db::SQLiteDB{PathStr::view()});
+        return dao;
+    }
 };
 
-} // namespace HX
+} // namespace HX::dao

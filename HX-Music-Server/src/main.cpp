@@ -108,6 +108,7 @@ int _x_main() {
 #include <filesystem>
 
 void ininDir() {
+    // 创建文件夹
     std::filesystem::create_directories("file/music");
     std::filesystem::create_directories("file/db");
 
