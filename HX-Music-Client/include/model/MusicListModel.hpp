@@ -51,7 +51,7 @@ class MusicListModel : public QAbstractListModel {
 
     int findByUrl(QString const& url) const noexcept {
         for (int i = 0; auto const& it : _musicArr) {
-            if (it.url == url) {
+            if (getUrl(i) == url) {
                 return i;
             }
             ++i;
@@ -89,7 +89,7 @@ public:
             case PlayMode::SingleLoop:  // 单曲循环
             {
                 auto idx = (index + 1) % static_cast<int>(_musicArr.size());
-                MusicCommand::switchMusic(_musicArr[idx].url);
+                MusicCommand::switchMusic(getUrl(idx));
                 GlobalSingleton::get().musicConfig.listIndex = idx;
                 Q_EMIT SignalBusSingleton::get().listIndexChanged();
                 break;
@@ -128,7 +128,7 @@ public:
             {
                 auto idx = (index - 1 + static_cast<int>(_musicArr.size())) 
                               % static_cast<int>(_musicArr.size());
-                MusicCommand::switchMusic(_musicArr[idx].url);
+                MusicCommand::switchMusic(getUrl(idx));
                 GlobalSingleton::get().musicConfig.listIndex = idx;
                 Q_EMIT SignalBusSingleton::get().listIndexChanged();
                 break;
@@ -302,7 +302,7 @@ public:
         QString const& url,
         uint64_t id = 0
     ) {
-        if (!_isActiveUpdate) {
+        if (!_isActiveUpdate && !_isNet) {
             // 非主动更新, 即用户更新! 主动更新是对于本类来说的        
             GlobalSingleton::get().playlist.songList.push_back({
                 0,

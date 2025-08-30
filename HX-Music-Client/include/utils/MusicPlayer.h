@@ -47,6 +47,16 @@ public:
     }
 
     /**
+     * @brief 切换音乐
+     * @param url 目标音乐的网络链接
+     * @return MusicPlayer& 
+     */
+    MusicPlayer& switchMusic(QUrl const& url) {
+        _player.setSource(url);
+        return *this;
+    }
+
+    /**
      * @brief 播放音乐
      */
     void play() {

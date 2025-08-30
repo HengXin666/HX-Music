@@ -29,13 +29,17 @@ struct NetSingleton {
     }
 
     auto getReq(std::string url) {
-        log::hxLog.debug("http -> GET:", backendUrl + url);
-        return _client.get(backendUrl + std::move(url));
+        log::hxLog.debug("http -> GET:", _backendUrl + url);
+        return _client.get(_backendUrl + std::move(url));
+    }
+
+    std::string const& getBackendUrl() const noexcept {
+        return _backendUrl;
     }
 
 private:
     /// @brief 后端 URL
-    std::string backendUrl{"http://127.0.0.1:28205"};
+    std::string _backendUrl{"http://127.0.0.1:28205"};
 
     /// @brief Http 客户端
     decltype(net::HttpClient {}) _client{net::HttpClientOptions{}, 4};

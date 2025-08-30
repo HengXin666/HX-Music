@@ -20,6 +20,7 @@
 
 #include <singleton/GlobalSingleton.hpp>
 #include <singleton/SignalBusSingleton.h>
+#include <singleton/NetSingleton.hpp>
 
 namespace HX {
 
@@ -33,15 +34,29 @@ struct MusicCommand {
      */
     template <bool IsAddQueue = true>
     static void switchMusic(PlayQueue::Type path) {
+        // @todo 如果是网络, 则先播放网络的, 同时再下载本地的; 本地下载完成了, 就切换为本地播放.
         if constexpr (IsAddQueue) {
             GlobalSingleton::get().playQueue.push(path);
         }
-        auto fileInfo = QFileInfo{path};
-        auto info = MusicInfo{fileInfo};
-        GlobalSingleton::get().musicConfig.isPlay = true;
-        Q_EMIT SignalBusSingleton::get().newSongLoaded(&info);
-        GlobalSingleton::get().music.setLengthInMilliseconds(info.getLengthInMilliseconds());
-        GlobalSingleton::get().music.switchMusic(info.filePath()).play();
+        bool ok = false;
+        uint64_t id = path.toULongLong(&ok);
+        if (ok) {
+            qDebug() << "播放网络歌曲:" << id;
+            GlobalSingleton::get().musicConfig.isPlay = true;
+            GlobalSingleton::get().music.switchMusic(
+                QUrl{QString{"%1/music/download/%2"}.arg(
+                    NetSingleton::get().getBackendUrl(),
+                    std::to_string(id)
+                )}
+            ).play();
+        } else {        
+            auto fileInfo = QFileInfo{path};
+            auto info = MusicInfo{fileInfo};
+            GlobalSingleton::get().musicConfig.isPlay = true;
+            Q_EMIT SignalBusSingleton::get().newSongLoaded(&info);
+            GlobalSingleton::get().music.setLengthInMilliseconds(info.getLengthInMilliseconds());
+            GlobalSingleton::get().music.switchMusic(info.filePath()).play();
+        }
     }
 
     /**
