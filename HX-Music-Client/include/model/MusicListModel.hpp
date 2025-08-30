@@ -147,9 +147,12 @@ public:
             clear();
             _isActiveUpdate = true;
             bool isNet = playlist.id != 0;
-            for (auto const& songData : playlist.songList) {
-                auto const& url = songData.url;
-                addFromPath(QString::fromStdString(url));
+            if (isNet) {
+                // @todo
+            } else {            
+                for (auto const& songData : playlist.songList) {
+                    addFromPath(QString::fromStdString(songData.path));
+                }
             }
             _isActiveUpdate = false;
         });
@@ -276,6 +279,23 @@ public:
         QString duration,
         QString const& url
     ) {
+        if (!_isActiveUpdate) {
+            // 非主动更新, 即用户更新! 主动更新是对于本类来说的        
+            GlobalSingleton::get().playlist.songList.push_back({
+                0,
+                url.toStdString(),
+                title.toStdString(),
+                [&](){
+                    std::vector<std::string> res;
+                    for (auto const& it : artist) {
+                        res.emplace_back(it.toStdString());
+                    }
+                    return res;
+                }(),
+                album.toStdString()
+            });
+            Q_EMIT SignalBusSingleton::get().savePlaylistSignal();
+        }
         Q_EMIT beginInsertRows({}, _musicArr.size(), _musicArr.size());
         _musicArr.append({
             std::move(title),
@@ -285,13 +305,6 @@ public:
             url
         });
         Q_EMIT endInsertRows();
-        if (!_isActiveUpdate) {
-            // 非主动更新, 即用户更新! 主动更新是对于本类来说的        
-            GlobalSingleton::get().playlist.songList.push_back({
-                url.toStdString()
-            });
-            Q_EMIT SignalBusSingleton::get().savePlaylistSignal();
-        }
     }
 
     /**
@@ -303,7 +316,17 @@ public:
         newSongList.reserve(_musicArr.size());
         for (auto const& it : _musicArr) {
             newSongList.push_back({
-                it.url.toStdString()
+                0,
+                it.url.toStdString(),
+                it.title.toStdString(),
+                [&](){
+                    std::vector<std::string> res;
+                    for (auto const& it : it.artist) {
+                        res.emplace_back(it.toStdString());
+                    }
+                    return res;
+                }(),
+                it.album.toStdString()
             });
         }
         GlobalSingleton::get().playlist.songList = std::move(newSongList);

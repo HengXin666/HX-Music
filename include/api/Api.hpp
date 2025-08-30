@@ -22,7 +22,19 @@
 #include <HXLibs/reflection/json/JsonRead.hpp>
 #include <HXLibs/macro/Join.hpp>
 
+#include <pojo/vo/JsonVO.hpp>
+
 namespace HX::api {
+
+template <typename T>
+constexpr vo::JsonVO<T> succeed(T&& data) {
+    return vo::JsonVO<T>::succeed(std::forward<T>(data));
+}
+
+template <typename T>
+constexpr vo::JsonVO<T> err(std::string msg) {
+    return vo::JsonVO<T>::err(std::move(msg));
+}
 
 /**
  * @brief 注册 Api 到服务端
@@ -43,6 +55,16 @@ template <typename T, typename Body>
 T getVO(Body const& body) {
     T t{};
     reflection::fromJson(t, body.getBody());
+    return t;
+}
+
+template <typename T, typename Body>
+    requires (requires (Body const& body) {
+        { (body.body) } -> std::convertible_to<std::string_view>;
+    })
+T getVO(Body const& body) {
+    T t{};
+    reflection::fromJson(t, body.body);
     return t;
 }
 

@@ -114,13 +114,22 @@ void ininDir() {
 
     // 测试数据
     [&] {
-        auto db = db::open("./file/db/playlist.db");
-        db.createDatabase<PlaylistDO>();
-        db.insert<PlaylistDO>({
-            {}, "HX-测试歌单", "测试没有描述...", {
-                1, 2, 3, 4, 5
-            }
-        });
+        auto playlistDAO 
+            = dao::MemoryDAOPool::get<PlaylistDAO, "./file/db/playlist.db">();
+        using PathStr = meta::ToCharPack<"./file/db/playlist.db">;
+        try {
+            playlistDAO->update<true, PlaylistDO>({
+                1, "HX-测试歌单", "测试没有描述...", {
+                    1, 2, 3, 4, 5
+                }
+            });
+        } catch (...) {
+            playlistDAO->add<PlaylistDO>({
+                1, "HX-测试歌单", "测试没有描述...", {
+                    1, 2, 3, 4, 5
+                }
+            });
+        }
     }();
 }
 

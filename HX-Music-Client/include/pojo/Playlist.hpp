@@ -32,6 +32,7 @@ struct Playlist {
     inline static constexpr uint64_t kLocalPlaylist = 0;
 
     uint64_t id;                    // 歌单id (唯一), 定义本地歌单为默认, 为 `0`
+    std::string name;               // 歌单名称
     std::string description;        // 歌单描述
     std::vector<SongInformation> songList;  // 歌曲列表
 };

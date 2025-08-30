@@ -26,11 +26,11 @@ namespace HX::meta {
 // 一个承载 char 参数包的类型
 template <char... Cs>
 struct CharPack {
-    inline static constexpr std::array<char, sizeof...(Cs) + 1> value = {Cs..., '\0'};
-    inline static constexpr std::size_t size = sizeof...(Cs);
+    inline static constexpr std::size_t Size = sizeof...(Cs);
+    inline static constexpr std::array<char, Size + 1> Val = {Cs..., '\0'};
 
     static constexpr auto view() noexcept {
-        return std::string_view{value.data(), size};
+        return std::string_view{Val.data(), Size};
     }
 };
 
@@ -46,12 +46,12 @@ struct FixedString {
     }
 
     // 长度不含终止符
-    static consteval std::size_t literalSize() noexcept { return N; }
+    static constexpr std::size_t literalSize() noexcept { return N; }
 
-    static consteval std::size_t size() noexcept { return N - 1; }
+    static constexpr std::size_t size() noexcept { return N - 1; }
 
     // 编译期索引访问
-    consteval char operator[](std::size_t i) const noexcept { return data[i]; }
+    constexpr char operator[](std::size_t i) const noexcept { return data[i]; }
 
     // 为了结构化类型比较, 避免某些实现细节陷阱
     constexpr auto operator<=>(const FixedString&) const noexcept = default;
@@ -61,7 +61,7 @@ namespace internal {
 
 // 把 FixedString<S> 编译期展开为 CharPack<S[0], S[1], ...>
 template <FixedString S, std::size_t... I>
-consteval auto toCharPackImpl(std::index_sequence<I...>) -> CharPack<S[I]...>;
+constexpr auto toCharPackImpl(std::index_sequence<I...>) -> CharPack<S[I]...>;
 
 } // namespace internal
 

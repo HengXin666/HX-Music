@@ -42,7 +42,7 @@ int main(int argc, char* argv[]) {
     cp->setContextProperty("SignalBusSingleton", &HX::SignalBusSingleton::get());
 
     // 窗口掩码工具类
-    HX::WindowMaskUtil windowMaskUtil;
+    HX::WindowMaskUtil windowMaskUtil{};
     cp->setContextProperty("WindowMaskUtil", &windowMaskUtil);
 
     // 主题数据类
@@ -50,8 +50,12 @@ int main(int argc, char* argv[]) {
     cp->setContextProperty("Theme", &theme);
 
     // 音乐控制类
-    static HX::MusicController musicController;
+    static HX::MusicController musicController{};
     cp->setContextProperty("MusicController", &musicController);
+
+    // 歌单控制类
+    static HX::PlaylistController playlistController{};
+    cp->setContextProperty("PlaylistController", &playlistController);
 
     // 注册 歌曲列表视图 到 qml
     qmlRegisterType<HX::MusicListModel>(
@@ -88,8 +92,6 @@ int main(int argc, char* argv[]) {
 
     // 应该使用 _ 和 [0-9a-Z], 不能使用`-`
     engine.loadFromModule("HX.Music", "Main");
-
-    HX::PlaylistController playlistController{}; // @todo 加载一下歌单
 
     // 集中保存
     QObject::connect(&app, &QCoreApplication::aboutToQuit, [&] {

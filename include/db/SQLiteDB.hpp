@@ -33,6 +33,9 @@
 #include <HXLibs/reflection/TypeName.hpp>
 #include <HXLibs/log/serialize/ToString.hpp>
 
+// debug
+#include <HXLibs/log/Log.hpp>
+
 #include <db/SQLiteMeta.hpp>
 #include <db/SQLiteStmt.hpp>
 
@@ -257,6 +260,7 @@ public:
     SQLiteDB(std::string_view filePath) 
         : SQLiteDB{}
     {
+        log::hxLog.debug("make dbFile:", filePath);
         if (::sqlite3_open(filePath.data(), &_db) != SQLITE_OK) [[unlikely]] {
             throw std::runtime_error{
                 "Failed to open database: " + std::string{::sqlite3_errmsg(_db)}
@@ -437,6 +441,14 @@ public:
         sql.back() = ' ';
         sql += std::move(sqlBody);
         return {sql, _db};
+    }
+
+    /**
+     * @brief 获取上一次行数变化
+     * @return int 
+     */
+    int lastLineChange() const noexcept {
+        return ::sqlite3_changes(_db);
     }
 
 private:

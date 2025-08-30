@@ -115,10 +115,17 @@ BorderlessWindow {
                     onTabClicked: (index) => {
                         console.log("点击了标签页:", index);
                         stackView.currentIndex = index; // 属性存储当前标签索引
+                        if (index == 1) {
+                            // @todo 我的收藏
+                        } else if (index == 2) {
+                            PlaylistController.loadPlaylistById(0);
+                        }
                     }
 
-                    onPlayListClicked: (id) => {
+                    onPlayListClicked: function (id: int) {
                         console.log("点击了歌单:", id);
+                        stackView.currentIndex = 2;
+                        PlaylistController.loadPlaylistById(id);
                     }
                 }
 

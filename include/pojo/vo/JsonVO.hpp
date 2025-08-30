@@ -19,22 +19,45 @@
  */
 
 #include <string>
-#include <vector>
+#include <optional>
 
-#include <HXLibs/container/UninitializedNonVoidVariant.hpp>
+namespace HX::vo {
 
-namespace HX {
-
-/**
- * @brief 歌曲信息
- */
-struct SongInformation {
-    uint64_t id;                        // id, 如果是 0, 则表示是本地歌曲, 此时 path 是本地绝对路径; 否则是服务器路径
-    std::string path;                   // 歌曲存放路径 (相对于 ~/file/music/)
-    std::string musicName;              // 歌名
-    std::vector<std::string> singers;   // 歌手
-    std::string musicAlbum;             // 专辑
+enum class VOCode : int {
+    Err = -1,
+    OK = 0
 };
 
-} // namespace HX
+inline bool operator==(int v, VOCode code) noexcept {
+    return v == static_cast<int>(code);
+}
 
+inline bool operator!=(int v, VOCode code) noexcept {
+    return v != static_cast<int>(code);
+}
+
+
+template <typename T>
+struct JsonVO {
+    int code;
+    std::string msg;
+    std::optional<T> data;
+
+    constexpr static JsonVO err(std::string msg) {
+        return {
+            static_cast<int>(VOCode::Err),
+            std::move(msg),
+            {}
+        };
+    }
+
+    constexpr static JsonVO succeed(T&& t) {
+        return {
+            static_cast<int>(VOCode::OK),
+            "ok",
+            std::move(t)
+        };
+    }
+};
+
+} // namespace HX::vo

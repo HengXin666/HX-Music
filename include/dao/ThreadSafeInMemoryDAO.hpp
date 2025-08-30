@@ -65,7 +65,7 @@ struct ThreadSafeInMemoryDAO {
         return it->second;
     }
 
-    template <typename U>
+    template <bool IsMustSucceed = false, typename U>
     const T& update(U&& u) {
         using namespace std::string_literals;
         std::unique_lock _{_mtx};
@@ -74,7 +74,12 @@ struct ThreadSafeInMemoryDAO {
                         += reflection::getMembersNames<T>()[db::GetFirstPrimaryKeyIndex<T>])
                         += " = ?")
             .bind(id)
-            .exec();
+            .execOnThrow();
+        if constexpr (IsMustSucceed) {
+            if (_db.lastLineChange() == 0) [[unlikely]] {
+                throw std::runtime_error{"update By KeyId Fail: The data is" + log::formatString(u)};
+            }
+        }
         return _map[id] = std::forward<U>(u);
     }
 
@@ -85,7 +90,7 @@ struct ThreadSafeInMemoryDAO {
                         += reflection::getMembersNames<T>()[db::GetFirstPrimaryKeyIndex<T>])
                         += " = ?")
             .bind(id)
-            .exec();
+            .execOnThrow();
         _map.erase(id);
     }
 

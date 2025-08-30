@@ -22,6 +22,7 @@
 #include <api/Api.hpp>
 #include <dao/MemoryDAOPool.hpp>
 
+#include <pojo/vo/JsonVO.hpp>
 #include <pojo/vo/PlaylistVO.hpp>
 #include <dao/MusicDAO.hpp>
 #include <dao/PlaylistDAO.hpp>
@@ -81,7 +82,7 @@ HX_SERVER_API_BEGIN(PlaylistApi) {
                 uint64_t id;
                 reflection::fromJson(id, req.getPathParam(0));
                 auto const& listDO = playlistDAO->at(id);
-                PlaylistVO vo {
+                auto vo = api::succeed<PlaylistVO>({
                     listDO.id,
                     listDO.name,
                     listDO.description,
@@ -99,12 +100,14 @@ HX_SERVER_API_BEGIN(PlaylistApi) {
                         }
                         return songList;
                     }()
-                };
+                });
                 api::setVO(vo, res);
                 co_await res.setResLine(Status::CODE_200)
                             .sendRes();
             }, [&] CO_FUNC {
-                co_await res.setStatusAndContent(Status::CODE_500, "获取歌单失败")
+                auto vo = api::err<PlaylistVO>("获取歌单失败");
+                api::setVO(vo, res);
+                co_await res.setResLine(Status::CODE_500)
                             .sendRes();
             });
         })

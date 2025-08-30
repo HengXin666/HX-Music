@@ -20,6 +20,7 @@
 
 #include <singleton/SignalBusSingleton.h>
 #include <singleton/GlobalSingleton.hpp>
+#include <api/PlaylistApi.hpp>
 
 #include <HXLibs/utils/FileUtils.hpp>
 #include <HXLibs/log/Log.hpp>
@@ -57,13 +58,21 @@ public:
                             {}
                         };
                     }
+                    // 发送更新歌单信号
+                    Q_EMIT SignalBusSingleton::get().playlistChanged();
                 } else {
                     // @todo 网络
-                    log::hxLog.warning("网络版本没有实现!, ErrId:", id);
+                    log::hxLog.info("网络: 请求歌单", id);
+                    PlaylistApi::selectById(id).thenTry([](container::Try<Playlist> t){
+                        if (!t) [[unlikely]] {
+                            GlobalSingleton::get().playlist = {};
+                        } else {
+                            GlobalSingleton::get().playlist = t.move();
+                        }
+                        // 发送更新歌单信号
+                        Q_EMIT SignalBusSingleton::get().playlistChanged();
+                    });
                 }
-
-                // 发生更新歌单信号
-                Q_EMIT SignalBusSingleton::get().playlistChanged();
             });
         
         // 保存歌单
@@ -72,6 +81,7 @@ public:
             &SignalBusSingleton::savePlaylistSignal,
             this,
             [this]() {
+            GlobalSingleton::get().playlist.songList.clear();
             auto& playlist = GlobalSingleton::get().playlist;
             if (playlist.id == Playlist::kLocalPlaylist) {
                 // 保存本地
@@ -90,9 +100,16 @@ public:
 
         // === init ===
         // 加载配置歌单
-        Q_EMIT SignalBusSingleton::get().loadPlaylistSignal(
-            GlobalSingleton::get().musicConfig.playlistId
-        );
+        loadPlaylistById(GlobalSingleton::get().musicConfig.playlistId);
+    }
+
+    /**
+     * @brief 加载歌单
+     * @param id 歌单id
+     * @return Q_INVOKABLE 
+     */
+    Q_INVOKABLE void loadPlaylistById(uint64_t id) {
+        Q_EMIT SignalBusSingleton::get().loadPlaylistSignal(id);
     }
 };
 
