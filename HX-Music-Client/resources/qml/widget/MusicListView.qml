@@ -72,7 +72,7 @@ Item {
                 onDoubleClicked: (mouse) => {
                     if (mouse.button === Qt.LeftButton) {
                         listView.currentIndex = delegateRoot.index;
-                        MusicController.playMusic(delegateRoot.model.url);
+                        MusicController.playMusic(musicListModel.getUrl(index));
                     }
                 }
 

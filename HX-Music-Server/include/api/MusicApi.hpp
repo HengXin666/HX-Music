@@ -61,7 +61,7 @@ HX_SERVER_API_BEGIN(MusicApi) {
             utils::traverseDirectory("./file/music", {},
                 [&](const std::filesystem::path& relativePath) {
                 std::string path = relativePath.string();
-                if (!musicDAO->isExist(path)) {
+                if (!std::filesystem::is_directory(path) && !musicDAO->isExist(path)) {
                     log::hxLog.info("新增歌曲:", path);
                     musicDAO->add<MusicDO>({
                         {},

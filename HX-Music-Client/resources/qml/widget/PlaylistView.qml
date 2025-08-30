@@ -205,7 +205,7 @@ Item {
         MenuItem {
             text: "播放"
             onTriggered: {
-                // MusicController.playMusic(playListModel.getUrl(menu.index));
+                // @todo
             }
         }
         MenuItem {

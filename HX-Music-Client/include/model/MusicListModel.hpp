@@ -46,6 +46,7 @@ class MusicListModel : public QAbstractListModel {
         QString album;          // 专辑
         QString duration;       // 时长 (单位: 秒(s))
         QString url;            // path && img.url && imgPool-id && 配置文件歌曲路径
+        uint64_t id = 0;        // 歌曲id, 仅网络有效
     };
 
     int findByUrl(QString const& url) const noexcept {
@@ -146,8 +147,8 @@ public:
             auto& playlist = GlobalSingleton::get().playlist;
             clear();
             _isActiveUpdate = true;
-            bool isNet = playlist.id != 0;
-            if (isNet) {
+            _isNet = playlist.id != 0;
+            if (_isNet) {
                 for (auto const& songData : playlist.songList) {
                     addFromNet(songData);
                 }
@@ -252,8 +253,15 @@ public:
         return true;
     }
 
+    /**
+     * @brief 获取 URL, 如果为网络歌单, 则返回歌曲Id, 否则为本地路径
+     * @param row 
+     * @return Q_INVOKABLE 
+     */
     Q_INVOKABLE QString getUrl(int row) const {
-        return _musicArr[row].url;
+        return _isNet 
+            ? QString{"%1"}.arg(_musicArr[row].id)
+            : _musicArr[row].url;
     }
 
     Q_INVOKABLE void addFromPath(QString const& path) {
@@ -281,7 +289,8 @@ public:
             }(),
             QString::fromStdString(songInfo.musicAlbum),
             QString{"%1"}.arg(songInfo.millisecondsLen),
-            QString::fromStdString(songInfo.path)
+            QString::fromStdString(songInfo.path),
+            songInfo.id
         );
     }
 
@@ -290,7 +299,8 @@ public:
         QStringList artist,
         QString album,
         QString duration,
-        QString const& url
+        QString const& url,
+        uint64_t id = 0
     ) {
         if (!_isActiveUpdate) {
             // 非主动更新, 即用户更新! 主动更新是对于本类来说的        
@@ -315,7 +325,8 @@ public:
             std::move(artist),
             std::move(album),
             std::move(duration),
-            url
+            url,
+            id
         });
         Q_EMIT endInsertRows();
     }
@@ -356,6 +367,7 @@ private:
     std::mt19937 _rng{std::random_device{}()};
     QVector<MusicInfoData> _musicArr{};
     bool _isActiveUpdate = false;
+    bool _isNet = false; // 当前歌单是否为网络歌单
 };
 
 } // namespace HX
