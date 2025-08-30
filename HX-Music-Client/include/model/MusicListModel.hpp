@@ -148,7 +148,9 @@ public:
             _isActiveUpdate = true;
             bool isNet = playlist.id != 0;
             if (isNet) {
-                // @todo
+                for (auto const& songData : playlist.songList) {
+                    addFromNet(songData);
+                }
             } else {            
                 for (auto const& songData : playlist.songList) {
                     addFromPath(QString::fromStdString(songData.path));
@@ -268,8 +270,19 @@ public:
         }
     }
 
-    void addFromNet() {
-
+    void addFromNet(SongInformation const& songInfo) {
+        addMusic(
+            QString::fromStdString(songInfo.musicName),
+            [&]{
+                QStringList res;
+                for (auto const& it : songInfo.singers)
+                    res.emplace_back(QString::fromStdString(it));
+                return res;
+            }(),
+            QString::fromStdString(songInfo.musicAlbum),
+            QString{"%1"}.arg(songInfo.millisecondsLen),
+            QString::fromStdString(songInfo.path)
+        );
     }
 
     Q_INVOKABLE void addMusic(

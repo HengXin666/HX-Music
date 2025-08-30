@@ -31,6 +31,7 @@ struct MusicVO {
     std::string musicName;              // 歌名
     std::vector<std::string> singers;   // 歌手
     std::string musicAlbum;             // 专辑
+    uint64_t millisecondsLen;           // 毫秒长度
 };
 
 } // namespace HX

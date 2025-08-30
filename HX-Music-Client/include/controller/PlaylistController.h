@@ -41,6 +41,7 @@ public:
             &SignalBusSingleton::loadPlaylistSignal,
             this,
             [this](uint64_t id) {
+                GlobalSingleton::get().playlist = {};
                 if (id == Playlist::kLocalPlaylist) {
                     // 加载本地
                     try {
@@ -81,7 +82,6 @@ public:
             &SignalBusSingleton::savePlaylistSignal,
             this,
             [this]() {
-            GlobalSingleton::get().playlist.songList.clear();
             auto& playlist = GlobalSingleton::get().playlist;
             if (playlist.id == Playlist::kLocalPlaylist) {
                 // 保存本地

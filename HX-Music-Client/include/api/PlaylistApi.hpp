@@ -61,7 +61,8 @@ struct PlaylistApi {
                             std::move(musicVO.path),
                             std::move(musicVO.musicName),
                             std::move(musicVO.singers),
-                            std::move(musicVO.musicAlbum)
+                            std::move(musicVO.musicAlbum),
+                            musicVO.millisecondsLen
                         );
                     }
                     return songList;

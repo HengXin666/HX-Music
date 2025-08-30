@@ -81,6 +81,7 @@ public:
      * @param path 音乐路径
      */
     Q_INVOKABLE void playMusic(QString const& path) {
+        // @todo 如果是网络, 则先播放网络的, 同时再下载本地的; 本地下载完成了, 就切换为本地播放.
         MusicCommand::switchMusic(path);
         Q_EMIT playingChanged(true);
     }
