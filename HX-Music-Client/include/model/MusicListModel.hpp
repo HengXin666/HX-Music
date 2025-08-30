@@ -282,6 +282,7 @@ public:
     }
 
     void addFromNet(SongInformation const& songInfo) {
+        log::hxLog.debug(songInfo);
         addMusic(
             QString::fromStdString(songInfo.musicName),
             [&]{
@@ -291,7 +292,7 @@ public:
                 return res;
             }(),
             QString::fromStdString(songInfo.musicAlbum),
-            QString{"%1"}.arg(songInfo.millisecondsLen),
+            QString{"%1"}.arg(songInfo.millisecondsLen / 1000),
             QString::fromStdString(songInfo.path),
             songInfo.id
         );

@@ -95,7 +95,8 @@ HX_SERVER_API_BEGIN(PlaylistApi) {
                                 musicDO.path,
                                 musicDO.musicName,
                                 musicDO.singers,
-                                musicDO.musicAlbum
+                                musicDO.musicAlbum,
+                                musicDO.millisecondsLen
                             );
                         }
                         return songList;

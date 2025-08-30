@@ -130,6 +130,10 @@ void ininDir() {
                 }
             });
         }
+
+        auto musicDAO 
+            = dao::MemoryDAOPool::get<MusicDAO, "./file/db/music.db">();
+        log::hxLog.info(musicDAO->at(1));
     }();
 }
 
