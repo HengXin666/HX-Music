@@ -67,6 +67,7 @@ public:
                     PlaylistApi::selectById(id).thenTry([=](container::Try<Playlist> t){
                         if (!t) [[unlikely]] {
                             GlobalSingleton::get().playlist = {};
+                            log::hxLog.error("请求歌单错误:", t.what());
                         } else {
                             GlobalSingleton::get().playlist = t.move();
                         }

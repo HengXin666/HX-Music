@@ -43,7 +43,7 @@ struct JsonVO {
     std::string msg;
     std::optional<T> data;
 
-    constexpr static JsonVO err(std::string msg) {
+    constexpr static JsonVO error(std::string msg) {
         return {
             static_cast<int>(VOCode::Err),
             std::move(msg),
@@ -57,6 +57,10 @@ struct JsonVO {
             "ok",
             std::move(t)
         };
+    }
+
+    constexpr bool isError() const noexcept {
+        return code != VOCode::OK;
     }
 };
 

@@ -35,6 +35,7 @@
 #include <HXLibs/utils/FileUtils.hpp>
 #include <HXLibs/reflection/json/JsonRead.hpp>
 #include <HXLibs/reflection/json/JsonWrite.hpp>
+#include <HXLibs/log/Log.hpp>
 
 namespace HX {
 
@@ -70,17 +71,12 @@ public:
             reflection::fromJson(_lyricConfig, file.syncReadAll());
             file.syncClose();
         } catch (...) {
-            using namespace std::string_view_literals;
-            reflection::fromJson(_lyricConfig, R"({
-"windowX":400,
-"windowY": 300,
-"windowWidth": 800,
-"windowHeight": 200,
-"lyricOffset": 0,
-"isWindowOpened": false,
-"isLocked": false,
-"isFullScreen": false
-})"sv);
+            _lyricConfig = {
+                400, 300,
+                800, 200,
+                0, false,
+                false, false
+            };
         }
 
         /* musicPlayPosChanged (歌曲播放位置变化) */
@@ -101,14 +97,21 @@ public:
             &SignalBusSingleton::get(),
             &SignalBusSingleton::newSongLoaded,
             this,
-            [this](HX::MusicInfo* info) {
-                auto path = findLyricFile(*info);
-                auto data = utils::FileUtils::getFileContent(path);
-                _assParse = preprocessLyricBoundingBoxes(
-                    0,
-                    info->getLengthInMilliseconds(),
-                    data
-                );
+            [this](MusicInformation* info) {
+                if (GlobalSingleton::get().musicConfig.playlistId == Playlist::kLocalPlaylist) {
+                    auto path = findLyricFile(info->filePath());
+                    auto data = utils::FileUtils::getFileContent(path);
+                    _assParse = preprocessLyricBoundingBoxes(
+                        0,
+                        info->getLengthInMilliseconds(),
+                        data
+                    );
+                } else {
+                    _assParse.readMemory(internal::readQrcFile(":default/loading.ass"));
+                    renderAFrameInstantly();
+                    // 网络加载歌词到内存
+                    log::hxLog.warning("@todo 歌词网络加载");
+                }
             });
 
         /* lyricAddOffset 歌词加上偏移量 */
@@ -142,12 +145,12 @@ public:
     }
 
     decltype(std::declval<std::filesystem::path>().string()) findLyricFile(
-        HX::MusicInfo const& info
+        QString path
     ) {
         // 规则: 先查找 当前歌曲目录 是否存在 `歌曲名称.ass` 文件
         // 如果没有, 再查找 歌曲目录是否有`ass`文件夹, 进入重复上面的查找
         // todo 以后可以支持从缓存目录中查找, 如果没有就看看服务器?!
-        std::filesystem::path musicPath{info.fileInfo().filesystemFilePath()};
+        std::filesystem::path musicPath{path.toStdString()};
 
         // 提取歌曲的文件名 (不包括扩展名)
         std::string songName = musicPath.stem().string();

@@ -23,7 +23,7 @@ Slider {
         id: songConn
         target: null
         // 绑定信号: 更新歌曲
-        function onNewSongLoaded(song: MusicInfo) {
+        function onNewSongLoaded(song: MusicInformation) {
             root.to = song.getLengthInMilliseconds();
         }
 

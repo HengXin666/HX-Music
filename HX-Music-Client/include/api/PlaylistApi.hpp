@@ -33,42 +33,43 @@ struct PlaylistApi {
     /**
      * @brief 获取歌单
      * @param id 
-     * @return auto 
+     * @return container::FutureResult<Playlist> 
      */
-    static auto selectById(uint64_t id) {
+    static container::FutureResult<Playlist> selectById(uint64_t id) {
         return NetSingleton::get().getReq("/playlist/select/" + std::to_string(id))
             .thenTry([](container::Try<net::ResponseData> t) -> Playlist {
-            if (!t) [[unlikely]] {
-                log::hxLog.error("selectById:", t.what());
-                t.rethrow();
+                if (!t) [[unlikely]] {
+                    log::hxLog.error("selectById:", t.what());
+                    t.rethrow();
+                }
+                log::hxLog.info("selectById:", t.get());
+                auto res = t.move();
+                auto jsonVo = api::getVO<vo::JsonVO<PlaylistVO>>(res);
+                if (jsonVo.isError()) [[unlikely]] {
+                    throw std::runtime_error{std::move(jsonVo.msg)};
+                }
+                auto playlistVO = *jsonVo.data;
+                return {
+                    playlistVO.id,
+                    playlistVO.name,
+                    playlistVO.description,
+                    [&] {
+                        std::vector<SongInformation> songList;
+                        for (auto&& musicVO : playlistVO.songList) {
+                            songList.emplace_back(
+                                musicVO.id,
+                                std::move(musicVO.path),
+                                std::move(musicVO.musicName),
+                                std::move(musicVO.singers),
+                                std::move(musicVO.musicAlbum),
+                                musicVO.millisecondsLen
+                            );
+                        }
+                        return songList;
+                    }()
+                };
             }
-            log::hxLog.info("selectById:", t.get());
-            auto res = t.move();
-            auto jsonVo = api::getVO<vo::JsonVO<PlaylistVO>>(res);
-            if (jsonVo.code == vo::VOCode::Err) [[unlikely]] {
-                throw std::runtime_error{std::move(jsonVo.msg)};
-            }
-            auto playlistVO = *jsonVo.data;
-            return {
-                playlistVO.id,
-                playlistVO.name,
-                playlistVO.description,
-                [&] {
-                    std::vector<SongInformation> songList;
-                    for (auto&& musicVO : playlistVO.songList) {
-                        songList.emplace_back(
-                            musicVO.id,
-                            std::move(musicVO.path),
-                            std::move(musicVO.musicName),
-                            std::move(musicVO.singers),
-                            std::move(musicVO.musicAlbum),
-                            musicVO.millisecondsLen
-                        );
-                    }
-                    return songList;
-                }()
-            };
-        });
+        );
     }
 };
 

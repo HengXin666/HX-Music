@@ -102,13 +102,10 @@ HX_SERVER_API_BEGIN(PlaylistApi) {
                     }()
                 });
                 api::setVO(vo, res);
-                co_await res.setResLine(Status::CODE_200)
-                            .sendRes();
+                co_await api::setJsonSucceed(res).sendRes();
             }, [&] CO_FUNC {
-                auto vo = api::err<PlaylistVO>("获取歌单失败");
-                api::setVO(vo, res);
-                co_await res.setResLine(Status::CODE_500)
-                            .sendRes();
+                api::setVO(api::error<PlaylistVO>("获取歌单失败"), res);
+                co_await api::setJsonError(res).sendRes();
             });
         })
         // 获取全部歌单

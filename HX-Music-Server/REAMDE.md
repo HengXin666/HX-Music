@@ -113,6 +113,10 @@ struct PlaylistDO {
 - 参数描述:
 - 返回值描述:
 
+特别的, 所以 JSON 返回的, 都是:
+
+[`JsonVO<T>`](../include/pojo/vo/JsonVO.hpp#40-45)
+
 ### 2.1 音乐相关接口
 #### 2.1.1 下载音乐
 

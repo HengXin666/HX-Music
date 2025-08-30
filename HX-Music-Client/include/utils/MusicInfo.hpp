@@ -32,11 +32,8 @@
 
 namespace HX {
 
-
 class MusicInfo : public QObject {
     Q_OBJECT
-    Q_PROPERTY(QString title READ getTitle CONSTANT)
-    Q_PROPERTY(QStringList artistList READ getArtistList CONSTANT)
 public:
     explicit MusicInfo(QFileInfo fileInfo) 
         : _fileInfo(std::move(fileInfo))
@@ -47,7 +44,7 @@ public:
      * @brief 获取音频标题
      * @return QString `获取失败`则返回文件名
      */
-    Q_INVOKABLE QString getTitle() const {
+    QString getTitle() const {
         if (_mpegFile.isNull() || !_mpegFile.tag()) {
             return _fileInfo.fileName();
         }
@@ -60,7 +57,7 @@ public:
      * @param errRes 获取失败返回的值
      * @return QString
      */
-    Q_INVOKABLE QString getArtist(QString errRes = "") const {
+    [[deprecated]] QString getArtist(QString errRes = "") const {
         if (_mpegFile.isNull() || !_mpegFile.tag()) {
             return errRes;
         }
@@ -72,7 +69,7 @@ public:
      * @param errRes 
      * @return QVector<QString> 每一项就是一个歌手名
      */
-    Q_INVOKABLE QStringList getArtistList(QStringList errRes = {}) const {
+    QStringList getArtistList(QStringList errRes = {}) const {
         if (_mpegFile.isNull()) {
             return errRes;
         }
@@ -101,7 +98,6 @@ public:
         raw.replace(" ft. ", ";", Qt::CaseInsensitive);
         raw.replace("、", ";");
         raw.replace("／", ";");
-        raw.replace(";", ";");  // 防御性
     
         return raw.split(";", Qt::SkipEmptyParts)
                   .replaceInStrings(QRegularExpression("^\\s+|\\s+$"), "");
@@ -153,7 +149,7 @@ public:
      * @param errRes 获取失败返回的值
      * @return int
      */
-    Q_INVOKABLE int getLengthInMilliseconds(int errRes = 0) const {
+    int getLengthInMilliseconds(int errRes = 0) const {
         if (_mpegFile.isNull() || !_mpegFile.audioProperties()) {
             return errRes;
         }
@@ -214,7 +210,7 @@ public:
         return {};
     }
 
-    Q_INVOKABLE QString filePath() const {
+    QString filePath() const {
         return _fileInfo.filePath();
     }
 

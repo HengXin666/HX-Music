@@ -24,7 +24,7 @@
 #include <QMutex>
 
 #include <config/MusicConfig.hpp>
-#include <utils/MusicInfo.hpp>
+#include <pojo/MusicInformation.hpp>
 
 namespace HX {
 
@@ -55,7 +55,7 @@ Q_SIGNALS:
      * @brief 加载新歌信号
      * @param info 歌曲信息 (QML中使用自定义类型只能是指针传递)
      */
-    void newSongLoaded(HX::MusicInfo* info);
+    void newSongLoaded(MusicInformation* info);
 
     /**
      * @brief 音量变化

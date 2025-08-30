@@ -18,9 +18,12 @@
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <QApplication>
+
 #include <singleton/GlobalSingleton.hpp>
 #include <singleton/SignalBusSingleton.h>
 #include <singleton/NetSingleton.hpp>
+#include <api/MusicApi.hpp>
 
 namespace HX {
 
@@ -42,20 +45,32 @@ struct MusicCommand {
         uint64_t id = path.toULongLong(&ok);
         if (ok) {
             qDebug() << "播放网络歌曲:" << id;
-            GlobalSingleton::get().musicConfig.isPlay = true;
-            GlobalSingleton::get().music.switchMusic(
-                QUrl{QString{"%1/music/download/%2"}.arg(
-                    NetSingleton::get().getBackendUrl(),
-                    std::to_string(id)
-                )}
-            ).play();
+            // 网络再次获取信息, 因为传递太麻烦了
+            MusicApi::selectById(id).thenTry([=](container::Try<SongInformation> t) {
+                if (t) [[likely]] {
+                    MusicInformation musicInfo{t.move()};
+                    QMetaObject::invokeMethod(QCoreApplication::instance(), 
+                    [id, musicInfo = std::move(musicInfo)]() mutable {
+                        GlobalSingleton::get().musicConfig.isPlay = true;
+                        Q_EMIT SignalBusSingleton::get().newSongLoaded(&musicInfo);
+                        GlobalSingleton::get().music.setLengthInMilliseconds(musicInfo.getLengthInMilliseconds());
+                        GlobalSingleton::get().music.switchMusic(
+                            QUrl{QString{"%1/music/download/%2"}.arg(
+                                NetSingleton::get().getBackendUrl(),
+                                std::to_string(id)
+                            )}
+                        ).play();
+                    }, Qt::QueuedConnection);
+                } else {
+                    log::hxLog.error("播放失败: 请求错误:", t.what());
+                }
+            });
         } else {        
-            auto fileInfo = QFileInfo{path};
-            auto info = MusicInfo{fileInfo};
+            MusicInformation musicInfo{MusicInfo{QFileInfo{path}}};
             GlobalSingleton::get().musicConfig.isPlay = true;
-            Q_EMIT SignalBusSingleton::get().newSongLoaded(&info);
-            GlobalSingleton::get().music.setLengthInMilliseconds(info.getLengthInMilliseconds());
-            GlobalSingleton::get().music.switchMusic(info.filePath()).play();
+            Q_EMIT SignalBusSingleton::get().newSongLoaded(&musicInfo);
+            GlobalSingleton::get().music.setLengthInMilliseconds(musicInfo.getLengthInMilliseconds());
+            GlobalSingleton::get().music.switchMusic(musicInfo.filePath()).play();
         }
     }
 

@@ -72,11 +72,14 @@ int main(int argc, char* argv[]) {
     );
 
     // 注册 音频信息
-    qmlRegisterType<HX::MusicInfo>(
+    qmlRegisterType<HX::MusicInformation>(
         "HX.Music",
         1, 0,
-        "MusicInfo"
+        "MusicInformation"
     );
+
+    // 注册 音频信息
+    qRegisterMetaType<HX::MusicInformation>("MusicInformation");
 
     // 歌词渲染与管理
     auto* lyricController = new HX::LyricController;

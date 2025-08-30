@@ -51,6 +51,7 @@
     </qresource>
     <qresource prefix="/default">
         <file alias="default.ass">default/default.ass</file>
+        <file alias="loading.ass">default/loading.ass</file>
     </qresource>
     <qresource prefix="/qml">
         <file alias="Main.qml">qml/Main.qml</file>

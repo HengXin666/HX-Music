@@ -61,7 +61,7 @@ public:
             this,
             [this](uint64_t id) {
             // 延迟调用, 因为 MusicListModel 可能还没有更新好, 我们延迟到下一个事件循环
-            QTimer::singleShot(0, [this, id]() {
+            QTimer::singleShot(0, this, [this, id]() {
                 if (id != GlobalSingleton::get().musicConfig.playlistId) {
                     Q_EMIT listIndexChanged(-1);
                 } else {

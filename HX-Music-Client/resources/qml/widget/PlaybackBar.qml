@@ -237,7 +237,7 @@ ProgressBarRect {
         target: null
 
         // 绑定信号: 更新歌曲
-        function onNewSongLoaded(song: MusicInfo) {
+        function onNewSongLoaded(song: MusicInformation) {
             // 更新: 歌曲名 - 歌手
             const musicTitle = song.getTitle();
             const artists = song.getArtistList();

@@ -25,6 +25,7 @@
 #include <HXLibs/reflection/json/JsonRead.hpp>
 
 #include <dao/MusicDAO.hpp>
+#include <pojo/vo/MusicVO.hpp>
 #include <utils/DirFor.hpp>
 
 namespace HX {
@@ -74,6 +75,28 @@ HX_SERVER_API_BEGIN(MusicApi) {
                 Status::CODE_200,
                 "OK: 扫描完成, 新增 " + std::to_string(cnt) + " 首音乐!")
                         .sendRes();
+        })
+        // 获取音乐信息
+        .addEndpoint<GET>("/music/info/{id}", [=] ENDPOINT {
+            co_await api::coTryCatch([&] CO_FUNC {
+                auto idStrView = req.getPathParam(0);
+                MusicDAO::PrimaryKeyType id{};
+                reflection::fromJson(id, idStrView);
+                auto const& musicDO = musicDAO->at(id);
+                auto vo = api::succeed<MusicVO>({
+                    musicDO.id,
+                    musicDO.path,
+                    musicDO.musicName,
+                    musicDO.singers,
+                    musicDO.musicAlbum,
+                    musicDO.millisecondsLen
+                });
+                api::setVO(vo, res);
+                co_await api::setJsonSucceed(res).sendRes();
+            }, [&] CO_FUNC {
+                api::setVO(api::error<MusicVO>("歌曲 ID 不存在"), res);
+                co_await api::setJsonError(res).sendRes();
+            });
         })
     HX_ENDPOINT_END;
 } HX_SERVER_API_END;

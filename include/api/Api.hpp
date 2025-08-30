@@ -32,8 +32,8 @@ constexpr vo::JsonVO<T> succeed(T&& data) {
 }
 
 template <typename T>
-constexpr vo::JsonVO<T> err(std::string msg) {
-    return vo::JsonVO<T>::err(std::move(msg));
+constexpr vo::JsonVO<T> error(std::string msg) {
+    return vo::JsonVO<T>::error(std::move(msg));
 }
 
 /**
@@ -76,6 +76,26 @@ void setVO(T const& t, Body& body) {
     std::string s;
     reflection::toJson(t, s);
     body.setBody(std::move(s));
+}
+
+/**
+ * @brief 设置 JSON 类型 和 响应码 200
+ * @param res 
+ * @return auto& 
+ */
+inline auto& setJsonSucceed(net::Response& res) noexcept {
+    return res.setResLine(net::Status::CODE_200)
+              .setContentType(net::JSON);
+}
+
+/**
+ * @brief 设置 JSON 类型 和 响应码 400
+ * @param res 
+ * @return auto& 
+ */
+inline auto& setJsonError(net::Response& res) noexcept {
+    return res.setResLine(net::Status::CODE_400)
+              .setContentType(net::JSON);
 }
 
 /**
