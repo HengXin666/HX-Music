@@ -60,18 +60,18 @@ public:
                         };
                     }
                     // 发送更新歌单信号
-                    Q_EMIT SignalBusSingleton::get().playlistChanged();
+                    Q_EMIT SignalBusSingleton::get().playlistChanged(id);
                 } else {
                     // @todo 网络
                     log::hxLog.info("网络: 请求歌单", id);
-                    PlaylistApi::selectById(id).thenTry([](container::Try<Playlist> t){
+                    PlaylistApi::selectById(id).thenTry([=](container::Try<Playlist> t){
                         if (!t) [[unlikely]] {
                             GlobalSingleton::get().playlist = {};
                         } else {
                             GlobalSingleton::get().playlist = t.move();
                         }
                         // 发送更新歌单信号
-                        Q_EMIT SignalBusSingleton::get().playlistChanged();
+                        Q_EMIT SignalBusSingleton::get().playlistChanged(id);
                     });
                 }
             });

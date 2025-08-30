@@ -45,10 +45,12 @@ class MusicListModel : public QAbstractListModel {
         QStringList artist;     // 歌手列表
         QString album;          // 专辑
         QString duration;       // 时长 (单位: 秒(s))
-        QString url;            // path && img.url && imgPool-id && 配置文件歌曲路径
+        QString url;            // 歌曲路径, 如果是网络歌单则是服务器内部的相对路径
+                                // 如果是本地歌单, 则是本机的绝对路径
         uint64_t id = 0;        // 歌曲id, 仅网络有效
     };
 
+    // 通过 URL 查找 索引
     int findByUrl(QString const& url) const noexcept {
         for (int i = 0; auto const& it : _musicArr) {
             if (getUrl(i) == url) {
@@ -143,7 +145,7 @@ public:
             &SignalBusSingleton::get(),
             &SignalBusSingleton::playlistChanged,
             this,
-            [this]() {
+            [this](uint64_t id) {
             auto& playlist = GlobalSingleton::get().playlist;
             clear();
             _isActiveUpdate = true;
@@ -158,6 +160,7 @@ public:
                 }
             }
             _isActiveUpdate = false;
+            _id = id;
         });
     }
 
@@ -363,9 +366,14 @@ public:
         Q_EMIT endResetModel();
     }
 
+    Q_INVOKABLE uint64_t getPlaylistId() const noexcept {
+        return _id;
+    }
+
 private:
     std::mt19937 _rng{std::random_device{}()};
     QVector<MusicInfoData> _musicArr{};
+    uint64_t _id = 0; // 当前歌单id
     bool _isActiveUpdate = false;
     bool _isNet = false; // 当前歌单是否为网络歌单
 };

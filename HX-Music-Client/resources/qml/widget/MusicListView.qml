@@ -72,7 +72,9 @@ Item {
                 onDoubleClicked: (mouse) => {
                     if (mouse.button === Qt.LeftButton) {
                         listView.currentIndex = delegateRoot.index;
-                        MusicController.playMusic(musicListModel.getUrl(index));
+                        MusicController.setPlaylistId(musicListModel.getPlaylistId());
+                        MusicController.playMusic(musicListModel.getUrl(delegateRoot.index));
+                        MusicController.listIndex = delegateRoot.index;
                     }
                 }
 
@@ -233,15 +235,12 @@ Item {
             }
         }
 
-        onCurrentIndexChanged: {
-            MusicController.listIndex = listView.currentIndex;
-        }
-
         function init() {
             if (listView === null) {
                 Qt.callLater(() => {
                     init();
-                });;
+                });
+                return;
             }
             listView.currentIndex = MusicController.listIndex;
             if (listView.currentIndex >= 0 && listView.currentIndex < listView.count) {
@@ -276,7 +275,9 @@ Item {
             text: "播放"
             onTriggered: {
                 listView.currentIndex = menu.index;
+                MusicController.setPlaylistId(musicListModel.getPlaylistId());
                 MusicController.playMusic(musicListModel.getUrl(menu.index));
+                MusicController.listIndex = menu.index;
             }
         }
         MenuItem {

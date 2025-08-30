@@ -21,10 +21,13 @@
 #define _HX_MUSIC_CONTROLLER_H_
 
 #include <QObject>
+#include <QTimer>
 
 #include <cmd/MusicCommand.hpp>
 
+// debug
 #include <QDebug>
+#include <HXLibs/log/Log.hpp>
 
 namespace HX {
 
@@ -50,6 +53,22 @@ public:
             this,
             [this]() { Q_EMIT listIndexChanged(getListIndex()); }
         );
+
+        // 歌单更新信号
+        connect(
+            &SignalBusSingleton::get(),
+            &SignalBusSingleton::playlistChanged,
+            this,
+            [this](uint64_t id) {
+            // 延迟调用, 因为 MusicListModel 可能还没有更新好, 我们延迟到下一个事件循环
+            QTimer::singleShot(0, [this, id]() {
+                if (id != GlobalSingleton::get().musicConfig.playlistId) {
+                    Q_EMIT listIndexChanged(-1);
+                } else {
+                    Q_EMIT listIndexChanged(getListIndex());
+                }
+            });
+        });
     }
 
     Q_INVOKABLE void prev() {
@@ -57,6 +76,7 @@ public:
         MusicCommand::prevMusic();
         Q_EMIT playingChanged(GlobalSingleton::get().musicConfig.isPlay = true);
     }
+
     Q_INVOKABLE void next() {
         qDebug() << "下一首";
         MusicCommand::nextMusic();
@@ -147,6 +167,15 @@ public:
      */
     Q_INVOKABLE void setPosition(qint64 position) {
         MusicCommand::setMusicPos(position);
+    }
+
+    /**
+     * @brief 设置当前活跃的歌单id
+     * @param id 
+     * @return Q_INVOKABLE 
+     */
+    Q_INVOKABLE void setPlaylistId(uint64_t id) noexcept {
+        GlobalSingleton::get().musicConfig.playlistId = id;
     }
 
     /**

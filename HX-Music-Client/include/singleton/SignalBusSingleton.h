@@ -115,8 +115,9 @@ Q_SIGNALS:
 
     /**
      * @brief 歌单更新信号 (加载完毕) (通过全局单例查看)
+     * @param id 歌单id
      */
-    void playlistChanged();
+    void playlistChanged(uint64_t id);
 
     /**
      * @brief 保存歌单信号 (通过全局单例查看) [任意歌曲顺序变化/添加、删除歌曲时候立刻触发]
