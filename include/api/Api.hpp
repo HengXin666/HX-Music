@@ -31,7 +31,7 @@ constexpr vo::JsonVO<T> succeed(T&& data) {
     return vo::JsonVO<T>::succeed(std::forward<T>(data));
 }
 
-template <typename T>
+template <typename T = std::string>
 constexpr vo::JsonVO<T> error(std::string msg) {
     return vo::JsonVO<T>::error(std::move(msg));
 }

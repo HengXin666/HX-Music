@@ -104,6 +104,7 @@ int _x_main() {
 
 #include <api/MusicApi.hpp>
 #include <api/PlaylistApi.hpp>
+#include <api/CoverApi.hpp>
 
 #include <filesystem>
 
@@ -143,6 +144,7 @@ int main() {
     net::HttpServer server{"0.0.0.0", "28205"};
     api::addApi<MusicApi>(server);
     api::addApi<PlaylistApi>(server);
+    api::addApi<CoverApi>(server);
     server.syncRun();
     return 0;
 }

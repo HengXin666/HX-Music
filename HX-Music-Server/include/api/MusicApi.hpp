@@ -54,8 +54,10 @@ HX_SERVER_API_BEGIN(MusicApi) {
                      "./file/music/"s += path
                 );
             }, [&] CO_FUNC {
-                co_await res.setStatusAndContent(Status::CODE_500, "id 不正确!")
-                            .sendRes();
+                api::setVO(api::error(
+                    "歌曲id不存在"
+                ), res);
+                co_await api::setJsonError(res).sendRes();
             });
         })
         // 扫描服务端音乐
@@ -69,20 +71,21 @@ HX_SERVER_API_BEGIN(MusicApi) {
                 if (!std::filesystem::is_directory(fullPath) && !musicDAO->isExist(path)) {
                     log::hxLog.info("新增歌曲:", path);
                     MusicInfo info{fullPath};
+                    auto imgOpt = info.getAlbumArtAdvanced();
                     auto const& dao = musicDAO->add<MusicDO>({
                         {},
                         std::move(path),
                         info.getTitle(),
                         info.getArtistList(),
                         info.getAlbum(),
-                        static_cast<uint64_t>(info.getLengthInMilliseconds())
-                    });
-                    auto imgOpt = info.getAlbumArtAdvanced();
+                        static_cast<uint64_t>(info.getLengthInMilliseconds()),
+                        imgOpt ? imgOpt->type : ""
+                    });  
                     if (imgOpt) {
                         auto img = *imgOpt;
                         utils::AsyncFile file{loop};
                         file.syncOpen(
-                            "./file/cover/" + std::to_string(dao.id) + "." + std::move(img.type)
+                            "./file/cover/" + std::to_string(dao.id) + std::move(img.type)
                         );
                         file.syncWrite(img.buf);
                         file.syncClose();

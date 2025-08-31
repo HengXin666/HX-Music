@@ -34,6 +34,7 @@ struct MusicDO {
     std::vector<std::string> singers;   // 歌手
     std::string musicAlbum;             // 专辑
     uint64_t millisecondsLen;           // 毫秒长度
+    std::string coverSuffix;            // 封面图片后缀 (.png / .jpg)
 };
 
 } // namespace HX

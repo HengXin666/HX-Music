@@ -73,8 +73,8 @@ struct MusicInfo {
     {}
 
     struct ImgRamFile {
-        std::string type;
-        std::string buf;
+        std::string type; // 拓展名 (.png/.jpg)
+        std::string buf;  // 图片数据
     };
 
     /**
@@ -195,7 +195,7 @@ struct MusicInfo {
                         };
                         auto type = m.value("MIME", {}).toString();
                         if (type.isEmpty()) {
-                            res.type = m.contains("png") ? "png" : "jpg";
+                            res.type = m.contains("png") ? ".png" : ".jpg";
                         } else {
                             res.type = type.to8Bit(true);
                         }
@@ -213,7 +213,7 @@ struct MusicInfo {
                 auto bv = pic->data();
                 if (!bv.isEmpty()) {
                     return ImgRamFile{
-                        pic->mimeType().to8Bit(true),
+                        pic->mimeType().to8Bit(true) == "image/png" ? ".png" : ".jpg",
                         {bv.data(), bv.size()}
                     };
                 }
