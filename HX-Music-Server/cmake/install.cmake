@@ -36,3 +36,23 @@ find_package(SQLite3 REQUIRED)
 
 # 链接 SQLite3 库
 target_link_libraries(HX-Music-Server PRIVATE SQLite::SQLite3)
+
+# 第三方依赖 (音频信息解析)
+if (WIN32)
+    # 添加头文件路径
+    include_directories(
+        "${LIB_ROOT}/include"
+    )
+
+    # 链接库文件
+    target_link_libraries(HX-Music-Server PRIVATE
+        "${LIB_ROOT}/debug/lib/tag.lib"
+        "${LIB_ROOT}/debug/lib/tag_c.lib"
+    )
+else()
+    find_package(taglib CONFIG REQUIRED)  # 必须小写"taglib"
+    target_link_libraries(HX-Music-Server
+        PRIVATE
+        TagLib::TagLib
+    )
+endif()

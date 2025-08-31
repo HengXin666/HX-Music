@@ -111,6 +111,7 @@ void ininDir() {
     // 创建文件夹
     std::filesystem::create_directories("file/music");
     std::filesystem::create_directories("file/db");
+    std::filesystem::create_directories("file/cover");
 
     // 测试数据
     [&] {
@@ -131,9 +132,9 @@ void ininDir() {
             });
         }
 
-        auto musicDAO 
-            = dao::MemoryDAOPool::get<MusicDAO, "./file/db/music.db">();
-        log::hxLog.info(musicDAO->at(1));
+        // auto musicDAO 
+        //     = dao::MemoryDAOPool::get<MusicDAO, "./file/db/music.db">();
+        // log::hxLog.info(musicDAO->at(1));
     }();
 }
 

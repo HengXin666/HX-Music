@@ -23,10 +23,12 @@
 #include <dao/MemoryDAOPool.hpp>
 
 #include <HXLibs/reflection/json/JsonRead.hpp>
+#include <HXLibs/utils/FileUtils.hpp>
 
 #include <dao/MusicDAO.hpp>
 #include <pojo/vo/MusicVO.hpp>
 #include <utils/DirFor.hpp>
+#include <utils/MusicInfo.hpp>
 
 namespace HX {
 
@@ -59,16 +61,32 @@ HX_SERVER_API_BEGIN(MusicApi) {
         // 扫描服务端音乐
         .addEndpoint<GET>("/music/runScan", [=] ENDPOINT {
             std::size_t cnt = 0;
+            coroutine::EventLoop loop;
             utils::traverseDirectory("./file/music", {},
                 [&](const std::filesystem::path& relativePath) {
                 std::string path = relativePath.string();
-                std::filesystem::path fullPath = std::filesystem::path("./file/music") / relativePath;
+                std::filesystem::path fullPath = std::filesystem::path{"./file/music"} / relativePath;
                 if (!std::filesystem::is_directory(fullPath) && !musicDAO->isExist(path)) {
                     log::hxLog.info("新增歌曲:", path);
-                    musicDAO->add<MusicDO>({
+                    MusicInfo info{fullPath};
+                    auto const& dao = musicDAO->add<MusicDO>({
                         {},
-                        std::move(path)
+                        std::move(path),
+                        info.getTitle(),
+                        info.getArtistList(),
+                        info.getAlbum(),
+                        static_cast<uint64_t>(info.getLengthInMilliseconds())
                     });
+                    auto imgOpt = info.getAlbumArtAdvanced();
+                    if (imgOpt) {
+                        auto img = *imgOpt;
+                        utils::AsyncFile file{loop};
+                        file.syncOpen(
+                            "./file/cover/" + std::to_string(dao.id) + "." + std::move(img.type)
+                        );
+                        file.syncWrite(img.buf);
+                        file.syncClose();
+                    }
                     ++cnt;
                 }
             });

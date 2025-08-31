@@ -108,7 +108,7 @@ public:
      * @param errRes 获取失败返回的值
      * @return QString
      */
-    QString getAlbum(QString&& errRes = "") const {
+    QString getAlbum(QString errRes = "") const {
         if (_mpegFile.isNull() || !_mpegFile.tag()) {
             return errRes;
         }
@@ -120,7 +120,7 @@ public:
      * @param errRes 获取失败返回的值
      * @return QString
      */
-    QString formatTimeLengthToHHMMSS(QString&& errRes = "") const {
+    QString formatTimeLengthToHHMMSS(QString errRes = "") const {
         if (_mpegFile.isNull() || !_mpegFile.audioProperties()) {
             return errRes;
         }
