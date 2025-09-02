@@ -78,6 +78,67 @@ struct MusicApi {
             return *std::move(jsonVO.data);
         });
     }
+
+    /**
+     * @brief 分块上传歌曲
+     * @param localPath 待上传的本地文件路径
+     * @param pushId 上传任务id
+     * @param progress 进度百分比
+     * @param uploadSpeed 上传速度, 单位: 字节 / 秒 (B/s)
+     * @return container::FutureResult<> 
+     */
+    static container::FutureResult<> uploadMusic(
+        std::string localPath,
+        std::string pushId,
+        double* progress = nullptr,
+        std::size_t* uploadSpeed = nullptr
+    ) {
+        return NetSingleton::get().wsReq("/music/upload/push/" + std::move(pushId),
+            [_localPath = std::move(localPath), progress, uploadSpeed](
+                net::WebSocketClient ws
+            ) mutable -> coroutine::Task<> {
+                using namespace std::chrono;
+                utils::AsyncFile file{ws.getIO()};
+                co_await file.open(_localPath, utils::OpenMode::Read);
+                std::vector<char> buf;
+                buf.resize(utils::FileUtils::kBufMaxSize);
+                auto mae = std::chrono::system_clock::now();
+                std::size_t sum = 0;
+                for (;;) {
+                    // 发
+                    int len = co_await file.read(buf);
+                    if (len) [[likely]] {
+                        co_await ws.sendBytes({buf.data(), static_cast<std::size_t>(len)});
+                    } else {
+                        break; // 我发完了
+                    }
+                    if (uploadSpeed) {                    
+                        sum += len;
+                        if (auto now = std::chrono::system_clock::now(); now - mae >= 1s) {
+                            mae = now;
+                            *uploadSpeed = sum;
+                            sum = 0;
+                        }
+                    }
+                    // 同步进度
+                    auto progressStr = co_await ws.recvText();
+                    if (progress) {
+                        reflection::fromJson(*progress, progressStr);
+                    }
+                    log::hxLog.debug("上传进度:", progressStr);
+                }
+                // 同步进度
+                auto progressStr = co_await ws.recvText();
+                if (progress) {
+                    reflection::fromJson(*progress, progressStr);
+                }
+                if (progressStr != "1") [[unlikely]] {
+                    // 未知错误, 非预期的
+                    throw std::runtime_error{"Unexpected: Not all files were uploaded"};
+                }
+                co_await ws.close();
+            });
+    }
 };
 
 } // namespace HX

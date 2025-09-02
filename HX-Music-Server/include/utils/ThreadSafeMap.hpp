@@ -31,6 +31,15 @@ namespace HX::utils {
  */
 template <typename Key, typename Val>
 class ThreadSafeMap {
+    std::map<Key, Val, std::less<>> _mp;
+    mutable std::shared_mutex _mtx;
+public:
+    using iterator = typename decltype(_mp)::iterator;
+private:
+    struct CompareIterators {
+        iterator it;    // 结果
+        iterator end;   // 基准 map.end()
+    };
 public:
     ThreadSafeMap()
         : _mp{}
@@ -48,15 +57,15 @@ public:
     }
 
     template <typename K>
-    auto find(K&& key) noexcept {
+    CompareIterators find(K&& key) noexcept {
         std::shared_lock _{_mtx};
-        return _mp.find(key);
+        return {_mp.find(std::forward<K>(key)), _mp.end()};
     }
 
     template <typename K>
-    auto find(K&& key) const noexcept {
+    CompareIterators find(K&& key) const noexcept {
         std::shared_lock _{_mtx};
-        return _mp.find(key);
+        return {_mp.find(std::forward<K>(key)), _mp.end()};
     }
 
     template <typename... Args>
@@ -66,9 +75,6 @@ public:
     }
 
     ThreadSafeMap& operator=(ThreadSafeMap&&) noexcept = delete;
-private:
-    std::map<Key, Val> _mp;
-    mutable std::shared_mutex _mtx;
 };
 
 } // namespace HX::utils

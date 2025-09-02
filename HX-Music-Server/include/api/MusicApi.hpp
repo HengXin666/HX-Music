@@ -40,10 +40,12 @@ namespace HX {
  */
 HX_SERVER_API_BEGIN(MusicApi) {
     struct MusicFileTask {
-        std::string path;
-        uint64_t fileSize;
-        std::chrono::system_clock time; // 任务创建时间
-        uint64_t nowOffset;             // 当前写入进度
+        std::string path;               // 临时文件采用 `${path}.tmp` 在后缀, 防止服务器关闭, 而任务却进行中
+                                        // 下次重启服务器就可以把 .tmp 的文件全部删除了, 让用户重新上传
+        uint64_t fileSize;              // 文件大小
+        std::chrono::system_clock::time_point makeTime; // 任务创建时间
+        uint64_t nowOffset;             // 当前写入进度 (偏移指针)
+        std::unique_ptr<std::atomic_bool> atWork;       // 记录是否开始任务
     };
     auto musicDAO 
         = dao::MemoryDAOPool::get<MusicDAO, "./file/db/music.db">();
@@ -129,14 +131,25 @@ HX_SERVER_API_BEGIN(MusicApi) {
         // 初始化上传音乐任务
         .addEndpoint<POST>("/music/upload/init", [=] ENDPOINT {
             co_await api::coTryCatch([&] CO_FUNC {
+                using namespace std::string_literals;
                 auto vo = co_await api::getVO<InitUploadFileTaskVO>(req);
                 // 1. 验证路径是否存在该文件
-                std::filesystem::path filePath = "./file/music" / std::filesystem::path{vo.path};
-                if (std::filesystem::exists(filePath)) [[unlikely]] {
+                std::filesystem::path filePath
+                    = "./file/music" / std::filesystem::path{vo.path};
+                std::filesystem::path tmpFilePath
+                    = "./file/music" / std::filesystem::path{vo.path + ".tmp"s};
+                if (std::filesystem::exists(filePath) 
+                 || std::filesystem::exists(tmpFilePath)
+                ) [[unlikely]] {
                     if (std::filesystem::is_regular_file(filePath)) [[likely]] {
-                        co_return co_await api::setJsonError("文件已存在", res).sendRes();
-                    } else {
-                        co_return co_await api::setJsonError("路径被占用, 目标可能是文件夹", res).sendRes();
+                        co_return co_await api::setJsonError(
+                            "文件已存在", res).sendRes();
+                    } else if (std::filesystem::is_regular_file(tmpFilePath)) {
+                        co_return co_await api::setJsonError(
+                            "任务已存在", res).sendRes();
+                    } {
+                        co_return co_await api::setJsonError(
+                            "路径被占用, 目标可能是文件夹", res).sendRes();
                     }
                 }
                 // 2. 创建唯一id
@@ -144,15 +157,62 @@ HX_SERVER_API_BEGIN(MusicApi) {
                 do {
                     id = utils::Uuid::makeV4();
                 } while (!musicUploadTaskMap->try_emplace(
-                    id, MusicFileTask{vo.path, vo.fileSize}
+                    id, MusicFileTask{
+                        vo.path,
+                        vo.fileSize,
+                        std::chrono::system_clock::now(),
+                        0,
+                        std::make_unique<std::atomic_bool>(false)
+                    }
                 ));
-                co_return co_await api::setJsonSucceed<std::string>(std::move(id), res).sendRes();
+                // 3. 创建占位文件
+                utils::AsyncFile file{req.getIO()};
+                co_await file.open(tmpFilePath.string(), utils::OpenMode::Write);
+                co_await file.close();
+                co_return co_await api::setJsonSucceed<std::string>(
+                    std::move(id), res).sendRes();
             }, [&] CO_FUNC {
-                co_return co_await api::setJsonError("数据非法", res).sendRes();
+                co_return co_await api::setJsonError(
+                    "数据非法", res).sendRes();
             });
         })
         // 上传音乐主任务
-        .addEndpoint<POST>("/music/upload/push/{pushId}", [] ENDPOINT {
+        .addEndpoint<POST>("/music/upload/push/{pushId}", [=] ENDPOINT {
+            using namespace std::string_literals;
+            auto [it, end] = musicUploadTaskMap->find(req.getPathParam(0));
+            if (it == end) {
+                co_return co_await api::setJsonError(
+                    "任务不存在", res).sendRes();
+            }
+            auto& task = it->second;
+            if (task.atWork->exchange(true)) {
+                // 之前就是 true, 表示已经在工作了
+                co_return co_await api::setJsonError(
+                    "任务被占用, 任务已经在工作了", res).sendRes();
+            }
+            // 写文件
+            utils::AsyncFile file{req.getIO()};
+            std::filesystem::path tmpFilePath
+                = "./file/music" / std::filesystem::path{task.path + ".tmp"s};
+            auto ws = co_await net::WebSocketFactory::accept(req, res);
+            co_await file.open(tmpFilePath.string());
+            file.setOffset(task.nowOffset);
+            try {
+                while (task.nowOffset < task.fileSize) {
+                    auto buf = co_await ws.recvBytes();
+                    co_await file.write(buf);
+                    task.nowOffset += buf.size();
+                    // 完成百分比
+                    co_await ws.sendText(
+                        log::internal::FormatZipString{}.make<double, 3>(
+                            static_cast<double>(task.nowOffset) / static_cast<double>(task.fileSize)
+                    ));
+                }
+            } catch (...) {
+                // 客户端ws断开了
+                *task.atWork = false;
+            }
+            co_await ws.close();
             co_return ;
         })
     HX_ENDPOINT_END;
