@@ -41,7 +41,7 @@ HX_SERVER_API_BEGIN(PlaylistApi) {
         // 创建歌单
         .addEndpoint<POST>("/playlist/make", [=] ENDPOINT {
             co_await api::coTryCatch([&] CO_FUNC {
-                auto listDO = api::toDO<PlaylistDO>(api::getVO<PlaylistVO>(req));
+                auto listDO = api::toDO<PlaylistDO>(co_await api::getVO<PlaylistVO>(req));
                 auto const& newDO = playlistDAO->add(listDO);
                 co_await res.setStatusAndContent(Status::CODE_200, log::toString(newDO.id))
                             .sendRes();
@@ -54,7 +54,7 @@ HX_SERVER_API_BEGIN(PlaylistApi) {
         .addEndpoint<POST>("/playlist/update", [=] ENDPOINT {
             co_await api::coTryCatch([&] CO_FUNC {
                 auto const& newDO = playlistDAO->update(
-                    api::toDO<PlaylistDO>(api::getVO<PlaylistVO>(req))
+                    api::toDO<PlaylistDO>(co_await api::getVO<PlaylistVO>(req))
                 );
                 co_await res.setStatusAndContent(Status::CODE_200, log::toString(newDO.id))
                             .sendRes();
@@ -82,7 +82,7 @@ HX_SERVER_API_BEGIN(PlaylistApi) {
                 uint64_t id;
                 reflection::fromJson(id, req.getPathParam(0));
                 auto const& listDO = playlistDAO->at(id);
-                auto vo = api::succeed<PlaylistVO>({
+                co_await api::setJsonSucceed<PlaylistVO>({
                     listDO.id,
                     listDO.name,
                     listDO.description,
@@ -101,12 +101,9 @@ HX_SERVER_API_BEGIN(PlaylistApi) {
                         }
                         return songList;
                     }()
-                });
-                api::setVO(vo, res);
-                co_await api::setJsonSucceed(res).sendRes();
+                }, res).sendRes();
             }, [&] CO_FUNC {
-                api::setVO(api::error<PlaylistVO>("获取歌单失败"), res);
-                co_await api::setJsonError(res).sendRes();
+                co_await api::setJsonError("获取歌单失败", res).sendRes();
             });
         })
         // 获取全部歌单

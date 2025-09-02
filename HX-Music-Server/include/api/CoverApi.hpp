@@ -40,10 +40,7 @@ HX_SERVER_API_BEGIN(CoverApi) {
                     "./file/cover/" + std::to_string(id) + musicDAO->at(id).coverSuffix
                 );
             }, [&] CO_FUNC {
-                api::setVO(api::error(
-                    "歌曲id不存在 或者 路径错误"
-                ), res);
-                co_await api::setJsonError(res).sendRes();
+                co_await api::setJsonError("歌曲id不存在 或者 路径错误", res).sendRes();
             });
         })
     HX_ENDPOINT_END;

@@ -33,6 +33,27 @@ struct NetSingleton {
         return _client.get(_backendUrl + std::move(url));
     }
 
+    auto postReq(
+        std::string url,
+        std::string body,
+        net::HttpContentType contentType = net::HttpContentType::Json
+    ) {
+        log::hxLog.debug("http -> POST:", _backendUrl + url);
+        return _client.post(_backendUrl + std::move(url), std::move(body), contentType);
+    }
+
+    template <typename T>
+    auto postReq(std::string url, T&& data) {
+        std::string json;
+        reflection::toJson(data, json);
+        log::hxLog.debug("http -> POST:", _backendUrl + url, "\njson:", json);
+        return _client.post(
+            _backendUrl + std::move(url),
+            std::move(json),
+            net::HttpContentType::Json
+        );
+    }
+
     std::string const& getBackendUrl() const noexcept {
         return _backendUrl;
     }
@@ -42,7 +63,10 @@ private:
     std::string _backendUrl{"http://127.0.0.1:28205"};
 
     /// @brief Http 客户端
-    decltype(net::HttpClient {}) _client{net::HttpClientOptions{}, 4};
+    decltype(net::HttpClient{net::HttpClientOptions<
+        decltype(utils::operator""_s<"600">())>{}}) _client{
+        net::HttpClientOptions<decltype(utils::operator""_s<"600">())>{}, 4
+    };
 
     NetSingleton() = default;
     NetSingleton& operator=(NetSingleton&&) = delete;

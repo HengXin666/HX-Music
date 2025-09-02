@@ -26,8 +26,8 @@
 #include <sqlite3.h>
 
 #include <meta/StaticConstexpr.hpp>
-#include <meta/FixedString.hpp>
 
+#include <HXLibs/meta/FixedString.hpp>
 #include <HXLibs/reflection/MemberName.hpp>
 #include <HXLibs/reflection/EnumName.hpp>
 #include <HXLibs/reflection/TypeName.hpp>

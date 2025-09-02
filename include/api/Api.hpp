@@ -58,6 +58,13 @@ T getVO(Body const& body) {
     return t;
 }
 
+template <typename T>
+coroutine::Task<T> getVO(net::Request& req) {
+    T t{};
+    reflection::fromJson(t,  co_await req.parseBody());
+    co_return t;
+}
+
 template <typename T, typename Body>
     requires (requires (Body const& body) {
         { (body.body) } -> std::convertible_to<std::string_view>;
@@ -83,7 +90,9 @@ void setVO(T const& t, Body& body) {
  * @param res 
  * @return auto& 
  */
-inline auto& setJsonSucceed(net::Response& res) noexcept {
+template <typename T>
+inline auto& setJsonSucceed(T&& data, net::Response& res) noexcept {
+    setVO(api::succeed<T>(std::forward<T>(data)), res);
     return res.setResLine(net::Status::CODE_200)
               .setContentType(net::JSON);
 }
@@ -93,7 +102,8 @@ inline auto& setJsonSucceed(net::Response& res) noexcept {
  * @param res 
  * @return auto& 
  */
-inline auto& setJsonError(net::Response& res) noexcept {
+inline auto& setJsonError(std::string msg, net::Response& res) noexcept {
+    setVO(api::error(std::move(msg)), res);
     return res.setResLine(net::Status::CODE_400)
               .setContentType(net::JSON);
 }

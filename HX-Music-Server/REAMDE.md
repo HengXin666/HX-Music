@@ -128,11 +128,17 @@ struct PlaylistDO {
 
 #### 2.1.2 上传音乐
 
-> 接口描述:
-- 请求方式: `GET`/...
-- 接口URL: `/`
-- 参数描述:
-- 返回值描述:
+> 接口描述: 初始化音乐任务
+- 请求方式: `POST`
+- 接口URL: `/music/upload/init`
+- 参数描述: 传递 JSON: 包含上传到的文件路径 (相对于`./file/music/`), 以及文件大小.
+- 返回值描述: `/music/upload/init` 获取到唯一的任务 ID (`pushId`)
+
+> 接口描述: 上传音乐, 可以获取上传进度, 以及缓存进度.
+- 请求方式: `POST` + WebSocket
+- 接口URL: `/music/upload/push/{pushId}`
+- 参数描述: `/music/upload/push/{pushId}` 通过任务id, 上传音乐文件.
+- 返回值描述: 内定; 包括进度
 
 #### 2.1.3 删除音乐
 

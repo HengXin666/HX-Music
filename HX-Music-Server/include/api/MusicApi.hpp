@@ -27,8 +27,11 @@
 
 #include <dao/MusicDAO.hpp>
 #include <pojo/vo/MusicVO.hpp>
+#include <pojo/vo/InitUploadFileTaskVO.hpp>
 #include <utils/DirFor.hpp>
 #include <utils/MusicInfo.hpp>
+#include <utils/Uuid.hpp>
+#include <utils/ThreadSafeMap.hpp>
 
 namespace HX {
 
@@ -36,8 +39,17 @@ namespace HX {
  * @brief 音乐播放 相关服务 API
  */
 HX_SERVER_API_BEGIN(MusicApi) {
+    struct MusicFileTask {
+        std::string path;
+        uint64_t fileSize;
+        std::chrono::system_clock time; // 任务创建时间
+        uint64_t nowOffset;             // 当前写入进度
+    };
     auto musicDAO 
         = dao::MemoryDAOPool::get<MusicDAO, "./file/db/music.db">();
+    auto musicUploadTaskMap
+        = std::make_shared<utils::ThreadSafeMap<
+            std::string, MusicFileTask>>();
     HX_ENDPOINT_BEGIN
         // 断点续传下载音乐
         .addEndpoint<GET, HEAD>("/music/download/{id}", [=] ENDPOINT {
@@ -54,10 +66,7 @@ HX_SERVER_API_BEGIN(MusicApi) {
                      "./file/music/"s += path
                 );
             }, [&] CO_FUNC {
-                api::setVO(api::error(
-                    "歌曲id不存在"
-                ), res);
-                co_await api::setJsonError(res).sendRes();
+                co_await api::setJsonError("歌曲id不存在", res).sendRes();
             });
         })
         // 扫描服务端音乐
@@ -105,20 +114,46 @@ HX_SERVER_API_BEGIN(MusicApi) {
                 MusicDAO::PrimaryKeyType id{};
                 reflection::fromJson(id, idStrView);
                 auto const& musicDO = musicDAO->at(id);
-                auto vo = api::succeed<MusicVO>({
+                co_await api::setJsonSucceed<MusicVO>({
                     musicDO.id,
                     musicDO.path,
                     musicDO.musicName,
                     musicDO.singers,
                     musicDO.musicAlbum,
                     musicDO.millisecondsLen
-                });
-                api::setVO(vo, res);
-                co_await api::setJsonSucceed(res).sendRes();
+                }, res).sendRes();
             }, [&] CO_FUNC {
-                api::setVO(api::error<MusicVO>("歌曲 ID 不存在"), res);
-                co_await api::setJsonError(res).sendRes();
+                co_await api::setJsonError("歌曲 ID 不存在", res).sendRes();
             });
+        })
+        // 初始化上传音乐任务
+        .addEndpoint<POST>("/music/upload/init", [=] ENDPOINT {
+            co_await api::coTryCatch([&] CO_FUNC {
+                auto vo = co_await api::getVO<InitUploadFileTaskVO>(req);
+                // 1. 验证路径是否存在该文件
+                std::filesystem::path filePath = "./file/music" / std::filesystem::path{vo.path};
+                if (std::filesystem::exists(filePath)) [[unlikely]] {
+                    if (std::filesystem::is_regular_file(filePath)) [[likely]] {
+                        co_return co_await api::setJsonError("文件已存在", res).sendRes();
+                    } else {
+                        co_return co_await api::setJsonError("路径被占用, 目标可能是文件夹", res).sendRes();
+                    }
+                }
+                // 2. 创建唯一id
+                std::string id;
+                do {
+                    id = utils::Uuid::makeV4();
+                } while (!musicUploadTaskMap->try_emplace(
+                    id, MusicFileTask{vo.path, vo.fileSize}
+                ));
+                co_return co_await api::setJsonSucceed<std::string>(std::move(id), res).sendRes();
+            }, [&] CO_FUNC {
+                co_return co_await api::setJsonError("数据非法", res).sendRes();
+            });
+        })
+        // 上传音乐主任务
+        .addEndpoint<POST>("/music/upload/push/{pushId}", [] ENDPOINT {
+            co_return ;
         })
     HX_ENDPOINT_END;
 } HX_SERVER_API_END;

@@ -17,6 +17,16 @@
 #include <model/PlaylistModel.hpp>
 
 int main(int argc, char* argv[]) {
+    HX::MusicApi::initUploadMusic(
+        "/mnt/anime/音乐/榊原ゆい - 刻司ル十二ノ盟約 (支配时间的十二盟约).flac",
+        "榊原ゆい - 刻司ル十二ノ盟約 (支配时间的十二盟约).flac"
+    ).thenTry([](HX::container::Try<std::string> t) {
+        if (!t) [[unlikely]] {
+            HX::log::hxLog.error(t.what());
+        }
+        HX::log::hxLog.info(t.move());
+    });
+    return 0;
     QGuiApplication app(argc, argv);
     QQmlApplicationEngine engine;
 

@@ -24,6 +24,7 @@
 #include <api/Api.hpp>
 
 #include <pojo/vo/MusicVO.hpp>
+#include <pojo/vo/InitUploadFileTaskVO.hpp>
 
 namespace HX {
 
@@ -31,6 +32,11 @@ namespace HX {
  * @brief 客户端 歌曲相关请求 API
  */
 struct MusicApi {
+    /**
+     * @brief 查询 指定歌曲id 的歌曲信息
+     * @param id 
+     * @return container::FutureResult<SongInformation> 
+     */
     static container::FutureResult<SongInformation> selectById(uint64_t id) {
         return NetSingleton::get().getReq("/music/info/" + std::to_string(id))
             .thenTry([](container::Try<net::ResponseData> t) -> SongInformation {
@@ -45,6 +51,32 @@ struct MusicApi {
                 return *std::move(jsonVO.data);
             }
         );
+    }
+
+    /**
+     * @brief 初始化上传音乐任务
+     * @param localPath 音乐的本地路径 (绝对路径)
+     * @param serverPath 服务器路径 (相对于`./file/music`)
+     * @return container::FutureResult<std::string> 
+     */
+    static container::FutureResult<std::string> initUploadMusic(
+        std::string_view localPath,
+        std::string serverPath
+    ) {
+        return NetSingleton::get().postReq<InitUploadFileTaskVO>("/music/upload/init", {
+            std::move(serverPath),
+            utils::FileUtils::getFileSize(localPath)
+        }).thenTry([](container::Try<net::ResponseData> t) {
+            if (!t) [[unlikely]] {
+                t.rethrow();
+            }
+            auto res = t.move();
+            auto jsonVO = api::getVO<vo::JsonVO<std::string>>(res);
+            if (jsonVO.isError()) [[unlikely]] {
+                throw std::runtime_error{std::move(jsonVO.msg)};
+            }
+            return *std::move(jsonVO.data);
+        });
     }
 };
 
