@@ -87,7 +87,7 @@ struct MusicApi {
      * @param uploadSpeed 上传速度, 单位: 字节 / 秒 (B/s)
      * @return container::FutureResult<> 
      */
-    static container::FutureResult<> uploadMusic(
+    static container::FutureResult<container::Try<>> uploadMusic(
         std::string localPath,
         std::string pushId,
         double* progress = nullptr,
@@ -101,7 +101,7 @@ struct MusicApi {
                 utils::AsyncFile file{ws.getIO()};
                 co_await file.open(_localPath, utils::OpenMode::Read);
                 std::vector<char> buf;
-                buf.resize(utils::FileUtils::kBufMaxSize);
+                buf.resize(1 << 22); // 4 MB
                 auto mae = std::chrono::system_clock::now();
                 std::size_t sum = 0;
                 for (;;) {
@@ -125,7 +125,7 @@ struct MusicApi {
                     if (progress) {
                         reflection::fromJson(*progress, progressStr);
                     }
-                    log::hxLog.debug("上传进度:", progressStr);
+                    log::hxLog.debug("上传进度:", progressStr, "(+add:", 1.0 * len / (1 << 20), "MB)");
                 }
                 // 同步进度
                 auto progressStr = co_await ws.recvText();

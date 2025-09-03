@@ -74,6 +74,11 @@ public:
         return _mp.try_emplace(std::forward<Args>(args)...).second;
     }
 
+    iterator erase(iterator it) {
+        std::unique_lock _{_mtx};
+        return _mp.erase(it);
+    }
+
     ThreadSafeMap& operator=(ThreadSafeMap&&) noexcept = delete;
 };
 

@@ -145,6 +145,6 @@ int main() {
     api::addApi<MusicApi>(server);
     api::addApi<PlaylistApi>(server);
     api::addApi<CoverApi>(server);
-    server.syncRun();
+    server.syncRun<decltype(utils::operator""_s<"600">())>(16, {});
     return 0;
 }

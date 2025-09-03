@@ -57,7 +57,10 @@ struct NetSingleton {
     template <typename Lambda>
         requires(std::is_same_v<std::invoke_result_t<Lambda, net::WebSocketClient>, coroutine::Task<>>)
     auto wsReq(std::string url, Lambda&& lambda) {
-        return _client.wsLoop(std::move(url), std::forward<Lambda>(lambda));
+        auto removeHttp = _backendUrl;
+        auto _url = "ws" + removeHttp.substr(removeHttp.find("http") + sizeof("http") - 1) + std::move(url);
+        log::hxLog.debug("ws -> get:", _url);
+        return _client.wsLoop(std::move(_url), std::forward<Lambda>(lambda));
     }
 
     std::string const& getBackendUrl() const noexcept {

@@ -49,6 +49,37 @@ HX_SERVER_API_BEGIN(MusicApi) {
     };
     auto musicDAO 
         = dao::MemoryDAOPool::get<MusicDAO, "./file/db/music.db">();
+
+    /**
+     * @brief 扫描音乐信息, 并且保存到数据库.
+     */
+    auto saveMusicInfo = [=](
+        std::string path,                       // 相对于 ./file/music 的路径
+        const std::filesystem::path& fullPath,  // path 加上 ./file/music 的路径
+        coroutine::EventLoop& loop              // 一个新建的事件循环, 不应该为 res/req .getIO!
+    ) {
+        log::hxLog.info("新增歌曲:", path);
+        MusicInfo info{fullPath};
+        auto imgOpt = info.getAlbumArtAdvanced();
+        auto const& dao = musicDAO->add<MusicDO>({
+            {},
+            std::move(path),
+            info.getTitle(),
+            info.getArtistList(),
+            info.getAlbum(),
+            static_cast<uint64_t>(info.getLengthInMilliseconds()),
+            imgOpt ? imgOpt->type : ""
+        });  
+        if (imgOpt) {
+            auto img = *imgOpt;
+            utils::AsyncFile file{loop};
+            file.syncOpen(
+                "./file/cover/" + std::to_string(dao.id) + std::move(img.type)
+            );
+            file.syncWrite(img.buf);
+            file.syncClose();
+        }
+    };
     auto musicUploadTaskMap
         = std::make_shared<utils::ThreadSafeMap<
             std::string, MusicFileTask>>();
@@ -80,27 +111,7 @@ HX_SERVER_API_BEGIN(MusicApi) {
                 std::string path = relativePath.string();
                 std::filesystem::path fullPath = std::filesystem::path{"./file/music"} / relativePath;
                 if (!std::filesystem::is_directory(fullPath) && !musicDAO->isExist(path)) {
-                    log::hxLog.info("新增歌曲:", path);
-                    MusicInfo info{fullPath};
-                    auto imgOpt = info.getAlbumArtAdvanced();
-                    auto const& dao = musicDAO->add<MusicDO>({
-                        {},
-                        std::move(path),
-                        info.getTitle(),
-                        info.getArtistList(),
-                        info.getAlbum(),
-                        static_cast<uint64_t>(info.getLengthInMilliseconds()),
-                        imgOpt ? imgOpt->type : ""
-                    });  
-                    if (imgOpt) {
-                        auto img = *imgOpt;
-                        utils::AsyncFile file{loop};
-                        file.syncOpen(
-                            "./file/cover/" + std::to_string(dao.id) + std::move(img.type)
-                        );
-                        file.syncWrite(img.buf);
-                        file.syncClose();
-                    }
+                    saveMusicInfo(std::move(path), fullPath, loop);
                     ++cnt;
                 }
             });
@@ -177,8 +188,9 @@ HX_SERVER_API_BEGIN(MusicApi) {
             });
         })
         // 上传音乐主任务
-        .addEndpoint<POST>("/music/upload/push/{pushId}", [=] ENDPOINT {
+        .addEndpoint<WS>("/music/upload/push/{pushId}", [=] ENDPOINT {
             using namespace std::string_literals;
+            log::hxLog.debug("ws: ", req.getReqPath());
             auto [it, end] = musicUploadTaskMap->find(req.getPathParam(0));
             if (it == end) {
                 co_return co_await api::setJsonError(
@@ -212,6 +224,15 @@ HX_SERVER_API_BEGIN(MusicApi) {
                 // 客户端ws断开了
                 *task.atWork = false;
             }
+            // 任务完成, 重命名文件
+            std::filesystem::path filePath
+                    = "./file/music" / std::filesystem::path{task.path};
+            std::filesystem::rename(tmpFilePath, filePath);
+            // 刮削到数据库
+            coroutine::EventLoop loop;
+            saveMusicInfo(std::move(task.path), filePath, loop);
+            // 删除任务
+            musicUploadTaskMap->erase(it);
             co_await ws.close();
             co_return ;
         })
