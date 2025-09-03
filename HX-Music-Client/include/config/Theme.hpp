@@ -55,6 +55,9 @@ private:                                                                       \
 #define HX_QML_QCOLOR_PROPERTY(name, defaultValue)                             \
     HX_QML_TYPE_PROPERTY(QColor, name, defaultValue)
 
+/**
+ * @brief 主题配置
+ */
 class Theme : public QObject {
     Q_OBJECT
 public:

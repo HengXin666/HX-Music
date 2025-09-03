@@ -18,8 +18,12 @@
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <QTimer>
+
 #include <singleton/SignalBusSingleton.h>
 #include <singleton/GlobalSingleton.hpp>
+#include <singleton/ImagePool.h>
+#include <cmd/MusicCommand.hpp>
 #include <api/PlaylistApi.hpp>
 
 #include <HXLibs/utils/FileUtils.hpp>
@@ -102,6 +106,28 @@ public:
         // === init ===
         // 加载配置歌单
         loadPlaylistById(GlobalSingleton::get().musicConfig.playlistId);
+        // 显示上次加载的歌曲
+        QTimer::singleShot(0, this, [this] {
+            auto idx = GlobalSingleton::get().musicConfig.listIndex;
+            if (idx == -1) {
+                return;
+            }
+            if (!GlobalSingleton::get().musicConfig.playlistId) {
+                auto path = QString::fromStdString(
+                    GlobalSingleton::get().playlist.songList[idx].path);
+                MusicInfo musicInfo{QFileInfo{path}};
+                if (auto img = musicInfo.getAlbumArtAdvanced()) {
+                    ImagePoll::get()->add(path, img->toImage());
+                }
+                // 本地歌曲
+                MusicCommand::switchMusic<false, true>(path);
+            } else {
+                // 网络加载
+                MusicCommand::switchMusic<false, true>(
+                    QString{"%1"}.arg(GlobalSingleton::get().playlist.songList[idx].id)
+                );
+            }
+        });
     }
 
     /**

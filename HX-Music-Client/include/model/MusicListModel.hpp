@@ -336,7 +336,7 @@ public:
     }
 
     /**
-     * @brief 保存歌单接口
+     * @brief 保存歌单接口, 仅本地歌单
      * @return Q_INVOKABLE 
      */
     Q_INVOKABLE void savePlaylist() {

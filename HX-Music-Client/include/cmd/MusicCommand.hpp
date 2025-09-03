@@ -35,7 +35,7 @@ struct MusicCommand {
      * @brief 切换音乐, 并且播放
      * @param it 
      */
-    template <bool IsAddQueue = true>
+    template <bool IsAddQueue = true, bool IsStop = false>
     static void switchMusic(PlayQueue::Type path) {
         // @todo 如果是网络, 则先播放网络的, 同时再下载本地的; 本地下载完成了, 就切换为本地播放.
         if constexpr (IsAddQueue) {
@@ -60,6 +60,9 @@ struct MusicCommand {
                                 std::to_string(id)
                             )}
                         ).play();
+                        if constexpr (IsStop) {
+                            pause();
+                        }
                     }, Qt::QueuedConnection);
                 } else {
                     log::hxLog.error("播放失败: 请求错误:", t.what());
@@ -71,6 +74,9 @@ struct MusicCommand {
             Q_EMIT SignalBusSingleton::get().newSongLoaded(&musicInfo);
             GlobalSingleton::get().music.setLengthInMilliseconds(musicInfo.getLengthInMilliseconds());
             GlobalSingleton::get().music.switchMusic(musicInfo.filePath()).play();
+            if constexpr (IsStop) {
+                pause();
+            }
         }
     }
 

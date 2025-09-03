@@ -216,7 +216,7 @@ HX_SERVER_API_BEGIN(MusicApi) {
                     task.nowOffset += buf.size();
                     // 完成百分比
                     co_await ws.sendText(
-                        log::internal::FormatZipString{}.make<double, 3>(
+                        log::internal::FormatZipString{}.make<double, 5>(
                             static_cast<double>(task.nowOffset) / static_cast<double>(task.fileSize)
                     ));
                 }

@@ -58,7 +58,9 @@ struct NetSingleton {
         requires(std::is_same_v<std::invoke_result_t<Lambda, net::WebSocketClient>, coroutine::Task<>>)
     auto wsReq(std::string url, Lambda&& lambda) {
         auto removeHttp = _backendUrl;
-        auto _url = "ws" + removeHttp.substr(removeHttp.find("http") + sizeof("http") - 1) + std::move(url);
+        auto _url = "ws"
+            + removeHttp.substr(removeHttp.find("http") + sizeof("http") - 1)
+            + std::move(url);
         log::hxLog.debug("ws -> get:", _url);
         return _client.wsLoop(std::move(_url), std::forward<Lambda>(lambda));
     }
@@ -68,13 +70,17 @@ struct NetSingleton {
     }
 
 private:
-    /// @brief 后端 URL
+    /// @brief 后端 URL, 必须以 http 开头
     std::string _backendUrl{"http://127.0.0.1:28205"};
 
     /// @brief Http 客户端
-    decltype(net::HttpClient{net::HttpClientOptions<
-        decltype(utils::operator""_s<"600">())>{}}) _client{
-        net::HttpClientOptions<decltype(utils::operator""_s<"600">())>{}, 4
+    decltype(net::HttpClient{
+        // net::HttpClientOptions<
+        // decltype(utils::operator""_s<"600">())>{}
+    }) _client{
+        net::HttpClientOptions<
+            // decltype(utils::operator""_s<"600">())
+        >{}, 4
     };
 
     NetSingleton() = default;
