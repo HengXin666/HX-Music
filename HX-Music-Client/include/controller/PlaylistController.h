@@ -45,40 +45,24 @@ public:
             &SignalBusSingleton::loadPlaylistSignal,
             this,
             [this](uint64_t id) {
-                GlobalSingleton::get().playlist = {};
-                if (id == Playlist::kLocalPlaylist) {
-                    // 加载本地
-                    try {
-                        coroutine::EventLoop loop;
-                        utils::AsyncFile file{loop};
-                        std::string json;
-                        file.syncOpen("./localPlaylist.json", platform::OpenMode::Read);
-                        json = file.syncReadAll();
-                        file.syncClose();
-                        reflection::fromJson(GlobalSingleton::get().playlist, json);
-                    } catch (...) {
-                        GlobalSingleton::get().playlist = {
-                            Playlist::kLocalPlaylist,
-                            "本地歌单",
-                            {}
-                        };
+                GlobalSingleton::get().guiPlaylist = {};
+                log::hxLog.info("网络: 请求歌单", id);
+                if (id == Playlist::kNonePlaylist) {
+                    return;
+                }
+                PlaylistApi::selectById(id).thenTry([=](container::Try<Playlist> t){
+                    if (!t) [[unlikely]] {
+                        GlobalSingleton::get().guiPlaylist = {};
+                        log::hxLog.error("请求歌单错误:", t.what());
+                    } else {
+                        GlobalSingleton::get().guiPlaylist = t.move();
+                    }
+                    if (id == GlobalSingleton::get().musicConfig.playlistId) {
+                        GlobalSingleton::get().nowPlaylist = GlobalSingleton::get().guiPlaylist;
                     }
                     // 发送更新歌单信号
                     Q_EMIT SignalBusSingleton::get().playlistChanged(id);
-                } else {
-                    // @todo 网络
-                    log::hxLog.info("网络: 请求歌单", id);
-                    PlaylistApi::selectById(id).thenTry([=](container::Try<Playlist> t){
-                        if (!t) [[unlikely]] {
-                            GlobalSingleton::get().playlist = {};
-                            log::hxLog.error("请求歌单错误:", t.what());
-                        } else {
-                            GlobalSingleton::get().playlist = t.move();
-                        }
-                        // 发送更新歌单信号
-                        Q_EMIT SignalBusSingleton::get().playlistChanged(id);
-                    });
-                }
+                });
             });
         
         // 保存歌单
@@ -87,20 +71,9 @@ public:
             &SignalBusSingleton::savePlaylistSignal,
             this,
             [this]() {
-            auto& playlist = GlobalSingleton::get().playlist;
-            if (playlist.id == Playlist::kLocalPlaylist) {
-                // 保存本地
-                coroutine::EventLoop loop;
-                utils::AsyncFile file{loop};
-                file.syncOpen("./localPlaylist.json");
-                std::string json;
-                reflection::toJson<true>(playlist, json);
-                file.syncWrite(json);
-                file.syncClose();
-            } else {
-                // @todo 网络
-                log::hxLog.warning("网络版本没有实现!, ErrId:", playlist.id);
-            }
+            auto& playlist = GlobalSingleton::get().guiPlaylist;
+            // @todo 网络
+            log::hxLog.warning("网络版本没有实现!, ErrId:", playlist.id);
         });
 
         // === init ===
@@ -112,21 +85,10 @@ public:
             if (idx == -1) {
                 return;
             }
-            if (!GlobalSingleton::get().musicConfig.playlistId) {
-                auto path = QString::fromStdString(
-                    GlobalSingleton::get().playlist.songList[idx].path);
-                MusicInfo musicInfo{QFileInfo{path}};
-                if (auto img = musicInfo.getAlbumArtAdvanced()) {
-                    ImagePoll::get()->add(path, img->toImage());
-                }
-                // 本地歌曲
-                MusicCommand::switchMusic<false, true>(path);
-            } else {
-                // 网络加载
-                MusicCommand::switchMusic<false, true>(
-                    QString{"%1"}.arg(GlobalSingleton::get().playlist.songList[idx].id)
-                );
-            }
+            // 网络加载
+            MusicCommand::switchMusic<false, true>(
+                QString{"%1"}.arg(GlobalSingleton::get().nowPlaylist.songList[idx].id)
+            );
         });
     }
 

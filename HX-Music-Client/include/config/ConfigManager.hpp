@@ -58,7 +58,7 @@ public:
                 100,
                 PlayMode::ListLoop,
                 0,
-                Playlist::kLocalPlaylist,
+                Playlist::kNonePlaylist,
                 -1,
                 false
             };

@@ -118,13 +118,13 @@ BorderlessWindow {
                         if (index == 1) {
                             // @todo 我的收藏
                         } else if (index == 2) {
-                            PlaylistController.loadPlaylistById(0);
+                            // @todo 上传列表
                         }
                     }
 
                     onPlayListClicked: function (id: int) {
                         console.log("点击了歌单:", id);
-                        stackView.currentIndex = 2;
+                        stackView.currentIndex = 3;
                         PlaylistController.loadPlaylistById(id);
                     }
                 }
@@ -144,6 +144,7 @@ BorderlessWindow {
                         }
                     }
                     Rectangle { color: "#d0eaff" }
+                    Rectangle { color: "#7e0b3f6a" }
                     Rectangle {
                         color: "transparent"
                         MusicListView {

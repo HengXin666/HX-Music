@@ -98,7 +98,7 @@ public:
             &SignalBusSingleton::newSongLoaded,
             this,
             [this](MusicInformation* info) {
-                if (GlobalSingleton::get().musicConfig.playlistId == Playlist::kLocalPlaylist) {
+                if (GlobalSingleton::get().musicConfig.playlistId == Playlist::kNonePlaylist) {
                     auto path = findLyricFile(info->filePath());
                     auto data = utils::FileUtils::getFileContent(path);
                     _assParse = preprocessLyricBoundingBoxes(

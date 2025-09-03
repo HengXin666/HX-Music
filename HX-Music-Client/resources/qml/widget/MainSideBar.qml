@@ -69,8 +69,8 @@ Item {
 
                 // 本地下载
                 SidebarItem {
-                    icon: "qrc:/icons/download.svg"
-                    text: "本地下载"
+                    icon: "qrc:/icons/upload.svg"
+                    text: "上传列表"
                     isSelected: root.currentIndex === 2
                     onClicked: {
                         createdPlayListView.resetIndex();

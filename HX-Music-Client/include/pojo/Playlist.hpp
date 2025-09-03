@@ -29,7 +29,7 @@ namespace HX {
  * @brief 歌单
  */
 struct Playlist {
-    inline static constexpr uint64_t kLocalPlaylist = 0;
+    inline static constexpr uint64_t kNonePlaylist = 0; // 未选择歌单
 
     uint64_t id;                    // 歌单id (唯一), 定义本地歌单为默认, 为 `0`
     std::string name;               // 歌单名称

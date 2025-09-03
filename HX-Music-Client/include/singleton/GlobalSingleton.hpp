@@ -41,8 +41,11 @@ struct GlobalSingleton {
     /// @brief 音频配置 (播放状态)
     MusicConfig musicConfig{};
 
-    /// @brief 当前加载的歌单
-    Playlist playlist{};
+    /// @brief 当前渲染的歌单
+    Playlist guiPlaylist{};
+
+    /// @brief 当前播放的歌单, 歌单id: 永远等于 musicConfig.playlistId
+    Playlist nowPlaylist{};
 
     /// @brief 音频播放实例
     MusicPlayer music{};

@@ -146,7 +146,7 @@ public:
             &SignalBusSingleton::playlistChanged,
             this,
             [this](uint64_t id) {
-            auto& playlist = GlobalSingleton::get().playlist;
+            auto& playlist = GlobalSingleton::get().guiPlaylist;
             clear();
             _isActiveUpdate = true;
             _isNet = playlist.id != 0;
@@ -308,7 +308,7 @@ public:
     ) {
         if (!_isActiveUpdate && !_isNet) {
             // 非主动更新, 即用户更新! 主动更新是对于本类来说的        
-            GlobalSingleton::get().playlist.songList.push_back({
+            GlobalSingleton::get().guiPlaylist.songList.push_back({
                 0,
                 url.toStdString(),
                 title.toStdString(),
@@ -340,7 +340,7 @@ public:
      * @return Q_INVOKABLE 
      */
     Q_INVOKABLE void savePlaylist() {
-        decltype(GlobalSingleton::get().playlist.songList) newSongList;
+        decltype(GlobalSingleton::get().guiPlaylist.songList) newSongList;
         newSongList.reserve(_musicArr.size());
         for (auto const& it : _musicArr) {
             newSongList.push_back({
@@ -357,7 +357,7 @@ public:
                 it.album.toStdString()
             });
         }
-        GlobalSingleton::get().playlist.songList = std::move(newSongList);
+        GlobalSingleton::get().guiPlaylist.songList = std::move(newSongList);
         Q_EMIT SignalBusSingleton::get().savePlaylistSignal();
     }
 
