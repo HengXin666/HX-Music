@@ -4,7 +4,7 @@
 
 #include <singleton/SignalBusSingleton.h>
 #include <singleton/GlobalSingleton.hpp>
-#include <singleton/ImagePool.h>
+#include <singleton/OnlineImagePoll.h>
 #include <controller/LyricController.h>
 #include <controller/MusicController.h>
 #include <controller/PlaylistController.h>
@@ -102,8 +102,8 @@ struct MusicClient {
         // 注册img链接: image://svgColored
         _engine.addImageProvider("svgColored", new HX::QmlSvgPars); // 内部会释放!
 
-        // 注册img链接: image://imgPool
-        _engine.addImageProvider("imgPool", HX::ImagePoll::get()); // 内部会释放!
+        // 注册img链接: image://onlineImagePoll
+        _engine.addImageProvider("onlineImagePoll", HX::OnlineImagePoll::get()); // 内部会释放!
 
         // 应该使用 _ 和 [0-9a-Z], 不能使用`-`
         _engine.loadFromModule("HX.Music", "Main");

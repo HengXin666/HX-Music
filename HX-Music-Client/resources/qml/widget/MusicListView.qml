@@ -165,8 +165,9 @@ Item {
                             color: delegateRoot.isSelected ? Theme.highlightingColor : Theme.textColor
                             Image {
                                 anchors.fill: parent
-                                source: `image://imgPool/${delegateRoot.model.url}`
+                                source: `image://onlineImagePoll/${delegateRoot.model.id}`
                                 fillMode: Image.PreserveAspectCrop
+                                asynchronous: true
                             }
                         }
 

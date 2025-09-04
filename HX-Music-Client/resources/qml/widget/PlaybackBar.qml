@@ -43,6 +43,7 @@ ProgressBarRect {
                 Image {
                     source: cover.url
                     visible: cover.url != "qrc:/icons/audio.svg"
+                    asynchronous: true
 
                     anchors.fill: parent
                     anchors.centerIn: parent
@@ -276,7 +277,7 @@ ProgressBarRect {
             title.itemData = dataList;
 
             // 更新封面
-            cover.url = `image://imgPool/${song.filePath()}`;
+            cover.url = `image://onlineImagePoll/${song.getId()}`;
 
             // 更新时长
             musicLengthText.text = musicProgressBarLayout.formatTime(song.getLengthInMilliseconds() / 1000);

@@ -23,8 +23,6 @@
 #include <pojo/SongInformation.hpp>
 #include <utils/MusicInfo.hpp>
 
-#include <HXLibs/log/Log.hpp> // debug
-
 namespace HX {
 
 class MusicInformation : public QObject, private SongInformation {
@@ -66,10 +64,6 @@ public:
             }()
         }
     {}
-
-    ~MusicInformation() noexcept {
-        log::hxLog.warning("RAII: MusicInformation");
-    }
 
     MusicInformation(const HX::MusicInformation& that)
         : MusicInformation{
@@ -126,6 +120,14 @@ public:
 
     Q_INVOKABLE QString filePath() const {
         return QString::fromStdString(path);
+    }
+
+    /**
+     * @brief 获取歌曲id, 可以通过id请求获取封面
+     * @return Q_INVOKABLE 
+     */
+    Q_INVOKABLE uint64_t getId() const {
+        return id;
     }
 private:
     QPixmap _img; // 封面

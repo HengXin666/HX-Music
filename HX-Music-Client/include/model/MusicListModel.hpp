@@ -21,7 +21,6 @@
 #include <QAbstractListModel>
 #include <cmd/MusicCommand.hpp>
 #include <utils/MusicInfo.hpp>
-#include <singleton/ImagePool.h>
 #include <singleton/GlobalSingleton.hpp>
 #include <singleton/SignalBusSingleton.h>
 
@@ -38,6 +37,7 @@ class MusicListModel : public QAbstractListModel {
         AlbumRole,
         DurationRole,
         UrlRole,
+        IdRole
     };
 
     struct MusicInfoData {
@@ -149,15 +149,8 @@ public:
             auto& playlist = GlobalSingleton::get().guiPlaylist;
             clear();
             _isActiveUpdate = true;
-            _isNet = playlist.id != 0;
-            if (_isNet) {
-                for (auto const& songData : playlist.songList) {
-                    addFromNet(songData);
-                }
-            } else {            
-                for (auto const& songData : playlist.songList) {
-                    addFromPath(QString::fromStdString(songData.path));
-                }
+            for (auto const& songData : playlist.songList) {
+                addFromNet(songData);
             }
             _isActiveUpdate = false;
             _id = id;
@@ -180,6 +173,7 @@ public:
         case AlbumRole: return music.album;
         case DurationRole: return music.duration;
         case UrlRole: return music.url;
+        case IdRole: return QString{"%1"}.arg(music.id);
         default: return {};
         }
     }
@@ -191,6 +185,7 @@ public:
             { AlbumRole, "album" },
             { DurationRole, "duration" },
             { UrlRole, "url" },
+            { IdRole, "id" },
         };
     }
 
@@ -262,23 +257,21 @@ public:
      * @return Q_INVOKABLE 
      */
     Q_INVOKABLE QString getUrl(int row) const {
-        return _isNet 
-            ? QString{"%1"}.arg(_musicArr[row].id)
-            : _musicArr[row].url;
+        return QString{"%1"}.arg(_musicArr[row].id);
     }
 
     Q_INVOKABLE void addFromPath(QString const& path) {
-        MusicInfo musicInfo{QFileInfo{path}};
-        addMusic(
-            musicInfo.getTitle(),
-            musicInfo.getArtistList(),
-            musicInfo.getAlbum(),
-            QString{"%1"}.arg(musicInfo.getLengthInSeconds()),
-            path
-        );
-        if (auto img = musicInfo.getAlbumArtAdvanced()) {
-            ImagePoll::get()->add(path, img->toImage());
-        }
+        // MusicInfo musicInfo{QFileInfo{path}};
+        // addMusic(
+        //     musicInfo.getTitle(),
+        //     musicInfo.getArtistList(),
+        //     musicInfo.getAlbum(),
+        //     QString{"%1"}.arg(musicInfo.getLengthInSeconds()),
+        //     path
+        // );
+        // if (auto img = musicInfo.getAlbumArtAdvanced()) {
+        //     OnlineImagePoll::get()->add(path, img->toImage());
+        // }
     }
 
     void addFromNet(SongInformation const& songInfo) {
@@ -306,7 +299,8 @@ public:
         QString const& url,
         uint64_t id = 0
     ) {
-        if (!_isActiveUpdate && !_isNet) {
+        // @todo 待验证
+        if (!_isActiveUpdate) {
             // 非主动更新, 即用户更新! 主动更新是对于本类来说的        
             GlobalSingleton::get().guiPlaylist.songList.push_back({
                 0,
@@ -376,7 +370,6 @@ private:
     QVector<MusicInfoData> _musicArr{};
     uint64_t _id = 0; // 当前歌单id
     bool _isActiveUpdate = false;
-    bool _isNet = false; // 当前歌单是否为网络歌单
 };
 
 } // namespace HX

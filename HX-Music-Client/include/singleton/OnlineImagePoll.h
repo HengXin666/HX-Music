@@ -20,24 +20,32 @@
 #ifndef _HX_IMAGE_POOL_H_
 #define _HX_IMAGE_POOL_H_
 
+#include <QCoreApplication>
+#include <QQmlApplicationEngine>
 #include <QQuickImageProvider>
 #include <QHash>
 
+#include <api/CoverApi.hpp>
+
 namespace HX {
 
-class ImagePoll : public QQuickImageProvider {
+/**
+ * @brief 网络图片池 [封面]
+ *  - 纯数字就是歌曲封面
+ */
+class OnlineImagePoll : public QQuickImageProvider {
     Q_OBJECT
 
-    ImagePoll()
+    OnlineImagePoll()
         : QQuickImageProvider{QQuickImageProvider::Image}
         , _noFindImg{":/icons/audio.svg"}
         , _imgPool{}
     {}
 
-    ImagePoll& operator=(ImagePoll&&) noexcept = delete;
+    OnlineImagePoll& operator=(OnlineImagePoll&&) noexcept = delete;
 public:
-    static ImagePoll* get() noexcept {
-        static auto* s = new ImagePoll; // 由 qml 释放
+    static OnlineImagePoll* get() noexcept {
+        static auto* s = new OnlineImagePoll; // 由 qml 释放
         return s;
     }
 
@@ -48,6 +56,25 @@ public:
     ) override {
         auto it = _imgPool.find(id);
         if (it == _imgPool.end()) {
+            bool ok = false;
+            auto uint64Id = id.toULongLong(&ok);
+            if (ok) [[likely]] {
+                // 请求封面
+                return CoverApi::getCoverImg(uint64Id)
+                    .thenTry([this, _idStr = id](container::Try<QImage> t) {
+                        if (!t) [[unlikely]] {
+                            log::hxLog.error("封面失败:", t.what());
+                            return _noFindImg;
+                        }
+                        auto res = t.get();
+                        QMetaObject::invokeMethod(
+                            QCoreApplication::instance(),
+                            [&]{
+                            add(_idStr, t.move());
+                        });
+                        return res;
+                    }).get();
+            }
             return _noFindImg;
         }
         auto& res = it.value();

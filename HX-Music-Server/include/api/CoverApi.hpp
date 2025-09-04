@@ -35,10 +35,12 @@ HX_SERVER_API_BEGIN(CoverApi) {
             MusicDAO::PrimaryKeyType id{};
             co_await api::coTryCatch([&] CO_FUNC {
                 reflection::fromJson(id, idStrView);
+                log::hxLog.debug("封面发送中...", id);
                 co_await res.useRangeTransferFile(
                     req.getRangeRequestView(),
                     "./file/cover/" + std::to_string(id) + musicDAO->at(id).coverSuffix
                 );
+                log::hxLog.debug("封面发送完成!", id);
             }, [&] CO_FUNC {
                 co_await api::setJsonError("歌曲id不存在 或者 路径错误", res).sendRes();
             });

@@ -22,7 +22,7 @@
 
 #include <singleton/SignalBusSingleton.h>
 #include <singleton/GlobalSingleton.hpp>
-#include <singleton/ImagePool.h>
+#include <singleton/OnlineImagePoll.h>
 #include <cmd/MusicCommand.hpp>
 #include <api/PlaylistApi.hpp>
 
@@ -57,8 +57,14 @@ public:
                     } else {
                         GlobalSingleton::get().guiPlaylist = t.move();
                     }
+                    // 活动歌单
                     if (id == GlobalSingleton::get().musicConfig.playlistId) {
-                        GlobalSingleton::get().nowPlaylist = GlobalSingleton::get().guiPlaylist;
+                        auto& maePlaylist = GlobalSingleton::get().nowPlaylist;
+                        // 活动歌单更新了, 析构之前保存的图片
+                        for (auto&& it : maePlaylist.songList) {
+                            OnlineImagePoll::get()->erase(QString{"%1"}.arg(it.id));
+                        }
+                        maePlaylist = GlobalSingleton::get().guiPlaylist;
                     }
                     // 发送更新歌单信号
                     Q_EMIT SignalBusSingleton::get().playlistChanged(id);

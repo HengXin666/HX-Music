@@ -21,7 +21,6 @@
 #include <QAbstractListModel>
 #include <cmd/MusicCommand.hpp>
 #include <utils/MusicInfo.hpp>
-#include <singleton/ImagePool.h>
 #include <singleton/GlobalSingleton.hpp>
 #include <singleton/SignalBusSingleton.h>
 
