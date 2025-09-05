@@ -37,9 +37,12 @@ struct CoverApi {
                 log::hxLog.info("imgRes:", t.get().headers);
                 QImage res{};
                 auto imgBuf = std::move(t.move().body); 
-                res.loadFromData(QByteArrayView{
-                    imgBuf.data(), static_cast<qint64>(imgBuf.size())});
-                return res;
+                if (res.loadFromData(QByteArrayView{
+                    imgBuf.data(), static_cast<qint64>(imgBuf.size())})) {
+                        return res;
+                } else {
+                    throw std::runtime_error{"QT: SB IMG"};
+                }
             });
     }
 };

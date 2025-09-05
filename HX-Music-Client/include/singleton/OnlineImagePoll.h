@@ -69,8 +69,8 @@ public:
                         auto res = t.get();
                         QMetaObject::invokeMethod(
                             QCoreApplication::instance(),
-                            [&]{
-                            add(_idStr, t.move());
+                            [this, idStr = std::move(_idStr), img = t.move()]() mutable {
+                            add(idStr, std::move(img));
                         });
                         return res;
                     }).get();
