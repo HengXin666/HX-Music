@@ -75,6 +75,15 @@ T getVO(Body const& body) {
     return t;
 }
 
+template <typename Body>
+    requires (requires (Body const& body) {
+        { (body.body) } -> std::convertible_to<std::string_view>;
+    })
+inline void throwVoMsg(Body&& body) {
+    auto vo = api::getVO<vo::JsonVO<std::string>>(std::forward<Body>(body));
+    throw std::runtime_error{std::move(vo.msg)};
+}
+
 template <typename T, typename Body>
     requires (requires (Body& body, std::string s) {
         { body.setBody(std::move(s)) };

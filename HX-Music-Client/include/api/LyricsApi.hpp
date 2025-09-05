@@ -18,8 +18,6 @@
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <QImage>
-
 #include <singleton/NetSingleton.hpp>
 
 #include <api/Api.hpp>
@@ -27,26 +25,23 @@
 namespace HX {
 
 /**
- * @brief 歌曲封面相关请求 API
+ * @brief 歌词相关 API
  */
-struct CoverApi {
-    static container::FutureResult<QImage> getCoverImg(uint64_t id) {
-        return NetSingleton::get().getReq("/cover/select/" + std::to_string(id))
+struct LyricsApi {
+    /**
+     * @brief 获取 ASS 歌词
+     * @param id 歌曲id
+     * @return container::FutureResult<std::string> 
+     */
+    static container::FutureResult<std::string> getAssLyrics(uint64_t id) {
+        return NetSingleton::get().getReq("/lyrics/ass/select/" + std::to_string(id))
             .thenTry([](container::Try<net::ResponseData> t) {
                 if (!t) [[unlikely]] {
                     t.rethrow();
                 } else if (t.get().status != 200) [[unlikely]] {
                     api::throwVoMsg(t.move());
                 }
-                log::hxLog.info("imgRes:", t.get().headers);
-                QImage res{};
-                auto imgBuf = std::move(t.move().body); 
-                if (res.loadFromData(QByteArrayView{
-                    imgBuf.data(), static_cast<qint64>(imgBuf.size())})) {
-                        return res;
-                } else {
-                    throw std::runtime_error{"QT: SB IMG"};
-                }
+                return t.move().body;
             });
     }
 };

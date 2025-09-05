@@ -1,11 +1,15 @@
-from src.mark.AssMark import AssMark
-
 import re
+from pathlib import Path
 from typing import Any, Callable, List
 
 import ass
 
+from src.mark.AssMark import AssMark
+from src.lddcCmd.localMatcAss import localMatcAss
+from src.utils.callLua import callApplyKaraokeTemplateLua, callSetKaraokeStyleLua
+
 def _addSy01(styles: List[ass.document.Style]) -> List[ass.document.Style]:
+    # 添加样式
     def makeStyle(name: str, font: str, size: int,
                   primary: str, secondary: str,
                   outline: str, back: str,
@@ -101,6 +105,7 @@ def addParsedComments(list: List[Any], lines: List[str]) -> List[Any]:
 
 
 def _addTx01(list: List[Any]) -> List[Any]:
+    # karaok函数
     lines = [
         r"Comment: 0,0:00:00.00,0:00:00.00,K1,,0,0,0,code once,line_strech = 0.7; colors = {{'&HFFFFFF&','&H080808&','&H0000B4&','&HFFFFFF&'},}; prevline = {}; line_count = 0",
         r'Comment: 0,0:00:00.00,0:00:00.00,K1,,0,0,0,code line all,line_count = line_count + 1; is_second_line = (line_count % 2 == 0); base_y = is_second_line and 650 or 439; x = 100; y = base_y',
@@ -115,34 +120,79 @@ def _addTx01(list: List[Any]) -> List[Any]:
     ]
     return addParsedComments(list, lines)
 
-# 把 Dialogue 变为 Comment, Effect 写 karaoke
 
-def lddcAssToKaraokeAss(inFile: str, outFile: str):
-    with open(inFile, "r", encoding="utf_8_sig") as f:
-        doc = ass.parse(f)
-
-    assMark = AssMark()
-    doc.styles = _addSy01(doc.styles)
+class KaRaOKAss:
+    """卡拉ok Ass 相关操作类"""
+    def __init__(self) -> None:
+        self._assMark = AssMark()
     
-    newEvents = _addTx01([])
-    flag: bool = True
-    for evt in doc.events:
-        # 只处理 Dialogue, 且包含 \k 或 \kf 的
-        if evt.TYPE == "Dialogue" and ("\\k" in evt.text or "\\kf" in evt.text):
-            evt.TYPE = "Comment"
-            evt.effect = "karaoke"
-            evt.text = assMark.mark(evt.text)
-            flag = not flag
-        newEvents.append(evt)
+    def _lddcAssToKaraokeAss(self, inFile: str, outFile: str):
+        """进行日语注音
 
-    doc.info['PlayResX'] = 1920
-    doc.info['PlayResY'] = 1080
-    doc.events = newEvents
-    with open(outFile, "w", encoding="utf_8_sig") as f:
-        # 手动加注释行
-        f.write("; HX-Music - PyTool: https://github.com/HengXin666/HX-Music\n")
-        f.write("; By Heng_Xin\n")
-        doc.dump_file(f)
+        Args:
+            inFile (str): 输入路径
+            outFile (str): 输出路径
+        """
+        with open(inFile, "r", encoding="utf_8_sig") as f:
+            doc = ass.parse(f)
+
+        doc.styles = _addSy01(doc.styles)
+        
+        newEvents = _addTx01([])
+        flag: bool = True
+        for evt in doc.events:
+            # 只处理 Dialogue, 且包含 \k 或 \kf 的
+            if evt.TYPE == "Dialogue" and ("\\k" in evt.text or "\\kf" in evt.text):
+                evt.TYPE = "Comment"
+                evt.effect = "karaoke"
+                evt.text = self._assMark.mark(evt.text)
+                flag = not flag
+            newEvents.append(evt)
+
+        doc.info['PlayResX'] = 1920
+        doc.info['PlayResY'] = 1080
+        doc.events = newEvents
+        with open(outFile, "w", encoding="utf_8_sig") as f:
+            # 手动加注释行
+            f.write("; HX-Music - PyTool: https://github.com/HengXin666/HX-Music\n")
+            f.write("; By Heng_Xin\n")
+            doc.dump_file(f)
+
+
+    def findLyricsFromNet(self, absolutePath: str, outputPath: str):
+        """从本地文件在网络上匹配歌词并保存到指定路径
+
+        Args:
+            absolutePath (str): 本地歌曲的绝对路径
+            outputPath (str): 输出路径 (绝对路径)
+        """
+        print("Python received:", absolutePath, outputPath)
+        localMatcAss(Path(absolutePath), Path(outputPath))
+    
+    def doJapanesePhonetics(self, absolutePath: str):
+        """对歌词进行日语注音
+
+        Args:
+            absolutePath (str): 歌词的绝对路径
+        """
+        self._lddcAssToKaraokeAss(absolutePath, absolutePath)
+
+    def toTwoLineKaraokeStyle(self, absolutePath: str):
+        """转变为双行卡拉ok样式
+
+        Args:
+            absolutePath (str): 歌词的绝对路径
+        """
+        callSetKaraokeStyleLua(Path(absolutePath), Path(absolutePath), "orig")
+
+    def callApplyKaraokeTemplateLua(self, absolutePath: str):
+        """应用卡拉ok模板
+
+        Args:
+            absolutePath (str): 歌词的绝对路径
+        """
+        callApplyKaraokeTemplateLua(Path(absolutePath), Path(absolutePath))
+
 
 if __name__ == "__main__":
     # from src.mark.jpMark import JpMark
@@ -150,5 +200,5 @@ if __name__ == "__main__":
     # print(s)
     # exit(0)
     # 示例: 简单回调, 把所有 \kf 改为 \k
-
-    lddcAssToKaraokeAss("test.ass", "output.ass")
+    # lddcAssToKaraokeAss("test.ass", "output.ass")
+    pass

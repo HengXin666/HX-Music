@@ -105,6 +105,7 @@ int _x_main() {
 #include <api/MusicApi.hpp>
 #include <api/PlaylistApi.hpp>
 #include <api/CoverApi.hpp>
+#include <api/LyricsApi.hpp>
 
 #include <filesystem>
 
@@ -113,6 +114,8 @@ void ininDir() {
     std::filesystem::create_directories("file/music");
     std::filesystem::create_directories("file/db");
     std::filesystem::create_directories("file/cover");
+    std::filesystem::create_directories("file/lyrics");
+    std::filesystem::create_directories("file/lyrics/ass");
 
     // 测试数据
     [&] {
@@ -145,6 +148,7 @@ int main() {
     api::addApi<MusicApi>(server);
     api::addApi<PlaylistApi>(server);
     api::addApi<CoverApi>(server);
+    api::addApi<LyricsApi>(server);
     server.syncRun<decltype(utils::operator""_s<"600">())>(16, {});
     return 0;
 }

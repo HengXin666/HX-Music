@@ -113,9 +113,12 @@ struct PlaylistDO {
 - 参数描述:
 - 返回值描述:
 
-特别的, 所以 JSON 返回的, 都是:
-
-[`JsonVO<T>`](../include/pojo/vo/JsonVO.hpp#40-45)
+> [!TIP]
+> 特别的, 所有 JSON 返回的, 都是:
+>
+> [`JsonVO<T>`](../include/pojo/vo/JsonVO.hpp#40-45)
+> 
+> 下面的描述会省略 `JsonVO`, 仅描述 `T` 的类型!
 
 ### 2.1 音乐相关接口
 #### 2.1.1 下载音乐
@@ -241,11 +244,19 @@ struct PlaylistDO {
 ### 2.3 歌词相关接口
 #### 2.3.1 获取歌曲歌词
 
-> 接口描述:
-- 请求方式: `GET`/...
-- 接口URL: `/`
-- 参数描述:
-- 返回值描述:
+> 接口描述: 获取 Ass 歌词
+- 请求方式: `GET`
+- 接口URL: `/lyrics/ass/select/{id}`
+- 参数描述: `id` 歌曲Id
+- 返回值描述: 断点续传 Ass 歌词
+
+#### 2.3.2 网络爬取歌曲歌词并且日语注音卡拉ok化
+
+> 接口描述: 网络爬取歌曲歌词并且日语注音卡拉ok化
+- 请求方式: `POST`
+- 接口URL: `/lyrics/ass/karaok/{id}`
+- 参数描述: `id` 歌曲Id
+- 返回值描述: ok (string)
 
 ### 2.4 封面相关接口
 #### 2.4.1 获取封面

@@ -21,6 +21,7 @@
 #define _HX_LYRIC_CONTROLLER_H_
 
 #include <QObject>
+#include <QApplication>
 #include <QQuickImageProvider>
 #include <QImage>
 #include <QPainter>
@@ -31,6 +32,7 @@
 #include <singleton/GlobalSingleton.hpp>
 #include <singleton/SignalBusSingleton.h>
 #include <config/LyricConfig.hpp>
+#include <api/LyricsApi.hpp>
 
 #include <HXLibs/utils/FileUtils.hpp>
 #include <HXLibs/reflection/json/JsonRead.hpp>
@@ -99,18 +101,36 @@ public:
             this,
             [this](MusicInformation* info) {
                 if (GlobalSingleton::get().musicConfig.playlistId == Playlist::kNonePlaylist) {
-                    auto path = findLyricFile(info->filePath());
-                    auto data = utils::FileUtils::getFileContent(path);
-                    _assParse = preprocessLyricBoundingBoxes(
-                        0,
-                        info->getLengthInMilliseconds(),
-                        data
-                    );
+                    // auto path = findLyricFile(info->filePath());
+                    // auto data = utils::FileUtils::getFileContent(path);
+                    // _assParse = preprocessLyricBoundingBoxes(
+                    //     0,
+                    //     info->getLengthInMilliseconds(),
+                    //     data
+                    // );
+                    log::hxLog.warning("ub: 歌词本地加载 @todo");
                 } else {
                     _assParse.readMemory(internal::readQrcFile(":default/loading.ass"));
                     renderAFrameInstantly();
+                    log::hxLog.debug("加载歌词:", info->getId());
                     // 网络加载歌词到内存
-                    log::hxLog.warning("@todo 歌词网络加载");
+                    LyricsApi::getAssLyrics(info->getId())
+                        .thenTry([this, ms = info->getLengthInMilliseconds()](container::Try<std::string> t) {
+                            if (!t) [[unlikely]] {
+                                log::hxLog.error("加载歌词失败:", t.what());
+                                return;
+                            }
+                            _assParse = preprocessLyricBoundingBoxes(
+                                0,
+                                ms,
+                                t.move()
+                            );
+                            // QMetaObject::invokeMethod(
+                            //     QCoreApplication::instance(),
+                            //     [this]{
+                            //         renderAFrameInstantly();
+                            //     });
+                        });
                 }
             });
 
