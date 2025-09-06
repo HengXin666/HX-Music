@@ -204,6 +204,7 @@ class AssMark:
                                 "".join([_.str for _ in kfList])
                             )
                             ans: List[str] = [AssMark._markKanJi(kfLink, (mark[0][0:markKanJiIdx+1], mark[1][0:markKaNaIdx+1]))]
+                            res.reverse()
                             ans.extend(res)
                             res = ans
                             break
@@ -312,6 +313,13 @@ class AssMark:
         # 期望输入是k帧率歌词
         lineStr: str = AssMark._toLinkStr(assLine)
         markList: List[Tuple[str, str]] = self._jpMark.convert(lineStr)
+
+        # 如果 markList 合成原文, 不为 assLine; 说明不支持注音 (该行有中文等非日语字符)
+        markLineStr = "".join([_[0] for _ in markList])
+        if (markLineStr != lineStr):
+            print("[Err]:", markLineStr, "!=", lineStr, " -> 可能包含中文等非日文字符")
+            return assLine # 什么也不做
+
         kfTokenList: List[KfToken] = AssMark._parseKfLine(assLine)
         return AssMark._doMark(lineStr, markList, kfTokenList)
     

@@ -159,15 +159,14 @@ class KaRaOKAss:
             doc.dump_file(f)
 
 
-    def findLyricsFromNet(self, absolutePath: str, outputPath: str):
+    def findLyricsFromNet(self, absolutePath: str, outputPath: str, minScore: int = 60):
         """从本地文件在网络上匹配歌词并保存到指定路径
 
         Args:
             absolutePath (str): 本地歌曲的绝对路径
             outputPath (str): 输出路径 (绝对路径)
         """
-        print("Python received:", absolutePath, outputPath)
-        localMatcAss(Path(absolutePath), Path(outputPath))
+        localMatcAss(Path(absolutePath), Path(outputPath), minScore)
     
     def doJapanesePhonetics(self, absolutePath: str):
         """对歌词进行日语注音
@@ -195,10 +194,15 @@ class KaRaOKAss:
 
 
 if __name__ == "__main__":
-    # from src.mark.jpMark import JpMark
-    # s = JpMark().convert('日々')
-    # print(s)
-    # exit(0)
+    from src.mark.jpMark import JpMark
+    # {\\k10}{\\kf12}い{\\kf14}つ{\\kf14}も{\\kf14}こ{\\kf14}の{\\kf12}場{\\kf16}所{\\kf8}で
+    # {\\kf8} (
+    # {\\kf14}一{\\kf13}直{\\kf15}在{\\kf16}这{\\kf14}个
+    # {\\kf16}地{\\kf17}方
+    # {\\kf12}) - {\\kf33}彩{\\kf7}音{\\kf7} ({\\kf14}あ{\\kf17}や{\\kf16}ね{\\kf0})
+    _ass = AssMark()
+    s = _ass.mark('{\\kf14}日{\\kf13}々')
+    print(s)
     # 示例: 简单回调, 把所有 \kf 改为 \k
     # lddcAssToKaraokeAss("test.ass", "output.ass")
     pass

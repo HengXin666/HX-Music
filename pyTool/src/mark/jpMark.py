@@ -61,15 +61,15 @@ class JpMark:
         # 日文字符作为单独的 token, 英文单词按空格拆分
         pattern = (
             r'[A-Za-z]+'                          # 英文单词
-            r'|[ぁ-んァ-ンヴヵヶヷ-ヺーｦ-ﾟ一-龯]+'     # 日文平假名+片假名+汉字
-            r'|[\u3000-\u303F\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF\u31F0-\u31FF]+'
             r'|[0-9]+'                             # 数字
             r'|[\\/,\.\?!！？、。；;:：…〜～\'\uFF00-\uFFEF]'      # 常见标点(全角+半角)
             r'|[♪♫♬♩♭♯☆★♥❤✨〽※]'              # 歌词符号/特殊装饰
             r'|[\-\_—\+＝=／／‖｜|]'                 # 连字符/斜杠/竖线等
             r'|[「」『』【】（）\(\)\[\]{}<>〈〉《》]'  # 各类括号
             r'|[】\*\.\&\^\%\$\#@~`"]'               # 额外符号：* . & ^ % $ # @ ~ ` "
-            r'|[ 　]'                                 # 空格
+            r'|[ 　 ]'                               # 空格
+            r'|[ぁ-んァ-ンヴヵヶヷ-ヺーｦ-ﾟ一-龯|々]+'     # 日文平假名+片假名+汉字
+            r'|[\u3000-\u303F\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF\u31F0-\u31FF]+'
         )
         return re.findall(pattern, text)
 
@@ -124,6 +124,17 @@ class JpMark:
                     "hepburn": "ano hi",
                     "kunrei": "ano hi",
                     "passport": "ano hi"
+                })
+            # 检查: ご + 飯
+            elif tokens[i - 1]["orig"] == "ご" and tokens[i]["orig"] == "飯":
+                fixed.pop()
+                fixed.append({
+                    "orig": "ご飯",
+                    "hira": "ごはん",
+                    "kana": "ゴハン",
+                    "hepburn": "go han",
+                    "kunrei": "go han",
+                    "passport": "go han"
                 })
             else:
                 fixed.append(tokens[i])

@@ -60,14 +60,21 @@ HX_SERVER_API_BEGIN(LyricsApi) {
                 auto const& musicDO = musicDAO->at(id);
                 std::filesystem::path assPath{std::filesystem::current_path() / "file/lyrics/ass" / (std::string{idStrView} + ".ass")};
                 log::hxLog.info("歌词查找:", std::filesystem::current_path() / "file/music" / musicDO.path, "->", assPath);
-                toKaRaOKAssPtr->findLyricsFromNet(
-                    std::filesystem::current_path() / "file/music" / musicDO.path,
-                    assPath
-                );
-                //  .doJapanesePhonetics(assPath)
-                //  .toTwoLineKaraokeStyle(assPath)
-                //  .callApplyKaraokeTemplateLua(assPath);
-                co_await api::setJsonSucceed<std::string>("ok", res).sendRes();
+                try {
+                    toKaRaOKAssPtr->findLyricsFromNet(
+                        std::filesystem::current_path() / "file/music" / musicDO.path,
+                        assPath
+                    )
+                     .doJapanesePhonetics(assPath)
+                     .toTwoLineKaraokeStyle(assPath)
+                     .callApplyKaraokeTemplateLua(assPath);
+                    co_await api::setJsonSucceed<std::string>("ok", res).sendRes();
+                } catch (std::exception const& e) {
+                    if (std::string_view{e.what()}.find("LyricsNotFoundError") == std::string_view::npos) {
+                        throw;
+                    }
+                }
+                co_await api::setJsonError("找不到符合条件的歌词...", res).sendRes();
             }, [&] CO_FUNC {
                 co_await api::setJsonError("歌曲id不存在 或者 路径错误", res).sendRes();
             });

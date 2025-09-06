@@ -54,8 +54,7 @@ struct MusicClient {
         cp->setContextProperty("SignalBusSingleton", &HX::SignalBusSingleton::get());
 
         // 窗口掩码工具类
-        HX::WindowMaskUtil windowMaskUtil{};
-        cp->setContextProperty("WindowMaskUtil", &windowMaskUtil);
+        cp->setContextProperty("WindowMaskUtil", &_windowMaskUtil);
 
         // 主题数据类
         static HX::Theme theme;
@@ -127,6 +126,7 @@ struct MusicClient {
 private:
     QGuiApplication _app;
     QQmlApplicationEngine _engine;
+    HX::WindowMaskUtil _windowMaskUtil{};
 };
 
 } // namespace HX

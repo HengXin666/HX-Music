@@ -1,10 +1,5 @@
 #include <HXLibs/log/Log.hpp>
 
-#include <pybind11/pybind11.h>
-#include <pybind11/embed.h> // pybind11::scoped_interpreter
-
-namespace py = pybind11;
-
 auto hx_init = []{
     setlocale(LC_ALL, "zh_CN.UTF-8");
     using namespace HX;
@@ -19,34 +14,11 @@ auto hx_init = []{
     return 0;
 }();
 
-int _main() {
-    py::scoped_interpreter guard{};
-
-    // 添加 Python 脚本目录到 sys.path
-    py::module sys = py::module::import("sys");
-    sys.attr("path").cast<py::list>().append("./pyTool");
-
-    // 导入模块
-    py::module myscript = py::module::import("main");
-
-    myscript.attr("lddcAssToKaraokeAss")("./pyTool/test.ass", "./cpp.ass");
-
-    return 0;
-}
-
-#include <db/SQLiteDB.hpp>
 #include <db/SQLiteMeta.hpp>
 #include <HXLibs/reflection/json/JsonRead.hpp>
 #include <HXLibs/reflection/json/JsonWrite.hpp>
 
 using namespace HX;
-
-struct Man {
-    db::PrimaryKey<int> id;
-    std::string name;
-    double okane;
-    std::vector<std::string> arr;
-};
 
 namespace HX::db {
 
@@ -67,40 +39,6 @@ struct SQLiteSqlType<std::vector<U>> {
 };
 
 } // namespace HX::db
-
-#include <dao/ThreadSafeInMemoryDAO.hpp>
-
-int _x_main() {
-    if (0) {
-        auto db = db::open("./test.db");
-        db.createDatabase<Man>();
-        auto id = db.insert<Man>({
-            {}, "战士", 0.721, {"1", "a", "#"}
-        });
-        auto res = db.queryAll<Man>();
-        log::hxLog.info("res:", res);
-    
-        db.deleteBy<Man>("where id = ?").bind(2).exec();
-        db.updateBy<Man>({
-            {}, "xxbb", 6.66, {"在", "あの場所"}
-        }, "").exec();
-    
-        res = db.queryAll<Man>();
-        log::hxLog.warning("res:", res);
-    }
-
-    // ===
-    dao::ThreadSafeInMemoryDAO<Man> manDao{db::open("./test.db")};
-    auto const& man = manDao.add<Man>({
-        {}, "张三", 123.456, {"这", "实际上", "是", "std::vector"}
-    });
-
-    log::hxLog.debug(man);
-
-    manDao.del(man.id);
-
-    return 0;
-}
 
 #include <api/MusicApi.hpp>
 #include <api/PlaylistApi.hpp>
@@ -142,6 +80,10 @@ void ininDir() {
     }();
 }
 
+#include <csignal>
+
+container::FutureResult<bool> isStop;
+
 int main() {
     ininDir();
     net::HttpServer server{"0.0.0.0", "28205"};
@@ -149,6 +91,15 @@ int main() {
     api::addApi<PlaylistApi>(server);
     api::addApi<CoverApi>(server);
     api::addApi<LyricsApi>(server);
-    server.syncRun<decltype(utils::operator""_s<"600">())>(16, {});
+    std::signal(SIGINT, [](int s) {
+        if (s == SIGINT) {
+            isStop.getFutureResult()->setData(true);
+        }
+    });
+    server.asyncRun<decltype(utils::operator""_s<"15">())>(16, {});
+    isStop.wait();
+    // 析构 pybind
+    getToKaRaOKAssPtr()->release();
+    exit(0);
     return 0;
 }

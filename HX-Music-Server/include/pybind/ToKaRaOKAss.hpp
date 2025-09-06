@@ -18,7 +18,6 @@
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <mutex>
 #include <memory>
 #include <filesystem>
 
@@ -26,35 +25,61 @@
 #include <pybind11/embed.h> // pybind11::scoped_interpreter
 
 #include <HXLibs/log/Log.hpp>
+#include <HXLibs/container/ThreadPool.hpp>
 
 namespace HX {
 
 struct ToKaRaOKAss {
 private:
-    pybind11::scoped_interpreter _guard;
-    pybind11::object _kaRaOKAss;
-    std::mutex _mtx;
+    struct PyData {
+        pybind11::scoped_interpreter _guard;
+        pybind11::object _kaRaOKAss;
+    };
+    container::UninitializedNonVoidVariant<PyData, void> _pyData;
+    container::ThreadPool _pool;
 public:
     ToKaRaOKAss()
-        : _guard{}
-        , _kaRaOKAss{}
-        , _mtx{}
+        : _pyData{}
+        , _pool{}
     {
-        namespace py = pybind11;
-        py::gil_scoped_acquire gil{};
-        // 添加 Python 脚本目录到 sys.path
-        py::module sys = py::module::import("sys");
-        sys.attr("path").cast<py::list>().append("../pyTool");
-        // 导入模块
-        py::module myscript = py::module::import("main");
-        // 获取 py 类
-        _kaRaOKAss = myscript.attr("KaRaOKAss")();
-        if (!_kaRaOKAss || _kaRaOKAss.is_none()) {
-            throw std::runtime_error("KaRaOKAss ctor failed");
-        }
+        _pool.setFixedThreadNum(1);
+        _pool.run();
+        _pool.addTask([this]() mutable {
+            namespace py = pybind11;
+            _pyData.emplace<0>(PyData{py::scoped_interpreter{}, py::object{}});
+            auto& [_, _kaRaOKAss] = _pyData.get<0>();
+            // 添加 Python 脚本目录到 sys.path
+            py::module sys = py::module::import("sys");
+            sys.attr("path").cast<py::list>().append("../pyTool");
+            // 导入模块
+            py::module myscript = py::module::import("main");
+            // 获取 py 类
+            _kaRaOKAss = myscript.attr("KaRaOKAss")();
+            if (!_kaRaOKAss || _kaRaOKAss.is_none()) {
+                throw std::runtime_error("KaRaOKAss ctor failed");
+            }
+        }).wait();
     }
 
     ToKaRaOKAss& operator=(ToKaRaOKAss&&) noexcept = delete;
+
+    /**
+     * @brief 释放
+     * @warning 之后再次调度就是ub
+     */
+    void release() {
+        log::hxLog.warning("释放ing..");
+        if (_pyData.index()) [[unlikely]] {
+            return;
+        }
+        _pool.addTask([this] {
+            log::hxLog.info("raii pybind");
+            auto& [_guard, _kaRaOKAss] = _pyData.get<0>();
+            _kaRaOKAss.release();
+            _pyData.reset();
+            log::hxLog.info("raii pybind: ok");
+        }).wait();
+    }
 
     /**
      * @brief 从本地文件在网络上匹配歌词并保存到指定路径
@@ -65,14 +90,10 @@ public:
         std::filesystem::path const& absolutePath,
         std::filesystem::path const& outputPath
     ) {
-        pybind11::gil_scoped_acquire gil{};
-        log::hxLog.info("begin findLyricsFromNet");
-        try {
-            _kaRaOKAss.attr("findLyricsFromNet")(absolutePath.string(), outputPath.string());
-        } catch (std::exception const& e) {
-            log::hxLog.error("err:", e.what());
-            throw ;
-        }
+        _pool.addTask([=, this]() {
+            auto& [_, _kaRaOKAss] = _pyData.get<0>();
+            _kaRaOKAss.attr("findLyricsFromNet")(absolutePath.string(), outputPath.string(), 0);
+        }).wait();
         return *this;
     }
 
@@ -81,8 +102,10 @@ public:
      * @param absolutePath 歌词的绝对路径
      */
     ToKaRaOKAss& doJapanesePhonetics(std::filesystem::path const& absolutePath) {
-        std::unique_lock _{_mtx};
-        _kaRaOKAss.attr("doJapanesePhonetics")(absolutePath.string());
+        _pool.addTask([=, this]() {
+            auto& [_, _kaRaOKAss] = _pyData.get<0>();
+            _kaRaOKAss.attr("doJapanesePhonetics")(absolutePath.string());
+        }).wait();
         return *this;
     }
 
@@ -91,7 +114,10 @@ public:
      * @param absolutePath 歌词的绝对路径
      */
     ToKaRaOKAss& toTwoLineKaraokeStyle(std::filesystem::path const& absolutePath) {
-        _kaRaOKAss.attr("toTwoLineKaraokeStyle")(absolutePath.string());
+        _pool.addTask([=, this]() {
+            auto& [_, _kaRaOKAss] = _pyData.get<0>();
+            _kaRaOKAss.attr("toTwoLineKaraokeStyle")(absolutePath.string());
+        }).wait();
         return *this;
     }
 
@@ -100,7 +126,10 @@ public:
      * @param absolutePath 歌词的绝对路径
      */
     void callApplyKaraokeTemplateLua(std::filesystem::path const& absolutePath) {
-        _kaRaOKAss.attr("callApplyKaraokeTemplateLua")(absolutePath.string());
+        _pool.addTask([=, this]() {
+            auto& [_, _kaRaOKAss] = _pyData.get<0>();
+            _kaRaOKAss.attr("callApplyKaraokeTemplateLua")(absolutePath.string());
+        }).wait();
     }
 };
 
