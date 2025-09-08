@@ -69,6 +69,15 @@ public:
                 }
             });
         });
+
+        /* newSongLoaded (加载新歌) */
+        connect(
+            &SignalBusSingleton::get(),
+            &SignalBusSingleton::newSongLoaded,
+            this,
+            [this](MusicInformation* info) {
+            Q_EMIT playingChanged(GlobalSingleton::get().musicConfig.isPlay);
+        });
     }
 
     Q_INVOKABLE void prev() {
@@ -151,14 +160,6 @@ public:
     Q_INVOKABLE void setVolume(float volume) {
         MusicCommand::setVolume(volume);
         Q_EMIT volumeChanged(volume);
-    }
-
-    /**
-     * @brief 获取歌曲播放到的位置 (从配置文件恢复)
-     * @return Q_INVOKABLE qint64
-     */
-    Q_INVOKABLE qint64 getTheLastPlayedPosition() const {
-        return GlobalSingleton::get().musicConfig.position;
     }
 
     /**

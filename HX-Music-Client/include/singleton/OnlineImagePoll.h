@@ -58,7 +58,7 @@ public:
         if (it == _imgPool.end()) {
             bool ok = false;
             auto uint64Id = id.toULongLong(&ok);
-            if (ok && false) [[likely]] {
+            if (ok) [[likely]] {
                 // 请求封面
                 return CoverApi::getCoverImg(uint64Id)
                     .thenTry([this, _idStr = id](container::Try<QImage> t) {

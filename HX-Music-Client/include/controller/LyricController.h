@@ -125,11 +125,11 @@ public:
                                 ms,
                                 t.move()
                             );
-                            // QMetaObject::invokeMethod(
-                            //     QCoreApplication::instance(),
-                            //     [this]{
-                            //         renderAFrameInstantly();
-                            //     });
+                            QMetaObject::invokeMethod(
+                                QCoreApplication::instance(),
+                                [this]{
+                                    renderAFrameInstantly();
+                                });
                         });
                 }
             });

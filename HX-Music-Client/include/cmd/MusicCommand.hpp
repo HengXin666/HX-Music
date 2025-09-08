@@ -44,9 +44,8 @@ struct MusicCommand {
         bool ok = false;
         uint64_t id = path.toULongLong(&ok);
         if (ok) {
-            qDebug() << "播放网络歌曲:" << id;
             // 网络再次获取信息, 因为传递太麻烦了
-            MusicApi::selectById(id).thenTry([=](container::Try<SongInformation> t) {
+            MusicApi::selectById(id).thenTry([id](container::Try<SongInformation> t) {
                 if (t) [[likely]] {
                     MusicInformation musicInfo{t.move()};
                     QMetaObject::invokeMethod(QCoreApplication::instance(), 
@@ -68,7 +67,8 @@ struct MusicCommand {
                     log::hxLog.error("播放失败: 请求错误:", t.what());
                 }
             });
-        } else {        
+        } else {
+            log::hxLog.error("错误的: cmd switch music");
             MusicInformation musicInfo{MusicInfo{QFileInfo{path}}};
             GlobalSingleton::get().musicConfig.isPlay = true;
             Q_EMIT SignalBusSingleton::get().newSongLoaded(&musicInfo);
@@ -103,7 +103,7 @@ struct MusicCommand {
      * @brief 音乐播放、音乐继续
      */
     static void resume() {
-        if (GlobalSingleton::get().playQueue.empty())
+        if (GlobalSingleton::get().nowPlaylist.songList.empty())
             return;
         GlobalSingleton::get().musicConfig.isPlay = true;
         // 不知道为什么, 暂停一段时间后, 重新播放会没有声音...

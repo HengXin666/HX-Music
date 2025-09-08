@@ -90,11 +90,23 @@ public:
             auto idx = GlobalSingleton::get().musicConfig.listIndex;
             if (idx == -1) {
                 return;
+            } else if (auto& songList
+                = GlobalSingleton::get().nowPlaylist.songList; idx >= songList.size()
+            ) {
+                log::hxLog.error("网络请求失败! 数据不存在, 导致: 歌单数组越界", idx);
+                return;
+            } else {
+                // 网络加载, 并且显示
+                MusicCommand::switchMusic<false, true>(
+                    QString{"%1"}.arg(songList[idx].id)
+                );
+                QTimer::singleShot(500, this, [this] {
+                    // 设置播放位置, 恢复之前的进度
+                    MusicCommand::setMusicPos(
+                        GlobalSingleton::get().musicConfig.position
+                    );
+                });
             }
-            // 网络加载
-            MusicCommand::switchMusic<false, true>(
-                QString{"%1"}.arg(GlobalSingleton::get().nowPlaylist.songList[idx].id)
-            );
         });
     }
 

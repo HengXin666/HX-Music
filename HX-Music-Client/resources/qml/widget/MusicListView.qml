@@ -140,7 +140,7 @@ Item {
                         text: (delegateRoot.index + 1).toString()
                         isSelected: delegateRoot.isSelected
                         isHovered: mouseArea._hovered
-                        path: delegateRoot.model.url
+                        path: musicListModel.getUrl(delegateRoot.index)
                         onSwitchThisMusic: {
                             listView.currentIndex = delegateRoot.index;
                         }
@@ -236,31 +236,7 @@ Item {
             }
         }
 
-        // @todo 应该是默认无数据, 由 C++ 侧驱动
-        // function init() {
-        //     if (listView === null) {
-        //         Qt.callLater(() => {
-        //             init();
-        //         });
-        //         return;
-        //     }
-        //     listView.currentIndex = MusicController.listIndex;
-        //     if (listView.currentIndex >= 0 && listView.currentIndex < listView.count) {
-        //         MusicController.playMusic(musicListModel.getUrl(listView.currentIndex));
-        //         Qt.callLater(() => {
-        //             MusicController.togglePause();
-        //             Qt.callLater(() => {
-        //                 MusicController.setPosition(MusicController.getTheLastPlayedPosition());
-        //             });
-        //         });
-        //     }
-        // }
-
         Component.onCompleted: {
-            // Qt.callLater(() => {
-            //     init();
-            // });;
-
             // 绑定 当前选择项更新信号
             MusicController.listIndexChanged.connect((idx) => {
                 listView.currentIndex = idx;

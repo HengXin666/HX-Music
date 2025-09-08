@@ -18,7 +18,7 @@
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <HXLibs/net/client/HttpClient.hpp>
+#include <HXLibs/net/client/HttpClientPool.hpp>
 
 namespace HX {
 
@@ -30,7 +30,7 @@ struct NetSingleton {
 
     auto getReq(std::string url) {
         log::hxLog.debug("http -> GET:", _backendUrl + url);
-        return _client.get(_backendUrl + std::move(url));
+        return _cliPool.get(_backendUrl + std::move(url));
     }
 
     auto postReq(
@@ -39,7 +39,7 @@ struct NetSingleton {
         net::HttpContentType contentType = net::HttpContentType::Json
     ) {
         log::hxLog.debug("http -> POST:", _backendUrl + url);
-        return _client.post(_backendUrl + std::move(url), std::move(body), contentType);
+        return _cliPool.post(_backendUrl + std::move(url), std::move(body), contentType);
     }
 
     template <typename T>
@@ -47,7 +47,7 @@ struct NetSingleton {
         std::string json;
         reflection::toJson(data, json);
         log::hxLog.debug("http -> POST:", _backendUrl + url, "\njson:", json);
-        return _client.post(
+        return _cliPool.post(
             _backendUrl + std::move(url),
             std::move(json),
             net::HttpContentType::Json
@@ -62,7 +62,7 @@ struct NetSingleton {
             + removeHttp.substr(removeHttp.find("http") + sizeof("http") - 1)
             + std::move(url);
         log::hxLog.debug("ws -> get:", _url);
-        return _client.wsLoop(std::move(_url), std::forward<Lambda>(lambda));
+        return _cliPool.wsLoop(std::move(_url), std::forward<Lambda>(lambda));
     }
 
     std::string const& getBackendUrl() const noexcept {
@@ -74,13 +74,14 @@ private:
     std::string _backendUrl{"http://127.0.0.1:28205"};
 
     /// @brief Http 客户端
-    decltype(net::HttpClient{
+    decltype(net::HttpClientPool{0
         // net::HttpClientOptions<
         // decltype(utils::operator""_s<"600">())>{}
-    }) _client{
+    }) _cliPool{
+        4,
         net::HttpClientOptions<
             // decltype(utils::operator""_s<"600">())
-        >{}, 4
+        >{}
     };
 
     NetSingleton() = default;

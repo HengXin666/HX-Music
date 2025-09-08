@@ -45,7 +45,7 @@ struct CoverApi {
                     imgBuf.data(), static_cast<qint64>(imgBuf.size())})) {
                         return res;
                 } else {
-                    throw std::runtime_error{"QT: SB IMG"};
+                    throw std::runtime_error{"QT: Bad Img"};
                 }
             });
     }

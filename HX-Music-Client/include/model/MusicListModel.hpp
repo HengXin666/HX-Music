@@ -257,6 +257,10 @@ public:
      * @return Q_INVOKABLE 
      */
     Q_INVOKABLE QString getUrl(int row) const {
+        if (row < 0 || row >= _musicArr.size()) {
+            log::hxLog.error("getUrl 越界:", row);
+            return {};
+        }
         return QString{"%1"}.arg(_musicArr[row].id);
     }
 
