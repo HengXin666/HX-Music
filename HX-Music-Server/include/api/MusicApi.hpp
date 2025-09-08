@@ -79,6 +79,7 @@ HX_SERVER_API_BEGIN(MusicApi) {
             file.syncWrite(img.buf);
             file.syncClose();
         }
+        return dao.id;
     };
     auto musicUploadTaskMap
         = std::make_shared<utils::ThreadSafeMap<
@@ -230,11 +231,19 @@ HX_SERVER_API_BEGIN(MusicApi) {
             std::filesystem::rename(tmpFilePath, filePath);
             // 刮削到数据库
             coroutine::EventLoop loop;
-            saveMusicInfo(std::move(task.path), filePath, loop);
+            auto id 
+                = saveMusicInfo(std::move(task.path), filePath, loop);
+            // 发送 id
+            co_await ws.sendText(std::to_string(id));
             // 删除任务
             musicUploadTaskMap->erase(it);
-            co_await ws.close();
-            co_return ;
+            try {
+                co_await ws.close();
+            } catch (...) {
+                ;
+            }
+            co_await file.close();
+            co_return;
         })
     HX_ENDPOINT_END;
 } HX_SERVER_API_END;

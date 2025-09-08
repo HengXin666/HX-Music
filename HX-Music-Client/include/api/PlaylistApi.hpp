@@ -71,6 +71,24 @@ struct PlaylistApi {
             }
         );
     }
+
+    /**
+     * @brief 为歌单添加歌曲
+     * @param playlistId 歌单ID
+     * @param musicId 歌曲ID
+     * @return container::FutureResult<> 
+     */
+    static container::FutureResult<> addMusic(uint64_t playlistId, uint64_t musicId) {
+        return NetSingleton::get().postReq("/playlist/"
+            + std::to_string(playlistId)
+            + "/addMusic/"
+            + std::to_string(musicId),
+            {},
+            net::HttpContentType::None
+        ).thenTry([](container::Try<net::ResponseData> t) {
+            api::checkTryAndStatusAndJsonVO<std::string>(std::move(t));
+        });
+    }
 };
 
 } // namespace HX

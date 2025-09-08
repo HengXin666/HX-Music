@@ -141,7 +141,7 @@ struct PlaylistDO {
 - 请求方式: (`GET`) => WebSocket
 - 接口URL: `/music/upload/push/{pushId}`
 - 参数描述: `/music/upload/push/{pushId}` 通过任务id, 上传音乐文件.
-- 返回值描述: 进度百分比字符串 (保留5位小数)
+- 返回值描述: 进度百分比字符串 (保留5位小数), 当返回 `"1.00000"` (100%) 后, 会返回 id (`Text`)
 
 #### 2.1.3 删除音乐
 

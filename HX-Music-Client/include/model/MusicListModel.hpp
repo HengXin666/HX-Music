@@ -23,6 +23,7 @@
 #include <utils/MusicInfo.hpp>
 #include <singleton/GlobalSingleton.hpp>
 #include <singleton/SignalBusSingleton.h>
+#include <api/PlaylistApi.hpp>
 
 #include <random>
 
@@ -264,18 +265,72 @@ public:
         return QString{"%1"}.arg(_musicArr[row].id);
     }
 
+    /**
+     * @brief 本地歌曲上传到服务器, 并且添加到歌单
+     * @param path 
+     * @return Q_INVOKABLE 
+     */
     Q_INVOKABLE void addFromPath(QString const& path) {
-        // MusicInfo musicInfo{QFileInfo{path}};
-        // addMusic(
-        //     musicInfo.getTitle(),
-        //     musicInfo.getArtistList(),
-        //     musicInfo.getAlbum(),
-        //     QString{"%1"}.arg(musicInfo.getLengthInSeconds()),
-        //     path
-        // );
-        // if (auto img = musicInfo.getAlbumArtAdvanced()) {
-        //     OnlineImagePoll::get()->add(path, img->toImage());
-        // }
+        std::string localPath = path.toStdString();
+        auto nowPlayListId = GlobalSingleton::get().guiPlaylist.id;
+        MusicApi::initUploadMusic(
+            localPath,
+            std::filesystem::path{path.toStdString()}.filename()
+        ).thenTry([](container::Try<std::string> t) {
+            if (!t) [[unlikely]] {
+                log::hxLog.error(t.what());
+                t.rethrow();
+            }
+            auto uuid = t.move();
+            log::hxLog.info("uuid:", uuid);
+            return std::move(uuid);
+        }).thenTry([_localPath = std::move(localPath), nowPlayListId](
+            container::Try<std::string> t
+        ) {
+            if (!t) [[unlikely]] {
+                log::hxLog.error(t.what());
+                t.rethrow();
+            }
+            log::hxLog.debug("上传文件 (uuid =", t.get(), ")");
+            
+            return MusicApi::uploadMusic(
+                _localPath,
+                t.move()
+            ).get();
+        }).thenTry([nowPlayListId](container::Try<uint64_t> t) {
+            if (!t) [[unlikely]] {
+                log::hxLog.error("上传歌曲获取新歌曲的id失败:", t.what());
+                t.rethrow();
+            }
+            // 添加到当前歌单
+            PlaylistApi::addMusic(nowPlayListId, t.get()).wait();
+            return t;
+        }).thenTry([nowPlayListId](container::Try<uint64_t> t) {
+            if (!t) [[unlikely]] {
+                t.rethrow();
+            }
+            // 获取歌曲数据, 插入到本歌单. 而不是再次请求.
+            // 因为可能时间差异. 所以需要先判断当前歌单是否还是被添加歌单
+            if (nowPlayListId != GlobalSingleton::get().guiPlaylist.id
+             && nowPlayListId != GlobalSingleton::get().nowPlaylist.id
+            ) {
+                // 当前没有选择该歌单
+                throw std::runtime_error{"The playlist is currently not selected"};
+            }
+            return MusicApi::selectById(t.get()).wait();
+        }).thenTry([nowPlayListId](container::Try<SongInformation> t) {
+            if (!t) [[unlikely]] {
+                t.rethrow();
+            }
+            if (nowPlayListId == GlobalSingleton::get().guiPlaylist.id) {
+                GlobalSingleton::get().guiPlaylist.songList.emplace_back(t.move());
+            } else if (nowPlayListId == GlobalSingleton::get().nowPlaylist.id) {
+                GlobalSingleton::get().nowPlaylist.songList.emplace_back(t.move());
+            } else [[unlikely]] {
+                // 当前没有选择该歌单
+                throw std::runtime_error{"The playlist is currently not selected"};
+            }
+        });
     }
 
     void addFromNet(SongInformation const& songInfo) {

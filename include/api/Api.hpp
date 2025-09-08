@@ -133,6 +133,47 @@ T toDO(U&& u) noexcept {
     return std::forward<U>(u).operator T();
 }
 
+/**
+ * @brief [客户端使用] 快速检查 Try<ResponseData> & 状态码 是否合法, 否则抛出异常
+ * @tparam T 应该为 vo::JsonVO<U>
+ * @param t 
+ * @return T = vo::JsonVO<U>
+ */
+template <typename T>
+T checkTryAndStatus(container::Try<net::ResponseData> t) {
+    if (!t) [[unlikely]] {
+        throw std::runtime_error{"check: " + t.what()};
+    } else if (t.get().status / 100 != 2) [[unlikely]] {
+        throw std::runtime_error{"check: Status Err"};
+    }
+    return getVO<T>(t.move());
+}
+
+/**
+ * @brief [客户端使用] 快速检查 vo::JsonVO<T> 是否合法, 否则抛出异常
+ * @tparam T 
+ * @param vo 
+ * @return T JsonVO的内部存储的data
+ */
+template <typename T>
+T checkJsonVO(vo::JsonVO<T> vo) {
+    if (vo.code != vo::VOCode::OK) [[unlikely]] {
+        throw std::runtime_error{std::move(vo.msg)};
+    }
+    return std::move(*vo.data);
+}
+
+/**
+ * @brief [客户端使用] 快速检查 Try<ResponseData> & 状态码 & vo::JsonVO<T> 是否合法, 否则抛出异常
+ * @tparam T 
+ * @param t 
+ * @return T 
+ */
+template <typename T>
+T checkTryAndStatusAndJsonVO(container::Try<net::ResponseData> t) {
+    return checkJsonVO(checkTryAndStatus<vo::JsonVO<T>>(t));
+}
+
 template <typename MainLambda, typename ErrLambda>
 coroutine::Task<> coTryCatch(MainLambda main, ErrLambda err) {
     bool isErr = false;

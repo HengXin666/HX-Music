@@ -28,12 +28,12 @@ struct NetSingleton {
         return net;
     }
 
-    auto getReq(std::string url) {
+    container::FutureResult<container::Try<net::ResponseData>> getReq(std::string url) {
         log::hxLog.debug("http -> GET:", _backendUrl + url);
         return _cliPool.get(_backendUrl + std::move(url));
     }
 
-    auto postReq(
+    container::FutureResult<container::Try<net::ResponseData>> postReq(
         std::string url,
         std::string body,
         net::HttpContentType contentType = net::HttpContentType::Json
@@ -43,7 +43,7 @@ struct NetSingleton {
     }
 
     template <typename T>
-    auto postReq(std::string url, T&& data) {
+    container::FutureResult<container::Try<net::ResponseData>> postReq(std::string url, T&& data) {
         std::string json;
         reflection::toJson(data, json);
         log::hxLog.debug("http -> POST:", _backendUrl + url, "\njson:", json);
@@ -54,9 +54,12 @@ struct NetSingleton {
         );
     }
 
-    template <typename Lambda>
-        requires(std::is_same_v<std::invoke_result_t<Lambda, net::WebSocketClient>, coroutine::Task<>>)
-    auto wsReq(std::string url, Lambda&& lambda) {
+    template <
+        typename Lambda, 
+        typename Res = coroutine::AwaiterReturnValue<std::invoke_result_t<Lambda, net::WebSocketClient>>
+    >
+        requires(std::is_same_v<std::invoke_result_t<Lambda, net::WebSocketClient>, coroutine::Task<Res>>)
+    container::FutureResult<container::Try<Res>> wsReq(std::string url, Lambda&& lambda) {
         auto removeHttp = _backendUrl;
         auto _url = "ws"
             + removeHttp.substr(removeHttp.find("http") + sizeof("http") - 1)

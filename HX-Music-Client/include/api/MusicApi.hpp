@@ -21,8 +21,9 @@
 #include <singleton/NetSingleton.hpp>
 #include <pojo/SongInformation.hpp>
 
-#include <api/Api.hpp>
+#include <HXLibs/utils/NumericBaseConverter.hpp>
 
+#include <api/Api.hpp>
 #include <pojo/vo/MusicVO.hpp>
 #include <pojo/vo/InitUploadFileTaskVO.hpp>
 
@@ -87,7 +88,7 @@ struct MusicApi {
      * @param uploadSpeed 上传速度, 单位: 字节 / 秒 (B/s)
      * @return container::FutureResult<> 
      */
-    static container::FutureResult<container::Try<>> uploadMusic(
+    static container::FutureResult<container::Try<uint64_t>> uploadMusic(
         std::string localPath,
         std::string pushId,
         double* progress = nullptr,
@@ -96,7 +97,7 @@ struct MusicApi {
         return NetSingleton::get().wsReq("/music/upload/push/" + std::move(pushId),
             [_localPath = std::move(localPath), progress, uploadSpeed](
                 net::WebSocketClient ws
-            ) mutable -> coroutine::Task<> {
+            ) mutable -> coroutine::Task<uint64_t> {
                 using namespace std::chrono;
                 utils::AsyncFile file{ws.getIO()};
                 co_await file.open(_localPath, utils::OpenMode::Read);
@@ -136,7 +137,16 @@ struct MusicApi {
                     // 未知错误, 非预期的
                     throw std::runtime_error{"Unexpected: Not all files were uploaded"};
                 }
-                co_await ws.close();
+                auto id = utils::NumericBaseConverter::strToNum<uint64_t, 10>(
+                    co_await ws.recvText()
+                );
+                try {
+                    co_await ws.close(); // 无需在意是否正确关闭
+                } catch (...) {
+                    ;
+                }
+                co_await file.close();
+                co_return id;
             });
     }
 };

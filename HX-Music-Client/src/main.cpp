@@ -133,30 +133,6 @@ private:
 
 
 int main(int argc, char* argv[]) {
-    // HX::MusicApi::initUploadMusic(
-    //     "/mnt/anime/音乐/榊原ゆい - 刻司ル十二ノ盟約 (支配时间的十二盟约).flac",
-    //     "榊原ゆい - 刻司ル十二ノ盟約 (支配时间的十二盟约).flac"
-    // ).thenTry([](HX::container::Try<std::string> t) {
-    //     if (!t) [[unlikely]] {
-    //         HX::log::hxLog.error(t.what());
-    //         t.rethrow();
-    //     }
-    //     auto uuid = t.move();
-    //     HX::log::hxLog.info("uuid:", uuid);
-    //     return std::move(uuid);
-    // }).thenTry([](HX::container::Try<std::string> t) {
-    //     if (!t) [[unlikely]] {
-    //         HX::log::hxLog.error(t.what());
-    //         t.rethrow();
-    //     }
-    //     using namespace std::chrono;
-    //     std::this_thread::sleep_for(2s);
-    //     HX::log::hxLog.debug("上传文件 (uuid =", t.get(), ")");
-    //     return HX::MusicApi::uploadMusic(
-    //         "/mnt/anime/音乐/榊原ゆい - 刻司ル十二ノ盟約 (支配时间的十二盟约).flac",
-    //         t.move()
-    //     ).wait();
-    // }).wait();
     // return 0;
     HX::MusicClient app{argc, argv};
     return app.loadConfig()
