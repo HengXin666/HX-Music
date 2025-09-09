@@ -170,8 +170,8 @@ T checkJsonVO(vo::JsonVO<T> vo) {
  * @return T 
  */
 template <typename T>
-T checkTryAndStatusAndJsonVO(container::Try<net::ResponseData> t) {
-    return checkJsonVO(checkTryAndStatus<vo::JsonVO<T>>(t));
+T checkTryAndStatusAndJsonVO(container::Try<net::ResponseData>&& t) {
+    return checkJsonVO(checkTryAndStatus<vo::JsonVO<T>>(std::move(t)));
 }
 
 template <typename MainLambda, typename ErrLambda>

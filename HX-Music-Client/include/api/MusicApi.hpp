@@ -86,7 +86,7 @@ struct MusicApi {
      * @param pushId 上传任务id
      * @param progress 进度百分比
      * @param uploadSpeed 上传速度, 单位: 字节 / 秒 (B/s)
-     * @return container::FutureResult<> 
+     * @return container::FutureResult<container::Try<uint64_t>> 新歌曲的id
      */
     static container::FutureResult<container::Try<uint64_t>> uploadMusic(
         std::string localPath,
@@ -128,25 +128,19 @@ struct MusicApi {
                     }
                     log::hxLog.debug("上传进度:", progressStr, "(+add:", 1.0 * len / (1 << 20), "MB)");
                 }
-                // 同步进度
-                auto progressStr = co_await ws.recvText();
-                if (progress) {
-                    reflection::fromJson(*progress, progressStr);
-                }
-                if (progressStr != "1") [[unlikely]] {
-                    // 未知错误, 非预期的
-                    throw std::runtime_error{"Unexpected: Not all files were uploaded"};
-                }
-                auto id = utils::NumericBaseConverter::strToNum<uint64_t, 10>(
-                    co_await ws.recvText()
-                );
-                try {
-                    co_await ws.close(); // 无需在意是否正确关闭
+                co_await file.close();
+                uint64_t resId;
+                try {                
+                    for (;;) { 
+                        // 服务器发送id后, 会关闭连接. 此次的第二次读取就是为了等待关闭连接.
+                        resId = utils::NumericBaseConverter::strToNum<uint64_t, 10>(
+                            co_await ws.recvText()
+                        );
+                    }
                 } catch (...) {
                     ;
                 }
-                co_await file.close();
-                co_return id;
+                co_return resId;
             });
     }
 };

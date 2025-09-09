@@ -302,9 +302,10 @@ public:
                 log::hxLog.error("上传歌曲获取新歌曲的id失败:", t.what());
                 t.rethrow();
             }
+            log::hxLog.info("获取到歌曲id:", t.get());
             // 添加到当前歌单
             PlaylistApi::addMusic(nowPlayListId, t.get()).wait();
-            return t;
+            return t.get();
         }).thenTry([nowPlayListId](container::Try<uint64_t> t) {
             if (!t) [[unlikely]] {
                 t.rethrow();
@@ -317,7 +318,7 @@ public:
                 // 当前没有选择该歌单
                 throw std::runtime_error{"The playlist is currently not selected"};
             }
-            return MusicApi::selectById(t.get()).wait();
+            return MusicApi::selectById(t.get()).get();
         }).thenTry([nowPlayListId](container::Try<SongInformation> t) {
             if (!t) [[unlikely]] {
                 t.rethrow();
