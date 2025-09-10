@@ -85,8 +85,12 @@ public:
         // === init ===
         // 加载配置歌单
         loadPlaylistById(GlobalSingleton::get().musicConfig.playlistId);
+
         // 显示上次加载的歌曲
         QTimer::singleShot(0, this, [this] {
+            // 加载歌单列表
+            Q_EMIT SignalBusSingleton::get().updatePlaylistList(0);
+            
             auto idx = GlobalSingleton::get().musicConfig.listIndex;
             if (idx == -1) {
                 return;
@@ -117,6 +121,26 @@ public:
      */
     Q_INVOKABLE void loadPlaylistById(uint64_t id) {
         Q_EMIT SignalBusSingleton::get().loadPlaylistSignal(id);
+    }
+
+    /**
+     * @brief 创建新歌单
+     * @param name 歌单名称
+     * @param description 歌单描述
+     * @return Q_INVOKABLE 
+     */
+    Q_INVOKABLE void makePlaylist(QString name, QString description) {
+        PlaylistApi::makePlaylist({
+            {},
+            name.toStdString(),
+            description.toStdString()
+        }).thenTry([](container::Try<uint64_t> t) {
+            if (!t) [[unlikely]] {
+                log::hxLog.error("创建歌单失败:", t.what());
+                return;
+            }
+            Q_EMIT SignalBusSingleton::get().updatePlaylistList(t.move());
+        });
     }
 };
 

@@ -23,6 +23,8 @@
 #include <dao/MemoryDAOPool.hpp>
 
 #include <pojo/vo/JsonVO.hpp>
+#include <pojo/vo/PlaylistInfoVO.hpp>
+#include <pojo/vo/PlaylistInfoListVO.hpp>
 #include <pojo/vo/PlaylistVO.hpp>
 #include <dao/MusicDAO.hpp>
 #include <dao/PlaylistDAO.hpp>
@@ -41,25 +43,31 @@ HX_SERVER_API_BEGIN(PlaylistApi) {
         // 创建歌单
         .addEndpoint<POST>("/playlist/make", [=] ENDPOINT {
             co_await api::coTryCatch([&] CO_FUNC {
-                auto listDO = api::toDO<PlaylistDO>(co_await api::getVO<PlaylistVO>(req));
-                auto const& newDO = playlistDAO->add(listDO);
+                auto vo = co_await api::getVO<PlaylistInfoVO>(req);
+                auto const& newDO = playlistDAO->add<PlaylistDO>({
+                    {},
+                    std::move(vo.name),
+                    std::move(vo.description),
+                    {}
+                });
                 co_await res.setStatusAndContent(Status::CODE_200, log::toString(newDO.id))
                             .sendRes();
             }, [&] CO_FUNC {
-                co_await res.setStatusAndContent(Status::CODE_500, "创建失败")
+                co_await res.setStatusAndContent(Status::CODE_400, "创建失败")
                             .sendRes();
             });
         })
         // 编辑歌单
         .addEndpoint<POST>("/playlist/update", [=] ENDPOINT {
             co_await api::coTryCatch([&] CO_FUNC {
+                // @todo
                 auto const& newDO = playlistDAO->update(
                     api::toDO<PlaylistDO>(co_await api::getVO<PlaylistVO>(req))
                 );
                 co_await res.setStatusAndContent(Status::CODE_200, log::toString(newDO.id))
                             .sendRes();
             }, [&] CO_FUNC {
-                co_await res.setStatusAndContent(Status::CODE_500, "编辑失败")
+                co_await res.setStatusAndContent(Status::CODE_400, "编辑失败")
                             .sendRes();
             });
         })
@@ -72,7 +80,7 @@ HX_SERVER_API_BEGIN(PlaylistApi) {
                 co_await res.setStatusAndContent(Status::CODE_200, "ok")
                             .sendRes();
             }, [&] CO_FUNC {
-                co_await res.setStatusAndContent(Status::CODE_500, "删除失败")
+                co_await res.setStatusAndContent(Status::CODE_400, "删除失败")
                             .sendRes();
             });
         })
@@ -107,8 +115,33 @@ HX_SERVER_API_BEGIN(PlaylistApi) {
             });
         })
         // 获取全部歌单
-        .addEndpoint<GET>("/playlist/selectAll", [] ENDPOINT {
-            co_return ;
+        .addEndpoint<GET>("/playlist/selectAll", [=] ENDPOINT {
+            co_await api::setJsonSucceed(
+                playlistDAO->lockSelect([](PlaylistDAO::MapType const& mp) noexcept {
+                PlaylistInfoListVO res;
+                for (auto const& [id, val] : mp) {
+                    res.infoList.emplace_back(id, val.name, val.description, val.songIdList.size());
+                }
+                return res;
+            }), res).sendRes();
+        })
+        // 获取歌单简介
+        .addEndpoint<GET>("/playlist/info/{id}", [=] ENDPOINT {
+            co_await api::coTryCatch([&] CO_FUNC {
+                uint64_t id;
+                reflection::fromJson(id, req.getPathParam(0));
+                co_await api::setJsonSucceed([&]() -> PlaylistInfoVO {
+                    auto const& listDO = playlistDAO->at(id);
+                    return {
+                        id,
+                        listDO.name,
+                        listDO.description,
+                        listDO.songIdList.size()
+                    };
+                }(), res).sendRes();
+            }, [&] CO_FUNC {
+                co_await api::setJsonError("获取歌单简介失败", res).sendRes();
+            });
         })
         // 为歌单添加歌曲
         .addEndpoint<POST>("/playlist/{id}/addMusic/{musicId}", [=] ENDPOINT {
@@ -122,7 +155,7 @@ HX_SERVER_API_BEGIN(PlaylistApi) {
                 co_await res.setStatusAndContent(Status::CODE_200, "ok")
                             .sendRes();
             }, [&] CO_FUNC {
-                co_await res.setStatusAndContent(Status::CODE_500, "歌单添加歌曲失败")
+                co_await res.setStatusAndContent(Status::CODE_400, "歌单添加歌曲失败")
                             .sendRes();
             });
         })

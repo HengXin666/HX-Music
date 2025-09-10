@@ -23,6 +23,7 @@
 #include <utils/MusicInfo.hpp>
 #include <singleton/GlobalSingleton.hpp>
 #include <singleton/SignalBusSingleton.h>
+#include <api/PlaylistApi.hpp>
 
 #include <HXLibs/reflection/EnumName.hpp>
 
@@ -41,12 +42,43 @@ class PlaylistModel : public QAbstractListModel {
     struct PlayListData {
         QString name;      // 歌单名称
         uint64_t id;       // 歌单id
-        uint32_t cnt;      // 歌单歌曲数量
+        uint64_t cnt;      // 歌单歌曲数量
     };
 public:
     explicit PlaylistModel(QObject* parent = nullptr)
         : QAbstractListModel(parent)
     {
+        connect(
+            &SignalBusSingleton::get(),
+            &SignalBusSingleton::updatePlaylistList,
+            this,
+            [this](uint64_t newId) {
+                if (!newId) {
+                    // 全量更新
+                    PlaylistApi::selectAllPlaylist()
+                        .thenTry([this](auto t) {
+                            if (!t) [[unlikely]] {
+                                log::hxLog.error("更新歌单简介列表失败:", t.what());
+                                return;
+                            }
+                            clear();
+                            for (auto const& info : t.get()) {
+                                addData(info);
+                            }
+                        });
+                } else {
+                    // 仅更新 id = newId
+                    PlaylistApi::getPlaylistInfo(newId)
+                        .thenTry([this](auto t) {
+                            if (!t) [[unlikely]] {
+                                log::hxLog.error("更新歌单简介失败:", t.what());
+                                return;
+                            }
+                            addData(t.move());
+                        });
+                }
+            }
+        );
     }
 
     int rowCount(const QModelIndex& parent = QModelIndex()) const override {
@@ -62,7 +94,7 @@ public:
         switch (role) {
         case NameRole: return playList.name;
         case IdRole: return QString{"%1"}.arg(playList.id);
-        case CntRole: return playList.cnt;
+        case CntRole: return QString{"%1"}.arg(playList.cnt);
         default: return {};
         }
     }
@@ -73,6 +105,16 @@ public:
             { IdRole, "id" },
             { CntRole, "cnt" },
         };
+    }
+
+    void addData(PlaylistInfo const& info) {
+        Q_EMIT beginInsertRows({}, _playListArr.size(), _playListArr.size());
+        _playListArr.emplace_back(
+            QString::fromStdString(info.name),
+            info.id,
+            info.cnt
+        );
+        Q_EMIT endInsertRows();
     }
 
     /**
@@ -154,13 +196,7 @@ public:
     }
 
 private:
-    QVector<PlayListData> _playListArr{{
-        "我喜欢", 114514, 2233
-    }, {
-        "你喜欢 id = 1", 1, 123
-    }, {
-        "她喜欢", 721, 666
-    }};
+    QVector<PlayListData> _playListArr{};
 };
 
 } // namespace HX

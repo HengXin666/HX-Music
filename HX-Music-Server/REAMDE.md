@@ -182,7 +182,7 @@ struct PlaylistDO {
 > 接口描述: 创建歌单
 - 请求方式: `POST`
 - 接口URL: `/playlist/make`
-- 参数描述: 在 `Body` 中传递 `Json`
+- 参数描述: 在 `Body` 中传递 `Json` (`UpdatePlayListVO`)
 - 返回值描述: `歌单ID`
 
 #### 2.2.2 编辑歌单
@@ -215,7 +215,7 @@ struct PlaylistDO {
 - 请求方式: `GET`
 - 接口URL: `/playlist/selectAll`
 - 参数描述: 无
-- 返回值描述: 歌单数据`Json`List
+- 返回值描述: 歌单数据`Json`List (PlaylistInfoListVO)
 
 #### 2.2.6 为歌单添加歌曲
 
@@ -240,6 +240,14 @@ struct PlaylistDO {
 - 接口URL: `/playlist/{id}/swapMusic`
 - 参数描述: `Body` 传递 `Json` (@todo)
 - 返回值描述: `ok`
+
+### 2.2.9 获取歌单简介
+
+> 接口描述: 获取歌单简介
+- 请求方式: `GET`
+- 接口URL: `/playlist/info/{id}`
+- 参数描述: `id` 歌单id
+- 返回值描述: 歌单数据`Json` (PlaylistInfoVO)
 
 ### 2.3 歌词相关接口
 #### 2.3.1 获取歌曲歌词

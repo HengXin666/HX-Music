@@ -4,6 +4,7 @@ import QtQuick.Controls
 import QtQuick.Controls.Material
 import QtQuick.Layouts
 import QtQuick.Window
+import HX.Music
 import "./internal"
 
 Item {
@@ -350,6 +351,7 @@ Item {
                         if (addPlaylistPopup.currentView === "create") {
                             console.log("创建歌单:", playlistNameField.text);
                             // 这里添加创建歌单的逻辑
+                            PlaylistController.makePlaylist(playlistNameField.text, "");
                         } else {
                             console.log("导入歌单:", playlistUrlField.text);
                             // 这里添加导入歌单的逻辑

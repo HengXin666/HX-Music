@@ -20,8 +20,13 @@
 
 #include <pojo/Playlist.hpp>
 #include <singleton/NetSingleton.hpp>
+#include <pojo/PlaylistInfo.hpp>
+
+#include <HXLibs/utils/NumericBaseConverter.hpp>
 
 #include <api/Api.hpp>
+#include <pojo/vo/PlaylistInfoVO.hpp>
+#include <pojo/vo/PlaylistInfoListVO.hpp>
 #include <pojo/vo/PlaylistVO.hpp>
 
 namespace HX {
@@ -30,6 +35,18 @@ namespace HX {
  * @brief 客户端 歌单相关请求 API
  */
 struct PlaylistApi {
+    /**
+     * @brief 创建歌单
+     * @param playlistInfo 歌单信息
+     * @return container::FutureResult<uint64_t> 新歌单的id
+     */
+    static container::FutureResult<uint64_t> makePlaylist(PlaylistInfoVO&& playlistInfo) {
+        return NetSingleton::get().postReq("/playlist/make", std::move(playlistInfo))
+            .thenTry([](container::Try<net::ResponseData> t) {
+                return api::checkTryAndStatusAndJsonVO<uint64_t>(std::move(t));
+            });
+    }
+
     /**
      * @brief 获取歌单
      * @param id 
@@ -70,6 +87,29 @@ struct PlaylistApi {
                 };
             }
         );
+    }
+
+    /**
+     * @brief 获取所有歌单简介列表
+     * @return container::FutureResult<std::vector<PlaylistInfo>> 
+     */
+    static container::FutureResult<std::vector<PlaylistInfo>> selectAllPlaylist() {
+        return NetSingleton::get().getReq("/playlist/selectAll")
+            .thenTry([](container::Try<net::ResponseData> t) {
+                return api::checkTryAndStatusAndJsonVO<PlaylistInfoListVO>(std::move(t)).infoList;
+            });
+    }
+
+    /**
+     * @brief 获取歌单简介
+     * @param id 
+     * @return container::FutureResult<PlaylistInfo> 
+     */
+    static container::FutureResult<PlaylistInfo> getPlaylistInfo(uint64_t id) {
+        return NetSingleton::get().getReq("/playlist/info/" + std::to_string(id))
+            .thenTry([](container::Try<net::ResponseData> t) {
+                return api::checkTryAndStatusAndJsonVO<PlaylistInfo>(std::move(t));
+            });
     }
 
     /**

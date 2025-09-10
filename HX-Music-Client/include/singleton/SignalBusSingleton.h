@@ -129,6 +129,12 @@ Q_SIGNALS:
      * @param addOffset 单位: 毫秒 (ms)
      */
     void lyricAddOffset(long long addOffset);
+
+    /**
+     * @brief 应该更新歌单列表
+     * @param newId 新增的歌单id, 如果为 0. 则表示全部重新刷新
+     */
+    void updatePlaylistList(uint64_t newId = 0);
 };
 
 } // namespace HX

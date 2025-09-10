@@ -41,6 +41,8 @@ struct ThreadSafeInMemoryDAO {
         >(reflection::internal::getObjTie(std::declval<T>()))
     )>>;
 
+    using MapType = std::map<db::GetFirstPrimaryKeyType<T>, T>;
+
     ThreadSafeInMemoryDAO(db::SQLiteDB db)
         : _db{std::move(db)}
         , _map{}
@@ -115,9 +117,14 @@ struct ThreadSafeInMemoryDAO {
         return _map;
     }
 
+    template <typename Lambda, typename Res = std::invoke_result_t<Lambda, MapType const&>>
+    Res lockSelect(Lambda&& lambda) const noexcept(noexcept(lambda(_map))) {
+        std::shared_lock _{_mtx};
+        return lambda(_map);
+    }
 private:
     db::SQLiteDB _db;
-    std::map<db::GetFirstPrimaryKeyType<T>, T> _map;
+    MapType _map;
     mutable std::shared_mutex _mtx;
 };
 
