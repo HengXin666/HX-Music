@@ -14,8 +14,352 @@ Item {
 
     property int currentIndex: 0
     property int currentPlaylistIndex: -1
-    signal tabClicked(int index);
-    signal playListClicked(int id);
+    signal tabClicked(int index)
+    signal playListClicked(int id)
+
+    Popup {
+        id: addPlaylistPopup
+        modal: true // 模态
+        focus: true // 焦点
+        closePolicy: Popup.CloseOnEscape
+        // 设置父对象为覆盖层, 这样坐标就是窗口坐标
+        parent: Overlay.overlay
+        width: 500
+        height: 300
+        dim: true
+        x: (parent.width - width) / 2
+        y: (parent.height - height) / 2
+        // 窗口弹出时候的动画
+        enter: Transition {
+            NumberAnimation {
+                property: "opacity"
+                from: 0.0
+                to: 1.0
+                duration: 500
+            }
+        }
+        // 窗口关闭时候的动画
+        exit: Transition {
+            NumberAnimation {
+                property: "opacity"
+                from: 1.0
+                to: 0.0
+                duration: 500
+            }
+        }
+
+        // 当前视图状态
+        property string currentView: "create" // "create" 或 "import"
+
+        background: null
+
+        // 内容区域
+        contentItem: Rectangle {
+            anchors.fill: parent
+            color: "#ea431e3a"
+            radius: 5
+
+            // 标题栏
+            Rectangle {
+                id: header
+                width: parent.width
+                height: 50
+                color: "#ea990099"
+                radius: 5
+
+                // 标题
+                Text {
+                    id: titleText
+                    anchors {
+                        left: parent.left
+                        leftMargin: 20
+                        verticalCenter: parent.verticalCenter
+                    }
+                    text: addPlaylistPopup.currentView === "create" ? "创建歌单" : "导入歌单"
+                    color: Theme.textColor
+                    font.bold: true
+                    font.pixelSize: 18
+                }
+
+                // 关闭按钮
+                MusicActionButton {
+                    anchors {
+                        right: parent.right
+                        rightMargin: 16
+                        verticalCenter: parent.verticalCenter
+                    }
+                    width: 16
+                    height: 16
+                    url: "qrc://icons/close.svg"
+                    onClicked: addPlaylistPopup.close()
+                }
+            }
+
+            // 视图切换选项卡
+            Row {
+                id: tabBar
+                anchors {
+                    top: header.bottom
+                    topMargin: 15
+                    horizontalCenter: parent.horizontalCenter
+                }
+                spacing: 0
+
+                // 创建歌单选项卡
+                Rectangle {
+                    width: 120
+                    height: 40
+                    color: addPlaylistPopup.currentView === "create" ? "#1dffffff" : "transparent"
+                    radius: 5
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "创建歌单"
+                        color: addPlaylistPopup.currentView === "create" ? Theme.highlightingColor : Theme.textColor
+                        font.pixelSize: 14
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: addPlaylistPopup.currentView = "create"
+                    }
+                }
+
+                // 导入歌单选项卡
+                Rectangle {
+                    width: 120
+                    height: 40
+                    color: addPlaylistPopup.currentView === "import" ? "#1dffffff" : "transparent"
+                    radius: 5
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "导入歌单"
+                        color: addPlaylistPopup.currentView === "import" ? Theme.highlightingColor : Theme.textColor
+                        font.pixelSize: 14
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: addPlaylistPopup.currentView = "import"
+                    }
+                }
+            }
+
+            // 内容区域
+            StackLayout {
+                id: contentStack
+                anchors {
+                    top: tabBar.bottom
+                    topMargin: 20
+                    left: parent.left
+                    right: parent.right
+                    bottom: buttonRow.top
+                    bottomMargin: 20
+                    leftMargin: 20
+                    rightMargin: 20
+                }
+                currentIndex: addPlaylistPopup.currentView === "create" ? 0 : 1
+
+                // 创建歌单视图
+                ColumnLayout {
+                    spacing: 15
+
+                    Text {
+                        text: "歌单名称"
+                        font.pixelSize: 14
+                        color: Theme.textColor
+                    }
+
+                    TextField {
+                        id: playlistNameField
+                        Layout.fillWidth: true
+                        placeholderText: "请输入歌单名称"
+                        background: Canvas {
+                            implicitHeight: 40
+
+                            onPaint: {
+                                const ctx = getContext("2d");
+                                ctx.clearRect(0, 0, width, height);
+                                ctx.strokeStyle = Theme.paratextColor;
+                                ctx.lineWidth = 1;
+
+                                // 绘制下边框
+                                ctx.beginPath();
+                                ctx.moveTo(0, height - 0.5);
+                                ctx.lineTo(width, height - 0.5);
+                                ctx.stroke();
+
+                                // 绘制左边框下半部分
+                                ctx.beginPath();
+                                ctx.moveTo(0.5, height / 2);
+                                ctx.lineTo(0.5, height);
+                                ctx.stroke();
+
+                                // 绘制右边框下半部分
+                                ctx.beginPath();
+                                ctx.moveTo(width - 0.5, height / 2);
+                                ctx.lineTo(width - 0.5, height);
+                                ctx.stroke();
+                            }
+                        }
+                        placeholderTextColor: Theme.paratextColor
+                        color: Theme.textColor
+                        font {
+                            pixelSize: 18
+                            family: "Microsoft YaHei"
+                        }
+                    }
+
+                    Text {
+                        text: "歌单名称长度建议在2-20个字符之间"
+                        font.pixelSize: 12
+                        color: Theme.paratextColor
+                    }
+                }
+
+                // 导入歌单视图
+                ColumnLayout {
+                    spacing: 15
+
+                    Text {
+                        text: "歌单URL"
+                        font.pixelSize: 14
+                        color: Theme.textColor
+                    }
+
+                    TextField {
+                        id: playlistUrlField
+                        Layout.fillWidth: true
+                        placeholderText: "请输入歌单分享链接"
+                        background: Canvas {
+                            implicitHeight: 40
+
+                            onPaint: {
+                                const ctx = getContext("2d");
+                                ctx.clearRect(0, 0, width, height);
+                                ctx.strokeStyle = Theme.paratextColor;
+                                ctx.lineWidth = 1;
+
+                                // 绘制下边框
+                                ctx.beginPath();
+                                ctx.moveTo(0, height - 0.5);
+                                ctx.lineTo(width, height - 0.5);
+                                ctx.stroke();
+
+                                // 绘制左边框下半部分
+                                ctx.beginPath();
+                                ctx.moveTo(0.5, height / 2);
+                                ctx.lineTo(0.5, height);
+                                ctx.stroke();
+
+                                // 绘制右边框下半部分
+                                ctx.beginPath();
+                                ctx.moveTo(width - 0.5, height / 2);
+                                ctx.lineTo(width - 0.5, height);
+                                ctx.stroke();
+                            }
+                        }
+                        placeholderTextColor: Theme.paratextColor
+                        color: Theme.textColor
+                        font {
+                            pixelSize: 18
+                            family: "Microsoft YaHei"
+                        }
+                    }
+
+                    Text {
+                        // @todo
+                        text: "支持从酷狗音乐、网易云、QQ音乐等平台导入公开歌单"
+                        font.pixelSize: 12
+                        color: Theme.paratextColor
+                        wrapMode: Text.Wrap
+                    }
+                }
+            }
+
+            // 底部按钮区域
+            RowLayout {
+                id: buttonRow
+                anchors {
+                    bottom: parent.bottom
+                    bottomMargin: 20
+                    left: parent.left
+                    right: parent.right
+                    leftMargin: 20
+                    rightMargin: 20
+                }
+                spacing: 15
+
+                // 左侧占位空间
+                Item {
+                    Layout.fillWidth: true
+                }
+
+                // 取消按钮
+                Button {
+                    Layout.preferredWidth: 120
+                    Layout.preferredHeight: 50
+
+                    contentItem: Text {
+                        text: "取消"
+                        color: Theme.textColor
+                        font {
+                            pixelSize: 16
+                            family: "Microsoft YaHei" // 使用更美观的字体
+                        }
+                        verticalAlignment: Text.AlignVCenter
+                        horizontalAlignment: Text.AlignHCenter
+                    }
+
+                    background: Rectangle {
+                        radius: 6
+                        color: parent.hovered ? "#3a3a3a" : "#2b2b2b"
+                        border {
+                            width: 1
+                            color: "#555555"
+                        }
+                    }
+
+                    onClicked: addPlaylistPopup.close()
+                }
+
+                // 创建/导入按钮
+                Button {
+                    Layout.preferredWidth: 120
+                    Layout.preferredHeight: 50
+
+                    contentItem: Text {
+                        text: addPlaylistPopup.currentView === "create" ? "创建" : "导入"
+                        color: Theme.textColor
+                        font {
+                            pixelSize: 16
+                            family: "Microsoft YaHei"
+                            bold: true // 主要操作按钮加粗
+                        }
+                        verticalAlignment: Text.AlignVCenter
+                        horizontalAlignment: Text.AlignHCenter
+                    }
+
+                    background: Rectangle {
+                        radius: 6
+                        color: parent.hovered ? "#4CAF50" : "#388E3C" // 绿色主题，悬停时变亮
+                    }
+
+                    onClicked: {
+                        if (addPlaylistPopup.currentView === "create") {
+                            console.log("创建歌单:", playlistNameField.text);
+                            // 这里添加创建歌单的逻辑
+                        } else {
+                            console.log("导入歌单:", playlistUrlField.text);
+                            // 这里添加导入歌单的逻辑
+                        }
+                        addPlaylistPopup.close();
+                    }
+                }
+            }
+        }
+    }
 
     // 整个侧边栏使用ScrollView实现滚动
     ScrollView {
@@ -64,6 +408,7 @@ Item {
                         favoritePlayListView.resetIndex();
                         root.currentIndex = 1;
                         root.tabClicked(1);
+                        // @todo 到时候跳转到 '我喜欢'
                     }
                 }
 
@@ -117,6 +462,7 @@ Item {
                         url: "qrc://icons/add.svg"
                         onClicked: {
                             console.log("添加歌单按钮点击");
+                            addPlaylistPopup.open();
                         }
                     }
 
@@ -132,7 +478,7 @@ Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 visible: playlistOperationBar.currentIndex === 0
-                onPlayListClicked: function(id: int) {
+                onPlayListClicked: function (id) {
                     root.currentIndex = -1;
                     favoritePlayListView.resetIndex();
                     root.playListClicked(id);
@@ -145,7 +491,7 @@ Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 visible: playlistOperationBar.currentIndex === 1
-                onPlayListClicked: function(id: int) {
+                onPlayListClicked: function (id) {
                     root.currentIndex = -1;
                     createdPlayListView.resetIndex();
                     root.playListClicked(id);
@@ -165,7 +511,7 @@ Item {
         property string text: "菜单项"
         property bool isSelected: false
         property color hoverColor: "#1bffffff"
-        signal clicked()
+        signal clicked
 
         // 背景颜色根据状态变化
         color: isSelected || mouseArea.containsMouse ? hoverColor : "transparent"
@@ -196,9 +542,7 @@ Item {
             Image {
                 id: iconImage
                 anchors.centerIn: parent
-                source: `image://svgColored/${sidebarItem.icon}?color=${sidebarItem.isSelected 
-                    ? Theme.highlightingColor 
-                    : Theme.paratextColor}`
+                source: `image://svgColored/${sidebarItem.icon}?color=${sidebarItem.isSelected ? Theme.highlightingColor : Theme.paratextColor}`
                 width: 20
                 height: 20
                 fillMode: Image.PreserveAspectFit
@@ -239,7 +583,7 @@ Item {
         property string text: ""
         property bool isSelected: false
         property alias textSize: buttonText.font.pixelSize
-        signal clicked()
+        signal clicked
 
         Text {
             id: buttonText

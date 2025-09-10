@@ -323,6 +323,7 @@ public:
                         if (!t) [[unlikely]] {
                             t.rethrow();
                         }
+                        // @todo 此处应该要同步一下, 通过 QT 的同步?
                         if (nowPlayListId == GlobalSingleton::get().guiPlaylist.id) {
                             _isActiveUpdate = true;
                             addFromNet(
