@@ -284,7 +284,7 @@ public:
             auto uuid = t.move();
             log::hxLog.info("uuid:", uuid);
             return std::move(uuid);
-        }).thenTry([_localPath = std::move(localPath), nowPlayListId](
+        }).thenTry([this, _localPath = std::move(localPath), nowPlayListId](
             container::Try<std::string> t
         ) {
             if (!t) [[unlikely]] {
@@ -293,44 +293,51 @@ public:
             }
             log::hxLog.debug("上传文件 (uuid =", t.get(), ")");
             
-            return MusicApi::uploadMusic(
+            MusicApi::uploadMusic(
                 _localPath,
                 t.move()
-            ).get();
-        }).thenTry([nowPlayListId](container::Try<uint64_t> t) {
-            if (!t) [[unlikely]] {
-                log::hxLog.error("上传歌曲获取新歌曲的id失败:", t.what());
-                t.rethrow();
-            }
-            log::hxLog.info("获取到歌曲id:", t.get());
-            // 添加到当前歌单
-            PlaylistApi::addMusic(nowPlayListId, t.get()).wait();
-            return t.get();
-        }).thenTry([nowPlayListId](container::Try<uint64_t> t) {
-            if (!t) [[unlikely]] {
-                t.rethrow();
-            }
-            // 获取歌曲数据, 插入到本歌单. 而不是再次请求.
-            // 因为可能时间差异. 所以需要先判断当前歌单是否还是被添加歌单
-            if (nowPlayListId != GlobalSingleton::get().guiPlaylist.id
-             && nowPlayListId != GlobalSingleton::get().nowPlaylist.id
-            ) {
-                // 当前没有选择该歌单
-                throw std::runtime_error{"The playlist is currently not selected"};
-            }
-            return MusicApi::selectById(t.get()).get();
-        }).thenTry([nowPlayListId](container::Try<SongInformation> t) {
-            if (!t) [[unlikely]] {
-                t.rethrow();
-            }
-            if (nowPlayListId == GlobalSingleton::get().guiPlaylist.id) {
-                GlobalSingleton::get().guiPlaylist.songList.emplace_back(t.move());
-            } else if (nowPlayListId == GlobalSingleton::get().nowPlaylist.id) {
-                GlobalSingleton::get().nowPlaylist.songList.emplace_back(t.move());
-            } else [[unlikely]] {
-                // 当前没有选择该歌单
-                throw std::runtime_error{"The playlist is currently not selected"};
-            }
+            ).thenTry([this, nowPlayListId](container::Try<uint64_t> t) {
+                if (!t) [[unlikely]] {
+                    log::hxLog.error("上传歌曲获取新歌曲的id失败:", t.what());
+                    t.rethrow();
+                }
+                log::hxLog.info("获取到歌曲id:", t.get());
+                // 添加到当前歌单
+                PlaylistApi::addMusic(
+                    nowPlayListId, t.get()
+                ).thenTry([this, nowPlayListId, musicId = t.get()](auto t) {
+                    if (!t) [[unlikely]] {
+                        t.rethrow();
+                    }
+                    // 获取歌曲数据, 插入到本歌单. 而不是再次请求.
+                    // 因为可能时间差异. 所以需要先判断当前歌单是否还是被添加歌单
+                    if (nowPlayListId != GlobalSingleton::get().guiPlaylist.id
+                        && nowPlayListId != GlobalSingleton::get().nowPlaylist.id
+                    ) {
+                        // 当前没有选择该歌单
+                        throw std::runtime_error{"The playlist is currently not selected"};
+                    }
+                    MusicApi::selectById(
+                        musicId
+                    ).thenTry([this, nowPlayListId](container::Try<SongInformation> t) {
+                        if (!t) [[unlikely]] {
+                            t.rethrow();
+                        }
+                        if (nowPlayListId == GlobalSingleton::get().guiPlaylist.id) {
+                            _isActiveUpdate = true;
+                            addFromNet(
+                                GlobalSingleton::get().guiPlaylist.songList.emplace_back(t.move())
+                            );
+                            _isActiveUpdate = false;
+                        } else if (nowPlayListId == GlobalSingleton::get().nowPlaylist.id) {
+                            GlobalSingleton::get().nowPlaylist.songList.emplace_back(t.move());
+                        } else [[unlikely]] {
+                            // 当前没有选择该歌单
+                            throw std::runtime_error{"The playlist is currently not selected"};
+                        }
+                    });
+                });
+            });
         });
     }
 
