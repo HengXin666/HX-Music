@@ -44,17 +44,15 @@ HX_SERVER_API_BEGIN(PlaylistApi) {
         .addEndpoint<POST>("/playlist/make", [=] ENDPOINT {
             co_await api::coTryCatch([&] CO_FUNC {
                 auto vo = co_await api::getVO<PlaylistInfoVO>(req);
-                auto const& newDO = playlistDAO->add<PlaylistDO>({
+                uint64_t id = playlistDAO->add<PlaylistDO>({
                     {},
                     std::move(vo.name),
                     std::move(vo.description),
                     {}
-                });
-                co_await res.setStatusAndContent(Status::CODE_200, log::toString(newDO.id))
-                            .sendRes();
+                }).id;
+                co_await api::setJsonSucceed(id, res).sendRes();
             }, [&] CO_FUNC {
-                co_await res.setStatusAndContent(Status::CODE_400, "创建失败")
-                            .sendRes();
+                co_await api::setJsonError("创建歌单失败", res).sendRes();
             });
         })
         // 编辑歌单

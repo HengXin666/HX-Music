@@ -21,6 +21,8 @@
 #include <string>
 #include <optional>
 
+#include <HXLibs/meta/TypeTraits.hpp>
+
 namespace HX::vo {
 
 enum class VOCode : int {
@@ -41,7 +43,7 @@ template <typename T>
 struct JsonVO {
     int code;
     std::string msg;
-    std::optional<T> data;
+    std::optional<meta::remove_cvref_t<T>> data;
 
     constexpr static JsonVO error(std::string msg) {
         return {
@@ -51,11 +53,13 @@ struct JsonVO {
         };
     }
 
-    constexpr static JsonVO succeed(T&& t) {
+    template <typename U>
+        requires (std::convertible_to<U, T>)
+    constexpr static JsonVO succeed(U&& t) {
         return {
             static_cast<int>(VOCode::OK),
             "ok",
-            std::move(t)
+            std::forward<U>(t)
         };
     }
 
