@@ -14,10 +14,10 @@ Item {
 
     property bool _hovered: false
     property real _contentWidth: mainView.implicitWidth  // 实际内容宽度
-    // 计算是否需要滚动（内容超出容器宽度时才滚动）
+    // 计算是否需要滚动(内容超出容器宽度时才滚动)
     property bool _needScrolling: isRunging && _contentWidth > width
 
-    // 默认委托（可被外部覆盖）
+    // 默认委托(可被外部覆盖)
     default property alias contentDelegate: repeater.delegate
 
     // 轻量委托
@@ -75,7 +75,7 @@ Item {
             clip: true
             interactive: false  // 禁用手动交互
 
-            // 循环滚动内容（两组相同内容实现无缝衔接）
+            // 循环滚动内容(两组相同内容实现无缝衔接)
             RowLayout {
                 id: row
                 spacing: root.spacingWidth

@@ -104,6 +104,11 @@ BorderlessWindow {
         anchors.fill: parent
         color: "transparent"
 
+        // 消息管理器
+        MessageManager {
+            anchors.fill: parent
+        }
+
         ColumnLayout {
             anchors.fill: parent
 
@@ -143,7 +148,19 @@ BorderlessWindow {
                             font.pixelSize: 20
                         }
                     }
-                    Rectangle { color: "#d0eaff" }
+                    Rectangle {
+                        color: "#25d0eaff"                        
+                        // 测试按钮
+                        Button {
+                            text: "测试消息"
+                            onClicked: {
+                                MessageController.showInfo("这是一条信息消息")
+                                MessageController.showError("这是一条错误消息")
+                                MessageController.showWarning("这是一条警告消息")
+                                MessageController.showSuccess("这是一条成功消息")
+                            }
+                        }
+                    }
                     Rectangle { color: "#7e0b3f6a" }
                     Rectangle {
                         color: "transparent"

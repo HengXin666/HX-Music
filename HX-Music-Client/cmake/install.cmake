@@ -61,6 +61,7 @@ qt_add_qml_module(HX-Music-Client
         resources/qml/widget/PlayStatusButton.qml
         resources/qml/widget/ProgressBarRect.qml
         resources/qml/widget/PlaylistView.qml
+        resources/qml/widget/MessageManager.qml
         # 内部控件组件
         resources/qml/widget/internal/MusicActionButton.qml
         resources/qml/widget/internal/AudioVisualizerBars.qml

@@ -8,6 +8,7 @@
 #include <controller/LyricController.h>
 #include <controller/MusicController.h>
 #include <controller/PlaylistController.h>
+#include <controller/MessageController.h>
 #include <cmd/MusicCommand.hpp>
 #include <config/MusicConfig.hpp>
 #include <config/Theme.hpp>
@@ -87,6 +88,14 @@ struct MusicClient {
             "HX.Music",
             1, 0,
             "MusicInformation"
+        );
+
+        // 注册消息控制器
+        qmlRegisterSingletonInstance(
+            "HX.Music",
+            1, 0,
+            "MessageController",
+            &HX::MessageController::get()
         );
 
         // 注册 音频信息
