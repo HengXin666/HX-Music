@@ -120,16 +120,16 @@ public:
                                 log::hxLog.error("加载歌词失败:", t.what());
                                 return;
                             }
-                            _assParse = preprocessLyricBoundingBoxes(
-                                0,
-                                ms,
-                                t.move()
-                            );
                             QMetaObject::invokeMethod(
                                 QCoreApplication::instance(),
-                                [this]{
-                                    renderAFrameInstantly();
-                                });
+                                [this, ms, buf = t.move()]{
+                                _assParse = preprocessLyricBoundingBoxes(
+                                    0,
+                                    ms,
+                                    buf
+                                );
+                                renderAFrameInstantly();
+                            });
                         });
                 }
             });

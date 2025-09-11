@@ -38,7 +38,7 @@ struct LyricsApi {
             .thenTry([](container::Try<net::ResponseData> t) {
                 if (!t) [[unlikely]] {
                     t.rethrow();
-                } else if (t.get().status != 200) [[unlikely]] {
+                } else if (t.get().status / 100 != 2) [[unlikely]] {
                     api::throwVoMsg(t.move());
                 }
                 return t.move().body;
