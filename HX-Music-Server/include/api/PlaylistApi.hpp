@@ -59,14 +59,12 @@ HX_SERVER_API_BEGIN(PlaylistApi) {
         .addEndpoint<POST>("/playlist/update", [=] ENDPOINT {
             co_await api::coTryCatch([&] CO_FUNC {
                 // @todo
-                auto const& newDO = playlistDAO->update(
+                playlistDAO->update(
                     api::toDO<PlaylistDO>(co_await api::getVO<PlaylistVO>(req))
                 );
-                co_await res.setStatusAndContent(Status::CODE_200, log::toString(newDO.id))
-                            .sendRes();
+                co_await api::setJsonSucceed<std::string>("ok", res).sendRes();
             }, [&] CO_FUNC {
-                co_await res.setStatusAndContent(Status::CODE_400, "编辑失败")
-                            .sendRes();
+                co_await api::setJsonError("编辑失败", res).sendRes();
             });
         })
         // 删除歌单
@@ -75,11 +73,9 @@ HX_SERVER_API_BEGIN(PlaylistApi) {
                 uint64_t id;
                 reflection::fromJson(id, req.getPathParam(0));
                 playlistDAO->del(id);
-                co_await res.setStatusAndContent(Status::CODE_200, "ok")
-                            .sendRes();
+                co_await api::setJsonSucceed<std::string>("ok", res).sendRes();
             }, [&] CO_FUNC {
-                co_await res.setStatusAndContent(Status::CODE_400, "删除失败")
-                            .sendRes();
+                co_await api::setJsonError("删除失败", res).sendRes();
             });
         })
         // 获取歌单
@@ -150,11 +146,9 @@ HX_SERVER_API_BEGIN(PlaylistApi) {
                 auto listDO = playlistDAO->at(id);
                 listDO.songIdList.push_back(musicId);
                 playlistDAO->update(std::move(listDO));
-                co_await res.setStatusAndContent(Status::CODE_200, "ok")
-                            .sendRes();
+                co_await api::setJsonSucceed<std::string>("ok", res).sendRes();
             }, [&] CO_FUNC {
-                co_await res.setStatusAndContent(Status::CODE_400, "歌单添加歌曲失败")
-                            .sendRes();
+                co_await api::setJsonError("歌单添加歌曲失败", res).sendRes();
             });
         })
         // 为歌单删除歌曲

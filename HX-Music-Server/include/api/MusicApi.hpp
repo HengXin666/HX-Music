@@ -116,10 +116,9 @@ HX_SERVER_API_BEGIN(MusicApi) {
                     ++cnt;
                 }
             });
-            co_await res.setStatusAndContent(
-                Status::CODE_200,
-                "OK: 扫描完成, 新增 " + std::to_string(cnt) + " 首音乐!")
-                        .sendRes();
+            co_await api::setJsonSucceed(
+                "OK: 扫描完成, 新增 " + std::to_string(cnt) + " 首音乐!",
+            res).sendRes();
         })
         // 获取音乐信息
         .addEndpoint<GET>("/music/info/{id}", [=] ENDPOINT {
@@ -181,7 +180,7 @@ HX_SERVER_API_BEGIN(MusicApi) {
                 utils::AsyncFile file{req.getIO()};
                 co_await file.open(tmpFilePath.string(), utils::OpenMode::Write);
                 co_await file.close();
-                co_return co_await api::setJsonSucceed<std::string>(
+                co_return co_await api::setJsonSucceed(
                     std::move(id), res).sendRes();
             }, [&] CO_FUNC {
                 co_return co_await api::setJsonError(

@@ -307,13 +307,15 @@ public:
                     nowPlayListId, t.get()
                 ).thenTry([this, nowPlayListId, musicId = t.get()](auto t) {
                     if (!t) [[unlikely]] {
-                        t.rethrow();
+                        log::hxLog.error("添加歌曲到歌单失败:", t.what());
+                        return;
                     }
                     // 获取歌曲数据, 插入到本歌单. 而不是再次请求.
                     // 因为可能时间差异. 所以需要先判断当前歌单是否还是被添加歌单
                     if (nowPlayListId != GlobalSingleton::get().guiPlaylist.id
                         && nowPlayListId != GlobalSingleton::get().nowPlaylist.id
                     ) {
+                        log::hxLog.error("当前没有选择歌单");
                         // 当前没有选择该歌单
                         throw std::runtime_error{"The playlist is currently not selected"};
                     }
@@ -335,6 +337,10 @@ public:
                         } else [[unlikely]] {
                             // 当前没有选择该歌单
                             throw std::runtime_error{"The playlist is currently not selected"};
+                        }
+                    }).thenTry([](container::Try<> t) {
+                        if (!t) [[unlikely]] {
+                            log::hxLog.error("显示新歌曲失败:", t.what());
                         }
                     });
                 });
