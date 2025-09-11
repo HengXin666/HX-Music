@@ -353,6 +353,18 @@ public:
             renderLyric(GlobalSingleton::get().music.getNowPos(), true);
         }
     }
+
+    // 爬取歌曲歌词
+    Q_INVOKABLE void crawlKaRaOKAssLyrics(uint64_t id) {
+        LyricsApi::crawlKaRaOKAssLyrics(id)
+            .thenTry([=](auto t) {
+                if (!t) [[unlikely]] {
+                    log::hxLog.error("爬取歌词失败:", t.what());
+                    return;
+                }
+                log::hxLog.info("成功获取到歌词!", id);
+            });
+    }
 Q_SIGNALS:
     void updateLyriced();
 

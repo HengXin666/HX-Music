@@ -44,6 +44,20 @@ struct LyricsApi {
                 return t.move().body;
             });
     }
+
+    /**
+     * @brief 爬取 卡拉OK Ass 歌词
+     * @param id 歌曲id
+     * @return container::FutureResult<> 
+     */
+    static container::FutureResult<> crawlKaRaOKAssLyrics(uint64_t id) {
+        return NetSingleton::get().postReq(
+            "/lyrics/ass/karaok/"
+            + std::to_string(id), {}, net::NONE
+        ).thenTry([](container::Try<net::ResponseData> t) {
+            api::checkTryAndStatusAndJsonVO<std::string>(std::move(t));
+        });
+    }
 };
 
 } // namespace HX

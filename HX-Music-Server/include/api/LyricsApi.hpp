@@ -52,7 +52,7 @@ HX_SERVER_API_BEGIN(LyricsApi) {
             });
         })
         // 网络爬取歌曲歌词并且日语注音卡拉ok化
-        .addEndpoint<GET, POST>("/lyrics/ass/karaok/{id}", [=] ENDPOINT {
+        .addEndpoint<POST>("/lyrics/ass/karaok/{id}", [=] ENDPOINT {
             auto idStrView = req.getPathParam(0);
             MusicDAO::PrimaryKeyType id{};
             co_await api::coTryCatch([&] CO_FUNC {

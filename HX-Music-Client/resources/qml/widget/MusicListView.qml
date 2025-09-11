@@ -259,6 +259,12 @@ Item {
             }
         }
         MenuItem {
+            text: "爬取歌词"
+            onTriggered: {
+                LyricController.crawlKaRaOKAssLyrics(musicListModel.getUrl(menu.index))
+            }
+        }
+        MenuItem {
             text: "删除"
             onTriggered: {
                 // @todo
