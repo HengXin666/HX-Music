@@ -68,18 +68,18 @@ struct MusicClient {
         static HX::MusicController musicController{};
         cp->setContextProperty("MusicController", &musicController);
 
-        // 注册 歌曲列表视图 到 qml
-        qmlRegisterType<HX::MusicListModel>(
-            "HX.Music",
-            1, 0,
-            "MusicListModel"
-        );
-
         // 注册 歌单列表视图 到 qml
         qmlRegisterType<HX::PlaylistModel>(
             "HX.Music",
             1, 0,
             "PlaylistModel"
+        );
+
+        // 注册 歌曲列表视图 到 qml
+        qmlRegisterType<HX::MusicListModel>(
+            "HX.Music",
+            1, 0,
+            "MusicListModel"
         );
 
         // 注册 音频信息

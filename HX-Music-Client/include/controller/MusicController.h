@@ -24,9 +24,9 @@
 #include <QTimer>
 
 #include <cmd/MusicCommand.hpp>
+#include <singleton/OnlineImagePoll.h>
 
 // debug
-#include <QDebug>
 #include <HXLibs/log/Log.hpp>
 
 namespace HX {
@@ -51,7 +51,12 @@ public:
             &SignalBusSingleton::get(),
             &SignalBusSingleton::listIndexChanged,
             this,
-            [this]() { Q_EMIT listIndexChanged(getListIndex()); }
+            [this]() {
+                // 必须当前为显示页才可以设置啊
+                if (GlobalSingleton::get().musicConfig.playlistId == GlobalSingleton::get().guiPlaylist.id) {
+                    Q_EMIT listIndexChanged(getListIndex());
+                }
+            }
         );
 
         // 歌单更新信号
@@ -77,6 +82,98 @@ public:
             this,
             [this](MusicInformation* info) {
             Q_EMIT playingChanged(GlobalSingleton::get().musicConfig.isPlay);
+        });
+
+        // 下首歌
+        connect(
+            &SignalBusSingleton::get(),
+            &SignalBusSingleton::nextMusicByMusicListModel,
+            this,
+            [this](int index) {
+            auto const& nowPlaylistSongList = GlobalSingleton::get().nowPlaylist.songList;
+            if (nowPlaylistSongList.empty()) {
+                return;
+            }
+            switch (GlobalSingleton::get().musicConfig.playMode) {
+            case PlayMode::RandomPlay:  // 随机播放
+                if (auto it = GlobalSingleton::get().playQueue.next()) {
+                    MusicCommand::switchMusic<false>(*it);
+                    Q_EMIT SignalBusSingleton::get().musicResumed();
+                    GlobalSingleton::get().musicConfig.listIndex = [&]() -> std::size_t {
+                        for (std::size_t i = 0; i < nowPlaylistSongList.size(); ++i)
+                            if (*it == nowPlaylistSongList[i].id)
+                                return i;
+                        [[unlikely]]
+                        log::hxLog.error("找不到该id");
+                        return {};
+                    }();
+                    Q_EMIT SignalBusSingleton::get().listIndexChanged();
+                    break;
+                } else {
+                    index = std::uniform_int_distribution<int>{
+                        0, static_cast<int>(nowPlaylistSongList.size()) - 1
+                    }(_rng);
+                }
+            [[fallthrough]];
+            case PlayMode::ListLoop:    // 列表循环
+            case PlayMode::SingleLoop:  // 单曲循环
+            {
+                auto idx = (index + 1) % nowPlaylistSongList.size();
+                MusicCommand::switchMusic(nowPlaylistSongList[idx].id);
+                GlobalSingleton::get().musicConfig.listIndex = idx;
+                Q_EMIT SignalBusSingleton::get().listIndexChanged();
+                break;
+            }
+            case PlayMode::PlayModeCnt: // !保留!
+                break;
+            }
+        });
+
+        // 上首歌
+        connect(
+            &SignalBusSingleton::get(),
+            &SignalBusSingleton::prevMusicByMusicListModel,
+            this,
+            [this](int index) {
+            auto const& nowPlaylistSongList = GlobalSingleton::get().nowPlaylist.songList;
+            if (nowPlaylistSongList.empty()) {
+                return;
+            }
+            switch (GlobalSingleton::get().musicConfig.playMode) {
+            case PlayMode::RandomPlay:  // 随机播放
+                if (auto it = GlobalSingleton::get().playQueue.prev()) {
+                    MusicCommand::switchMusic<false>(*it);
+                    Q_EMIT SignalBusSingleton::get().musicResumed();
+                    GlobalSingleton::get().musicConfig.listIndex = [&]() -> std::size_t {
+                        for (std::size_t i = 0; i < nowPlaylistSongList.size(); ++i)
+                            if (*it == nowPlaylistSongList[i].id)
+                                return i;
+                        [[unlikely]]
+                        log::hxLog.error("找不到该id");
+                        return {};
+                    }();
+                    Q_EMIT SignalBusSingleton::get().listIndexChanged();
+                    break;
+                } else {
+                    // 也是随机
+                    index = std::uniform_int_distribution<int>{
+                        0, static_cast<int>(nowPlaylistSongList.size()) - 1
+                    }(_rng);
+                }
+            [[fallthrough]];
+            case PlayMode::ListLoop:    // 列表循环
+            case PlayMode::SingleLoop:  // 单曲循环
+            {
+                auto idx = (index - 1 + static_cast<int>(nowPlaylistSongList.size())) 
+                              % static_cast<int>(nowPlaylistSongList.size());
+                MusicCommand::switchMusic(nowPlaylistSongList[idx].id);
+                GlobalSingleton::get().musicConfig.listIndex = idx;
+                Q_EMIT SignalBusSingleton::get().listIndexChanged();
+                break;
+            }
+            case PlayMode::PlayModeCnt: // !保留!
+                break;
+            }
         });
     }
 
@@ -107,10 +204,10 @@ public:
 
     /**
      * @brief 播放音乐
-     * @param path 音乐路径
+     * @param id 音乐id
      */
-    Q_INVOKABLE void playMusic(QString const& path) {
-        MusicCommand::switchMusic(path);
+    Q_INVOKABLE void playMusic(uint64_t id) {
+        MusicCommand::switchMusic(id);
         Q_EMIT playingChanged(true);
     }
 
@@ -171,11 +268,20 @@ public:
     }
 
     /**
-     * @brief 设置当前活跃的歌单id
+     * @brief 设置当前活跃的歌单id (双击播放该歌曲时候)
      * @param id 
      * @return Q_INVOKABLE 
      */
     Q_INVOKABLE void setPlaylistId(uint64_t id) noexcept {
+        // 如果不是当前歌单, 说明是新的活动歌单
+        if (id != GlobalSingleton::get().musicConfig.playlistId) {
+            auto& maePlaylist = GlobalSingleton::get().nowPlaylist;
+            // 活动歌单更新了, 析构之前保存的图片
+            for (auto&& it : maePlaylist.songList) {
+                OnlineImagePoll::get()->erase(QString{"%1"}.arg(it.id));
+            }
+            maePlaylist = GlobalSingleton::get().guiPlaylist;
+        }
         GlobalSingleton::get().musicConfig.playlistId = id;
     }
 
@@ -219,6 +325,8 @@ Q_SIGNALS:
     void listIndexChanged(int index);
 
 private:
+    std::mt19937 _rng{std::random_device{}()};
+
     Q_PROPERTY(
         bool isPlaying 
         READ getPlaying 

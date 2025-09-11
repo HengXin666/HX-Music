@@ -25,56 +25,83 @@
 namespace HX {
 
 /**
- * @brief 播放队列
+ * @brief 播放队列, 支持安全的前后切换和队列维护
  */
-class PlayQueue { // 需要重构
+class PlayQueue {
 public:
-    using Type = QString;
-    using TypeOpt = typename std::optional<Type>;
+    using Type = uint64_t;
+    using TypeOpt = std::optional<Type>;
+    using Iterator = std::list<Type>::iterator;
 
-    PlayQueue()
-        : _pq{}
-        , _it{_pq.end()}
-    {}
+    PlayQueue() = default;
 
     /**
-     * @brief 歌单列表下一首
-     * @return ItOpt 
+     * @brief 播放下一首
+     * @return 下一首歌曲ID, 如果没有则返回空
      */
     TypeOpt next() {
-        if (_it == --_pq.end()) {
+        if (_pq.empty() || !_it.has_value()) {
             return {};
         }
-        return *++_it;
+        auto cur = *_it;
+        auto last = std::prev(_pq.end());
+        if (cur == last) {
+            return {}; // 已经是最后一首
+        }
+        ++cur;
+        _it = cur;
+        return **_it;
     }
 
     /**
-     * @brief 歌单列表上一首
-     * @return ItOpt 
+     * @brief 播放上一首
+     * @return 上一首歌曲ID, 如果没有则返回空
      */
     TypeOpt prev() {
-        if (_it == _pq.begin()) {
+        if (_pq.empty() || !_it.has_value()) {
             return {};
         }
-        return *--_it;
+        auto cur = *_it;
+        if (cur == _pq.begin()) {
+            return {}; // 已经是第一首
+        }
+        --cur;
+        _it = cur;
+        return **_it;
     }
 
     /**
-     * @brief 添加音乐进入队列尾部
-     * @param it 
+     * @brief 添加音乐到队列尾部, 队列最多保留16首
+     * @param uri 歌曲ID
      */
     void push(Type const& uri) {
-        _it = _pq.emplace(_pq.end(), uri);
-        if (_pq.size() > 16)
-            _pq.pop_front();
+        _pq.emplace_back(uri);
+        if (!_it.has_value()) {
+            _it = std::prev(_pq.end()); // 第一次添加时初始化_it
+        } else {
+            // 插入在末尾时, 如果_it无效则更新到新元素
+            _it = std::prev(_pq.end());
+        }
+
+        // 队列溢出时删除最前的一个
+        if (_pq.size() > 16) {
+            auto frontIt = _pq.begin();
+            if (_it.value() == frontIt) {
+                _pq.pop_front();
+                _it = _pq.begin();
+            } else {
+                _pq.pop_front();
+            }
+        }
     }
 
     bool empty() const noexcept {
         return _pq.empty();
     }
+
 private:
-    std::list<Type> _pq; // 歌曲路径
-    decltype(_pq.begin()) _it; // 当前歌曲迭代器
+    std::list<Type> _pq;              // 歌曲路径队列
+    std::optional<Iterator> _it;      // 当前歌曲迭代器, 用optional保证有效性
 };
 
 } // namespace HX

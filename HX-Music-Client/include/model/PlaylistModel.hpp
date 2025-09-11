@@ -53,7 +53,6 @@ public:
             &SignalBusSingleton::updatePlaylistList,
             this,
             [this](uint64_t newId) {
-                log::hxLog.warning("歌单 -> ", newId);
                 if (!newId) {
                     // 全量更新
                     PlaylistApi::selectAllPlaylist()

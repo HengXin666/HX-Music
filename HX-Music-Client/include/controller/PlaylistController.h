@@ -22,7 +22,6 @@
 
 #include <singleton/SignalBusSingleton.h>
 #include <singleton/GlobalSingleton.hpp>
-#include <singleton/OnlineImagePoll.h>
 #include <cmd/MusicCommand.hpp>
 #include <api/PlaylistApi.hpp>
 
@@ -44,30 +43,35 @@ public:
             &SignalBusSingleton::get(),
             &SignalBusSingleton::loadPlaylistSignal,
             this,
-            [this](uint64_t id) {
+            [this, init = false](uint64_t id) mutable {
                 GlobalSingleton::get().guiPlaylist = {};
+                GlobalSingleton::get().playQueue = {};
+                // 发送更新歌单信号
+                Q_EMIT SignalBusSingleton::get().playlistChanged(id);
                 log::hxLog.info("网络: 请求歌单", id);
                 if (id == Playlist::kNonePlaylist) {
                     return;
                 }
-                PlaylistApi::selectById(id).thenTry([=](container::Try<Playlist> t){
+                PlaylistApi::selectById(id).thenTry([id, &init](container::Try<Playlist> t) mutable {
                     if (!t) [[unlikely]] {
                         GlobalSingleton::get().guiPlaylist = {};
                         log::hxLog.error("请求歌单错误:", t.what());
+                        return;
+                    }
+                    if (!init) {
+                        GlobalSingleton::get().nowPlaylist
+                            = GlobalSingleton::get().guiPlaylist
+                            = t.move();
+                        init = true;
                     } else {
                         GlobalSingleton::get().guiPlaylist = t.move();
                     }
-                    // 活动歌单
-                    if (id == GlobalSingleton::get().musicConfig.playlistId) {
-                        auto& maePlaylist = GlobalSingleton::get().nowPlaylist;
-                        // 活动歌单更新了, 析构之前保存的图片
-                        for (auto&& it : maePlaylist.songList) {
-                            OnlineImagePoll::get()->erase(QString{"%1"}.arg(it.id));
-                        }
-                        maePlaylist = GlobalSingleton::get().guiPlaylist;
-                    }
-                    // 发送更新歌单信号
-                    Q_EMIT SignalBusSingleton::get().playlistChanged(id);
+                    QMetaObject::invokeMethod(
+                        QCoreApplication::instance(),
+                        [id] {
+                        // 发送更新歌单信号
+                        Q_EMIT SignalBusSingleton::get().playlistChanged(id);
+                    });
                 });
             });
         
@@ -94,23 +98,26 @@ public:
             auto idx = GlobalSingleton::get().musicConfig.listIndex;
             if (idx == -1) {
                 return;
-            } else if (auto& songList
-                = GlobalSingleton::get().nowPlaylist.songList; idx >= songList.size()
-            ) {
-                log::hxLog.error("网络请求失败! 数据不存在, 导致: 歌单数组越界", idx);
-                return;
-            } else {
-                // 网络加载, 并且显示
-                MusicCommand::switchMusic<false, true>(
-                    QString{"%1"}.arg(songList[idx].id)
-                );
-                QTimer::singleShot(500, this, [this] {
-                    // 设置播放位置, 恢复之前的进度
-                    MusicCommand::setMusicPos(
-                        GlobalSingleton::get().musicConfig.position
-                    );
-                });
             }
+            // 等待加载好歌单, 然后显示上次的结果
+            QTimer::singleShot(500, this, [this, idx] {
+                if (auto& songList
+                    = GlobalSingleton::get().nowPlaylist.songList; idx >= songList.size()
+                ) {
+                    log::hxLog.error("网络请求失败! 数据不存在, 导致: 歌单数组越界", idx);
+                } else {
+                    // 网络加载, 并且显示
+                    MusicCommand::switchMusic<false, true>(
+                        songList[idx].id
+                    );
+                    QTimer::singleShot(200, [] {
+                        // 设置播放位置, 恢复之前的进度
+                        MusicCommand::setMusicPos(
+                            GlobalSingleton::get().musicConfig.position
+                        );
+                    });
+                }
+            });
         });
     }
 

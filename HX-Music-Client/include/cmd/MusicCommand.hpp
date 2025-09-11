@@ -36,23 +36,23 @@ struct MusicCommand {
      * @param it 
      */
     template <bool IsAddQueue = true, bool IsStop = false>
-    static void switchMusic(PlayQueue::Type path) {
+    static void switchMusic(PlayQueue::Type id) {
         // @todo 如果是网络, 则先播放网络的, 同时再下载本地的; 本地下载完成了, 就切换为本地播放.
         if constexpr (IsAddQueue) {
-            GlobalSingleton::get().playQueue.push(path);
+            GlobalSingleton::get().playQueue.push(id);
         }
-        bool ok = false;
-        uint64_t id = path.toULongLong(&ok);
-        if (ok) {
-            // 网络再次获取信息, 因为传递太麻烦了
-            MusicApi::selectById(id).thenTry([id](container::Try<SongInformation> t) {
-                if (t) [[likely]] {
-                    MusicInformation musicInfo{t.move()};
-                    QMetaObject::invokeMethod(QCoreApplication::instance(), 
+        // 网络再次获取信息, 因为传递太麻烦了
+        MusicApi::selectById(id).thenTry([id](container::Try<SongInformation> t) {
+            if (t) [[likely]] {
+                MusicInformation musicInfo{t.move()};
+                QMetaObject::invokeMethod(
+                    QCoreApplication::instance(), 
                     [id, musicInfo = std::move(musicInfo)]() mutable {
                         GlobalSingleton::get().musicConfig.isPlay = true;
                         Q_EMIT SignalBusSingleton::get().newSongLoaded(&musicInfo);
-                        GlobalSingleton::get().music.setLengthInMilliseconds(musicInfo.getLengthInMilliseconds());
+                        GlobalSingleton::get().music.setLengthInMilliseconds(
+                            musicInfo.getLengthInMilliseconds()
+                        );
                         GlobalSingleton::get().music.switchMusic(
                             QUrl{QString{"%1/music/download/%2"}.arg(
                                 NetSingleton::get().getBackendUrl(),
@@ -62,22 +62,13 @@ struct MusicCommand {
                         if constexpr (IsStop) {
                             pause();
                         }
-                    }, Qt::QueuedConnection);
-                } else {
-                    log::hxLog.error("播放失败: 请求错误:", t.what());
-                }
-            });
-        } else {
-            log::hxLog.error("错误的: cmd switch music");
-            MusicInformation musicInfo{MusicInfo{QFileInfo{path}}};
-            GlobalSingleton::get().musicConfig.isPlay = true;
-            Q_EMIT SignalBusSingleton::get().newSongLoaded(&musicInfo);
-            GlobalSingleton::get().music.setLengthInMilliseconds(musicInfo.getLengthInMilliseconds());
-            GlobalSingleton::get().music.switchMusic(musicInfo.filePath()).play();
-            if constexpr (IsStop) {
-                pause();
+                    },
+                    Qt::QueuedConnection
+                );
+            } else {
+                log::hxLog.error("播放失败: 请求错误:", t.what());
             }
-        }
+        });
     }
 
     /**

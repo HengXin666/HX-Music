@@ -25,8 +25,6 @@
 #include <singleton/SignalBusSingleton.h>
 #include <api/PlaylistApi.hpp>
 
-#include <random>
-
 namespace HX {
 
 class MusicListModel : public QAbstractListModel {
@@ -46,101 +44,12 @@ class MusicListModel : public QAbstractListModel {
         QStringList artist;     // 歌手列表
         QString album;          // 专辑
         QString duration;       // 时长 (单位: 秒(s))
-        QString url;            // 歌曲路径, 如果是网络歌单则是服务器内部的相对路径
-                                // 如果是本地歌单, 则是本机的绝对路径
         uint64_t id = 0;        // 歌曲id, 仅网络有效
     };
-
-    // 通过 URL 查找 索引
-    int findByUrl(QString const& url) const noexcept {
-        for (int i = 0; auto const& it : _musicArr) {
-            if (getUrl(i) == url) {
-                return i;
-            }
-            ++i;
-        }
-        return -1;
-    }
 public:
     explicit MusicListModel(QObject* parent = nullptr)
         : QAbstractListModel(parent)
     {
-        // 下首歌
-        connect(
-            &SignalBusSingleton::get(),
-            &SignalBusSingleton::nextMusicByMusicListModel,
-            this,
-            [this](int index) {
-            if (_musicArr.empty()) {
-                return;
-            }
-            switch (GlobalSingleton::get().musicConfig.playMode) {
-            case PlayMode::RandomPlay:  // 随机播放
-                if (auto it = GlobalSingleton::get().playQueue.next()) {
-                    MusicCommand::switchMusic<false>(*it);
-                    Q_EMIT SignalBusSingleton::get().musicResumed();
-                    GlobalSingleton::get().musicConfig.listIndex = findByUrl(*it);
-                    Q_EMIT SignalBusSingleton::get().listIndexChanged();
-                    break;
-                } else {
-                    index = std::uniform_int_distribution<int>{
-                        0, static_cast<int>(_musicArr.size()) - 1
-                    }(_rng);
-                }
-            [[fallthrough]];
-            case PlayMode::ListLoop:    // 列表循环
-            case PlayMode::SingleLoop:  // 单曲循环
-            {
-                auto idx = (index + 1) % static_cast<int>(_musicArr.size());
-                MusicCommand::switchMusic(getUrl(idx));
-                GlobalSingleton::get().musicConfig.listIndex = idx;
-                Q_EMIT SignalBusSingleton::get().listIndexChanged();
-                break;
-            }
-            case PlayMode::PlayModeCnt: // !保留!
-                break;
-            }
-        });
-
-        // 上首歌
-        connect(
-            &SignalBusSingleton::get(),
-            &SignalBusSingleton::prevMusicByMusicListModel,
-            this,
-            [this](int index) {
-            if (_musicArr.empty()) {
-                return;
-            }
-            switch (GlobalSingleton::get().musicConfig.playMode) {
-            case PlayMode::RandomPlay:  // 随机播放
-                if (auto it = GlobalSingleton::get().playQueue.prev()) {
-                    MusicCommand::switchMusic<false>(*it);
-                    Q_EMIT SignalBusSingleton::get().musicResumed();
-                    GlobalSingleton::get().musicConfig.listIndex = findByUrl(*it);
-                    Q_EMIT SignalBusSingleton::get().listIndexChanged();
-                    break;
-                } else {
-                    // 也是随机
-                    index = std::uniform_int_distribution<int>{
-                        0, static_cast<int>(_musicArr.size()) - 1
-                    }(_rng);
-                }
-            [[fallthrough]];
-            case PlayMode::ListLoop:    // 列表循环
-            case PlayMode::SingleLoop:  // 单曲循环
-            {
-                auto idx = (index - 1 + static_cast<int>(_musicArr.size())) 
-                              % static_cast<int>(_musicArr.size());
-                MusicCommand::switchMusic(getUrl(idx));
-                GlobalSingleton::get().musicConfig.listIndex = idx;
-                Q_EMIT SignalBusSingleton::get().listIndexChanged();
-                break;
-            }
-            case PlayMode::PlayModeCnt: // !保留!
-                break;
-            }
-        });
-
         // 歌单更新信号
         connect(
             &SignalBusSingleton::get(),
@@ -173,7 +82,6 @@ public:
         case ArtistRole: return music.artist;
         case AlbumRole: return music.album;
         case DurationRole: return music.duration;
-        case UrlRole: return music.url;
         case IdRole: return QString{"%1"}.arg(music.id);
         default: return {};
         }
@@ -185,7 +93,6 @@ public:
             { ArtistRole, "artist" },
             { AlbumRole, "album" },
             { DurationRole, "duration" },
-            { UrlRole, "url" },
             { IdRole, "id" },
         };
     }
@@ -253,16 +160,16 @@ public:
     }
 
     /**
-     * @brief 获取 URL, 如果为网络歌单, 则返回歌曲Id, 否则为本地路径
-     * @param row 
+     * @brief 歌曲Id
+     * @param row  
      * @return Q_INVOKABLE 
      */
-    Q_INVOKABLE QString getUrl(int row) const {
+    Q_INVOKABLE uint64_t getUrl(int row) const {
         if (row < 0 || row >= _musicArr.size()) {
             log::hxLog.error("getUrl 越界:", row);
             return {};
         }
-        return QString{"%1"}.arg(_musicArr[row].id);
+        return _musicArr[row].id;
     }
 
     /**
@@ -411,7 +318,6 @@ public:
             std::move(artist),
             std::move(album),
             std::move(duration),
-            url,
             id
         });
         Q_EMIT endInsertRows();
@@ -422,25 +328,26 @@ public:
      * @return Q_INVOKABLE 
      */
     Q_INVOKABLE void savePlaylist() {
-        decltype(GlobalSingleton::get().guiPlaylist.songList) newSongList;
-        newSongList.reserve(_musicArr.size());
-        for (auto const& it : _musicArr) {
-            newSongList.push_back({
-                0,
-                it.url.toStdString(),
-                it.title.toStdString(),
-                [&](){
-                    std::vector<std::string> res;
-                    for (auto const& it : it.artist) {
-                        res.emplace_back(it.toStdString());
-                    }
-                    return res;
-                }(),
-                it.album.toStdString()
-            });
-        }
-        GlobalSingleton::get().guiPlaylist.songList = std::move(newSongList);
-        Q_EMIT SignalBusSingleton::get().savePlaylistSignal();
+        log::hxLog.error("保存歌单@todo");
+        // decltype(GlobalSingleton::get().guiPlaylist.songList) newSongList;
+        // newSongList.reserve(_musicArr.size());
+        // for (auto const& it : _musicArr) {
+        //     newSongList.push_back({
+        //         0,
+        //         it.url.toStdString(),
+        //         it.title.toStdString(),
+        //         [&](){
+        //             std::vector<std::string> res;
+        //             for (auto const& it : it.artist) {
+        //                 res.emplace_back(it.toStdString());
+        //             }
+        //             return res;
+        //         }(),
+        //         it.album.toStdString()
+        //     });
+        // }
+        // GlobalSingleton::get().guiPlaylist.songList = std::move(newSongList);
+        // Q_EMIT SignalBusSingleton::get().savePlaylistSignal();
     }
 
     Q_INVOKABLE void clear() {
@@ -454,7 +361,6 @@ public:
     }
 
 private:
-    std::mt19937 _rng{std::random_device{}()};
     QVector<MusicInfoData> _musicArr{};
     uint64_t _id = 0; // 当前歌单id
     bool _isActiveUpdate = false;
