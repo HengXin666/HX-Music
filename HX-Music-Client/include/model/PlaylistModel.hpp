@@ -53,6 +53,7 @@ public:
             &SignalBusSingleton::updatePlaylistList,
             this,
             [this](uint64_t newId) {
+                log::hxLog.warning("歌单 -> ", newId);
                 if (!newId) {
                     // 全量更新
                     PlaylistApi::selectAllPlaylist()
@@ -61,10 +62,14 @@ public:
                                 log::hxLog.error("更新歌单简介列表失败:", t.what());
                                 return;
                             }
-                            clear();
-                            for (auto const& info : t.get()) {
-                                addData(info);
-                            }
+                            QMetaObject::invokeMethod(
+                                QCoreApplication::instance(),
+                                [this, infoList = t.move()] {
+                                clear();
+                                for (auto const& info : infoList) {
+                                    addData(info);
+                                }
+                            });
                         });
                 } else {
                     // 仅更新 id = newId

@@ -113,6 +113,18 @@ struct PlaylistApi {
     }
 
     /**
+     * @brief 删除歌单
+     * @param id 
+     * @return container::FutureResult<> 
+     */
+    static container::FutureResult<> delPlaylist(uint64_t id) {
+        return NetSingleton::get().delReq("/playlist/del/" + std::to_string(id))
+            .thenTry([](container::Try<net::ResponseData> t) {
+                api::checkTryAndStatusAndJsonVO<std::string>(std::move(t));
+            });
+    }
+
+    /**
      * @brief 为歌单添加歌曲
      * @param playlistId 歌单ID
      * @param musicId 歌曲ID

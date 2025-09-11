@@ -142,6 +142,29 @@ public:
             Q_EMIT SignalBusSingleton::get().updatePlaylistList(t.move());
         });
     }
+
+    /**
+     * @brief 删除歌单
+     * @param id 
+     * @return Q_INVOKABLE 
+     */
+    Q_INVOKABLE void delPlaylist(uint64_t id) {
+        PlaylistApi::delPlaylist(id).thenTry([](auto t) {
+            if (!t) [[unlikely]] {
+                log::hxLog.error("删除歌单失败:", t.what());
+                return;
+            }
+            Q_EMIT SignalBusSingleton::get().updatePlaylistList(0);
+        });
+    }
+
+    /**
+     * @brief 刷新歌单
+     * @return Q_INVOKABLE 
+     */
+    Q_INVOKABLE void refreshPlaylist() {
+        Q_EMIT SignalBusSingleton::get().updatePlaylistList(0);
+    }
 };
 
 } // namespace HX

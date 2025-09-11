@@ -394,7 +394,6 @@ Item {
                     isSelected: root.currentIndex === 0
                     onClicked: {
                         createdPlayListView.resetIndex();
-                        favoritePlayListView.resetIndex();
                         root.currentIndex = 0;
                         root.tabClicked(0);
                     }
@@ -407,7 +406,6 @@ Item {
                     isSelected: root.currentIndex === 1
                     onClicked: {
                         createdPlayListView.resetIndex();
-                        favoritePlayListView.resetIndex();
                         root.currentIndex = 1;
                         root.tabClicked(1);
                         // @todo 到时候跳转到 '我喜欢'
@@ -421,7 +419,6 @@ Item {
                     isSelected: root.currentIndex === 2
                     onClicked: {
                         createdPlayListView.resetIndex();
-                        favoritePlayListView.resetIndex();
                         root.currentIndex = 2;
                         root.tabClicked(2);
                     }
@@ -449,14 +446,20 @@ Item {
                     TextButton {
                         text: "自建歌单"
                         isSelected: playlistOperationBar.currentIndex === 0
-                        onClicked: playlistOperationBar.currentIndex = 0
+                        onClicked: {
+                            playlistOperationBar.currentIndex = 0;
+                            // @todo 请求: 获取用户创建歌单
+                        }
                     }
 
                     // 收藏歌单按钮
                     TextButton {
                         text: "收藏歌单"
                         isSelected: playlistOperationBar.currentIndex === 1
-                        onClicked: playlistOperationBar.currentIndex = 1
+                        onClicked: {
+                            playlistOperationBar.currentIndex = 1;
+                            // @todo 请求: 获取用户收藏歌单
+                        }
                     }
 
                     // 新建歌单 / 导入歌单
@@ -479,23 +482,8 @@ Item {
                 id: createdPlayListView
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                visible: playlistOperationBar.currentIndex === 0
                 onPlayListClicked: function (id) {
                     root.currentIndex = -1;
-                    favoritePlayListView.resetIndex();
-                    root.playListClicked(id);
-                }
-            }
-
-            // 歌单列表 (收藏他人)
-            PlaylistView {
-                id: favoritePlayListView
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                visible: playlistOperationBar.currentIndex === 1
-                onPlayListClicked: function (id) {
-                    root.currentIndex = -1;
-                    createdPlayListView.resetIndex();
                     root.playListClicked(id);
                 }
             }

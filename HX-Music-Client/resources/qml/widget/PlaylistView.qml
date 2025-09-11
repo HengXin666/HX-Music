@@ -210,9 +210,16 @@ Item {
             }
         }
         MenuItem {
+            text: "刷新"
+            onTriggered: {
+                console.log("刷新");
+                PlaylistController.refreshPlaylist();
+            }
+        }
+        MenuItem {
             text: "删除"
             onTriggered: {
-                // @todo
+                PlaylistController.delPlaylist(playlistModel.getId(menu.index));
             }
         }
     }

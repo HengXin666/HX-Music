@@ -327,13 +327,27 @@ public:
                         }
                         // @todo 此处应该要同步一下, 通过 QT 的同步?
                         if (nowPlayListId == GlobalSingleton::get().guiPlaylist.id) {
-                            _isActiveUpdate = true;
-                            addFromNet(
-                                GlobalSingleton::get().guiPlaylist.songList.emplace_back(t.move())
-                            );
-                            _isActiveUpdate = false;
+                            QMetaObject::invokeMethod(
+                                QCoreApplication::instance(),
+                                [this, songInfo = t.move()] {
+                                _isActiveUpdate = true;
+                                addFromNet(
+                                    GlobalSingleton::get()
+                                        .guiPlaylist
+                                        .songList
+                                        .emplace_back(std::move(songInfo))
+                                );
+                                _isActiveUpdate = false;
+                            });
                         } else if (nowPlayListId == GlobalSingleton::get().nowPlaylist.id) {
-                            GlobalSingleton::get().nowPlaylist.songList.emplace_back(t.move());
+                            QMetaObject::invokeMethod(
+                                QCoreApplication::instance(),
+                                [songInfo = t.move()] {
+                                GlobalSingleton::get()
+                                    .nowPlaylist
+                                    .songList
+                                    .emplace_back(std::move(songInfo));
+                            });
                         } else [[unlikely]] {
                             // 当前没有选择该歌单
                             throw std::runtime_error{"The playlist is currently not selected"};

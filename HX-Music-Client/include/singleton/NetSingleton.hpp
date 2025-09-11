@@ -33,6 +33,11 @@ struct NetSingleton {
         return _cliPool.get(_backendUrl + std::move(url));
     }
 
+    container::FutureResult<container::Try<net::ResponseData>> delReq(std::string url) {
+        log::hxLog.debug("http -> DEL:", _backendUrl + url);
+        return _cliPool.requst<net::DEL>(_backendUrl + std::move(url));
+    }
+
     container::FutureResult<container::Try<net::ResponseData>> postReq(
         std::string url,
         std::string body,
