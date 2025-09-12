@@ -20,16 +20,17 @@ AssParse LyricController::preprocessLyricBoundingBoxes(
     for (auto& assParse : assArr) {
         assParse.closeLog();
         assParse.setFrameSize(_assParse.getWidth(), _assParse.getHeight());
-        assParse.readMemory(data.data());
+        assParse.readMemory(data);
     }
+    TwoBlockBounds res;
     task.execute([&] {
-        _twoBlockBounds = tbb::parallel_reduce(tbb::blocked_range<std::size_t>{0, n}, TwoBlockBounds{}, 
+        res = tbb::parallel_reduce(tbb::blocked_range<std::size_t>{0, n}, TwoBlockBounds{}, 
         [&](tbb::blocked_range<std::size_t> const& r, TwoBlockBounds const& rect) -> TwoBlockBounds {
             TwoBlockBounds res;
             AssParse& assParse = assArr[tbb::this_task_arena::current_thread_index()];
-            for (auto it = r.begin(); it != r.end(); ++it) {
+            for (auto i = r.begin(); i != r.end(); ++i) {
                 int change;
-                int t = it * frameInterval;
+                qint64 t = startTime + static_cast<qint64>(i) * frameInterval;
                 auto* imgList = assParse.rendererFrame(t + _lyricConfig.lyricOffset, change);
                 if (!imgList || !change) {
                     continue;
@@ -59,8 +60,33 @@ AssParse LyricController::preprocessLyricBoundingBoxes(
             };
         });
     });
-    _hasCachedBlock = _twoBlockBounds.hasTop() || _twoBlockBounds.hasBtm();
+    _hasCachedBlock = res.hasTop() || res.hasBtm();
+    _twoBlockBounds = std::move(res);
+    log::hxLog.info(_twoBlockBounds);
     return std::move(assArr.front());
 }
+
+/*
+bug:
+[INFO] {
+    "topYMin": 360,
+    "topYMax": 490,
+    "btmYMin": 571,
+    "btmYMax": 701,
+    "left": 82,
+    "right": 1082
+} 
+
+正常:
+[INFO] {
+    "topYMin": 360,
+    "topYMax": 490,
+    "btmYMin": 571,
+    "btmYMax": 701,
+    "left": 82,
+    "right": 1920
+}
+
+*/
 
 } // namespace HX

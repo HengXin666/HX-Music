@@ -80,7 +80,10 @@ public:
         , _assParse{}
     {
         _assParse.setFrameSize(1920, 1080);
-        _assParse.readMemory(internal::readQrcFile(":default/default.ass"));
+        {
+            auto buf = internal::readQrcFile(":default/default.ass");
+            _assParse.readMemory({buf.data(), static_cast<std::size_t>(buf.size())});
+        }
 
         // 加载配置文件
         coroutine::EventLoop loop{};
@@ -127,7 +130,10 @@ public:
                     // );
                     MessageController::get().show<MsgType::Warning>("ub: 歌词本地加载 @todo");
                 } else {
-                    _assParse.readMemory(internal::readQrcFile(":default/loading.ass"));
+                    {
+                        auto buf = internal::readQrcFile(":default/loading.ass");
+                        _assParse.readMemory({buf.data(), static_cast<std::size_t>(buf.size())});
+                    }
                     renderAFrameInstantly();
                     log::hxLog.debug("加载歌词:", info->getId());
                     // 网络加载歌词到内存
@@ -218,7 +224,7 @@ public:
         return decltype(lyricFilePath.string()){};
     }
 
-    // 仅缓存上下范围, 左右实时
+    // 并行计算-缓存Ass范围用于切割
     AssParse preprocessLyricBoundingBoxes(qint64 startTime, qint64 endTime, std::string_view data);
 
     // 辅助函数: 绘制ASS图像到指定画布
@@ -301,8 +307,30 @@ public:
         QImage res{w, h, QImage::Format_RGBA8888};
         res.fill(Qt::transparent);
         QPainter painter(&res);
-        for (ASS_Image* img = imgList; img; img = img->next) {
-            drawAssImage(&painter, img, img->dst_y + (img->h >> 1) < midLine);
+        if (_hasAutoCenter) {
+            // 自动居中
+            int left = std::numeric_limits<int>::max();
+            int right = 0;
+            for (ASS_Image* img = imgList; img; img = img->next) {
+                left = std::min(left, img->dst_x);
+                right = std::max(right, img->dst_x + img->w);
+            }
+
+            // 计算水平偏移量
+            int offsetX = (w - (right - left)) >> 1;
+
+            // 先平移, 再绘制
+            if (offsetX > 0 && offsetX + right <= w) [[likely]] {
+                painter.translate(offsetX, 0);
+            }
+
+            for (ASS_Image* img = imgList; img; img = img->next) {
+                drawAssImage(&painter, img, img->dst_y + (img->h >> 1) < midLine);
+            }
+        } else {
+            for (ASS_Image* img = imgList; img; img = img->next) {
+                drawAssImage(&painter, img, img->dst_y + (img->h >> 1) < midLine);
+            }
         }
         _lastImage = std::move(res);
         Q_EMIT updateLyriced();
@@ -377,6 +405,7 @@ private:
     LyricConfig _lyricConfig;
     TwoBlockBounds _twoBlockBounds;
     bool _hasCachedBlock = false;       // 是否计算了边界块
+    bool _hasAutoCenter = true;         // 是否自动水平居中
 
 #ifndef Q_MOC_RUN
     #define HX_QML_CONFIG_TYPE(name) decltype(_lyricConfig.name)

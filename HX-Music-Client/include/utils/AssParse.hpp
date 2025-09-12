@@ -95,11 +95,16 @@ public:
      * @brief 加载内存中已读取的ass文件内容
      * @param buf 
      */
-    void readMemory(QByteArray&& buf) noexcept {
+    void readMemory(std::string_view buf) noexcept {
         if (_assTrack) {
             ::ass_free_track(_assTrack);
         }
-        _assTrack = ::ass_read_memory(_assLibrary, buf.data(), buf.size(), nullptr);
+        _assTrack = ::ass_read_memory(
+            _assLibrary,
+            const_cast<char*>(buf.data()),
+            buf.size(),
+            nullptr
+        );
     }
 
     /**
