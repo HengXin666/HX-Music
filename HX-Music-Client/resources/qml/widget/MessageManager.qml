@@ -2,11 +2,12 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import HX.Music
+import "./internal"
 
 Item {
     id: messageManager
     anchors.fill: parent
-    z: 9999 // 确保消息显示在最上层
+    focus: true
 
     // 消息数据模型
     ListModel {
@@ -17,6 +18,7 @@ Item {
     Component {
         id: messageComponent
         Item {
+            focus: true
             id: messageItem
             width: 300
             height: 70
@@ -33,13 +35,15 @@ Item {
             // 消息矩形
             Rectangle {
                 id: messageRect
+                focus: true
                 anchors.fill: parent
                 radius: 8
                 opacity: 0
 
                 // 背景颜色
                 color: {
-                    switch (messageType) {
+                    return '#60141414';
+                    switch (messageItem.messageType) {
                         case "error": return "#ffebee";
                         case "warning": return "#fff8e1";
                         case "success": return "#e8f5e9";
@@ -50,7 +54,7 @@ Item {
                 // 边框颜色
                 border.width: 1
                 border.color: {
-                    switch (messageType) {
+                    switch (messageItem.messageType) {
                         case "error": return "#f44336";
                         case "warning": return "#ffc107";
                         case "success": return "#4caf50";
@@ -59,21 +63,14 @@ Item {
                 }
 
                 // 左侧图标
-                Text {
+                MusicActionButton {
+                    focus: true
                     anchors.left: parent.left
                     anchors.leftMargin: 12
                     anchors.verticalCenter: parent.verticalCenter
-                    font.family: "Material Icons"
-                    font.pixelSize: 24
-                    text: {
-                        switch (messageItem.messageType) {
-                            case "error": return "\ue000";
-                            case "warning": return "\ue002";
-                            case "success": return "\ue86c";
-                            default: return "\ue88e";
-                        }
-                    }
-                    color: {
+                    width: 28
+                    height: 28
+                    defaultColor: {
                         switch (messageItem.messageType) {
                             case "error": return "#d32f2f";
                             case "warning": return "#f57c00";
@@ -81,6 +78,14 @@ Item {
                             default: return "#1976d2";
                         }
                     }
+                    url: `qrc:/icons/${(() => {
+                        switch (messageItem.messageType) {
+                            case "error": return "error";
+                            case "warning": return "warning";
+                            case "success": return "success";
+                            default: return "info";
+                        }
+                    })()}.svg`
                 }
 
                 // 消息文本
@@ -95,18 +100,19 @@ Item {
                     maximumLineCount: 2
                     elide: Text.ElideRight
                     font.pixelSize: 14
-                    color: "#212121"
+                    color: Theme.highlightingColor 
                 }
 
                 // 关闭按钮
-                Button {
+                MusicActionButton {
+                    focus: true
                     anchors.top: parent.top
                     anchors.right: parent.right
-                    width: 30
-                    height: 30
+                    anchors.margins: 8
+                    width: 20
+                    height: 20
                     flat: true
-                    icon.source: "qrc:/icons/close.svg"
-                    icon.color: "#757575"
+                    url: "qrc:/icons/close.svg"
                     onClicked: disappearAnimation.start()
                 }
             }
@@ -131,7 +137,7 @@ Item {
                 }
                 onStarted: {
                     // 在动画开始时计算并设置Y位置
-                    var targetY = (messageModel.count - 1 - messageItem.messageIndex) *
+                    const targetY = (messageModel.count - 1 - messageItem.messageIndex) *
                                  (messageItem.height + 10);
                     messageItem.y = targetY;
                 }
@@ -164,7 +170,8 @@ Item {
                 interval: 10
                 onTriggered: {
                     if (messageItem.messageIndex >= 0 && messageItem.messageIndex < messageModel.count) {
-                        messageModel.remove(messageItem.messageIndex)
+                        messageModel.remove(messageItem.messageIndex);
+                        messageManager.updateMessagePositions();
                     }
                 }
             }
@@ -172,7 +179,7 @@ Item {
             // 自动隐藏计时器
             Timer {
                 id: autoHideTimer
-                interval: 2000
+                interval: 3000
                 repeat: false
                 onTriggered: disappearAnimation.start()
             }
@@ -186,6 +193,9 @@ Item {
             // 鼠标悬停时暂停自动隐藏
             MouseArea {
                 anchors.fill: parent
+                focus: false
+                propagateComposedEvents: true
+                acceptedButtons: Qt.NoButton
                 hoverEnabled: true
                 onEntered: autoHideTimer.stop()
                 onExited: autoHideTimer.start()
@@ -201,10 +211,12 @@ Item {
             bottom: parent.bottom
             margins: 10
         }
+        focus: true
         width: 300
         height: parent.height
 
         Repeater {
+            focus: true
             model: messageModel
             delegate: messageComponent
         }

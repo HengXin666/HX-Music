@@ -101,13 +101,9 @@ BorderlessWindow {
 
     delegate: Rectangle {
         id: rootUI
+        focus: true
         anchors.fill: parent
         color: "transparent"
-
-        // 消息管理器
-        MessageManager {
-            anchors.fill: parent
-        }
 
         ColumnLayout {
             anchors.fill: parent
@@ -176,6 +172,13 @@ BorderlessWindow {
                 itemHeight: 72
                 Layout.fillWidth: true
             }
+        }
+
+        // 消息管理器
+        MessageManager {
+            z: 9999
+            focus: true
+            anchors.fill: parent
         }
     }
 

@@ -23,6 +23,8 @@ Window {
         color: "#3f3f3f"
         MouseArea {
             anchors.fill: parent
+            focus: false
+            propagateComposedEvents: true
             onDoubleClicked: root.toggleMaximized()
             acceptedButtons: Qt.LeftButton
             // 不要拖动, 移动逻辑交给外面的 DragHandler
@@ -48,6 +50,8 @@ Window {
                 }
                 MouseArea {
                     anchors.fill: parent
+                    focus: false
+                    propagateComposedEvents: true
                     onClicked: root.showMinimized()
                 }
             }
@@ -66,6 +70,8 @@ Window {
                 }
                 MouseArea {
                     anchors.fill: parent
+                    focus: false
+                    propagateComposedEvents: true
                     onClicked: {
                         if (root.visibility === Window.Maximized)
                             root.showNormal();
@@ -87,6 +93,8 @@ Window {
                 }
                 MouseArea {
                     anchors.fill: parent
+                    focus: false
+                    propagateComposedEvents: true
                     onClicked: root.close()
                 }
             }
@@ -132,6 +140,8 @@ Window {
     // 鼠标区域仅用于设置正确的光标形状
     MouseArea {
         anchors.fill: parent
+        focus: false
+        propagateComposedEvents: true
         hoverEnabled: true
         cursorShape: {
             const b = root.bw + 10; // 角尺寸
@@ -212,5 +222,6 @@ Window {
         width: root.width - 2 * root.bw
         height: root.height - (titleBarLoader.item ? titleBarLoader.y + titleBarLoader.height + root.bw : 2 * root.bw)
         sourceComponent: root.delegate
+        focus: true
     }
 }

@@ -21,8 +21,6 @@
 #include <QObject>
 #include <QString>
 
-#include <HXLibs/log/Log.hpp>
-
 namespace HX {
 
 class MessageController : public QObject {
@@ -45,7 +43,6 @@ Q_SIGNALS:
 public Q_SLOTS:
     // 显示信息消息
     void showInfo(const QString& message) {
-        log::hxLog.info("infoooo");
         Q_EMIT showMessageRequested("info", message);
     }
 

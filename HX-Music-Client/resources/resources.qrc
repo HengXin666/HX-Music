@@ -46,6 +46,10 @@
         <file alias="reset.svg">icons/reset.svg</file>
         <file alias="add.svg">icons/add.svg</file>
         <file alias="upload.svg">icons/upload.svg</file>
+        <file alias="info.svg">icons/info.svg</file>
+        <file alias="error.svg">icons/error.svg</file>
+        <file alias="success.svg">icons/success.svg</file>
+        <file alias="warning.svg">icons/warning.svg</file>
     </qresource>
     <qresource prefix="/logo">
         <file alias="HXMusic_logo.png">logo/HXMusic_logo.png</file>
