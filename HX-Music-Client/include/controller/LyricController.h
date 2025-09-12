@@ -57,6 +57,22 @@ inline QByteArray readQrcFile(const QString& qrcPath) {
 class LyricController : public QQuickImageProvider {
     Q_OBJECT
 
+    struct TwoBlockBounds {
+        int topYMin = std::numeric_limits<int>::max();
+        int topYMax = 0;
+        int btmYMin = std::numeric_limits<int>::max();
+        int btmYMax = 0;
+        int left = std::numeric_limits<int>::max();
+        int right = 0;
+
+        bool hasTop() const noexcept {
+            return topYMin != std::numeric_limits<int>::max();
+        }
+
+        bool hasBtm() const noexcept {
+            return btmYMin != std::numeric_limits<int>::max();
+        }
+    };
 public:
     LyricController()
         : QQuickImageProvider{QQuickImageProvider::Image}
@@ -225,10 +241,41 @@ public:
         painter->drawImage(img->dst_x - baseX, img->dst_y - baseY, image);
     }
 
+    inline void drawAssImage(QPainter* painter, ASS_Image* img, bool isTop) {
+        // 更正: Ass 使用的颜色是 BGR, 而不是 RGB
+        uint8_t b = (img->color >> 24) & 0xFF;
+        uint8_t g = (img->color >> 16) & 0xFF;
+        uint8_t r = (img->color >> 8) & 0xFF;
+        // uint8_t a = (img->color >>  0) & 0xFF;
+
+        QImage image{img->w, img->h, QImage::Format_RGBA8888};
+        for (int y = 0; y < img->h; ++y) {
+            uint8_t* srcLine = img->bitmap + y * img->stride;
+            QRgb* destLine = reinterpret_cast<QRgb*>(image.scanLine(y));
+            for (int x = 0; x < img->w; ++x) {
+                // uint8_t alpha = 255 - srcLine[x]; // 反转 alpha 值
+                destLine[x] = qRgba(r, g, b, srcLine[x]);
+            }
+        }
+        if (isTop) {
+            painter->drawImage(
+                img->dst_x - _twoBlockBounds.left,
+                img->dst_y - _twoBlockBounds.topYMin,
+                image
+            );
+        } else {
+            painter->drawImage(
+                img->dst_x - _twoBlockBounds.left,
+                img->dst_y - _twoBlockBounds.btmYMin
+                + (_twoBlockBounds.btmYMax - _twoBlockBounds.btmYMin),
+                image
+            );
+        }
+    }
+
     // 2. 渲染: 使用预计算的边界框
     void renderLyric(qint64 nowTime, bool mustBeUpdated = false) {
-        constexpr int middleGapHeight = 0; // 中间空白高度 (好像没有作用)
-        if (!_hasCachedY) [[unlikely]] {
+        if (!_hasCachedBlock) [[unlikely]] {
             return;
         }
 
@@ -247,62 +294,17 @@ public:
         }
 
         // 按上下分组
-        int midLine = _assParse.getHeight() / 2;
-        std::vector<ASS_Image*> topImages, bottomImages;
-        int widthLeft = INT_MAX, widthRight = INT_MIN;
+        int midLine = _assParse.getHeight() >> 1;
+        int w = _twoBlockBounds.right - _twoBlockBounds.left;
+        int h = (_twoBlockBounds.btmYMax - _twoBlockBounds.btmYMin)
+              + (_twoBlockBounds.topYMax - _twoBlockBounds.topYMin);
+        QImage res{w, h, QImage::Format_RGBA8888};
+        res.fill(Qt::transparent);
+        QPainter painter(&res);
         for (ASS_Image* img = imgList; img; img = img->next) {
-            if (img->dst_y + (img->h >> 1) < midLine) {
-                topImages.push_back(img);
-            } else {
-                bottomImages.push_back(img);
-            }
-            widthLeft = std::min(widthLeft, img->dst_x);
-            widthRight = std::max(widthRight, img->dst_x + img->w);
+            drawAssImage(&painter, img, img->dst_y + (img->h >> 1) < midLine);
         }
-
-        int width = std::max(1, widthRight - widthLeft);
-
-        // 计算总高度
-        int height = 0;
-        if (!topImages.empty()) {
-            height += _cachedTopYLR.y() - _cachedTopYLR.x();
-        }
-        if (!bottomImages.empty()) {
-            if (!topImages.empty()) {
-                height += middleGapHeight;
-            }
-            height += _cachedBottomYLR.y() - _cachedBottomYLR.x();
-        }
-        // height = std::max(1, height); // @?
-
-        // 创建最终画布
-        QImage result(width, height, QImage::Format_ARGB32);
-        result.fill(Qt::transparent);
-        QPainter painter(&result);
-
-        auto drawSection = [&](const std::vector<ASS_Image*>& images, const QPoint& yRange, int targetY) {
-            if (images.empty()) {
-                return;
-            }
-            int sectionHeight = yRange.y() - yRange.x();
-            QImage sectionCanvas(width, sectionHeight, QImage::Format_ARGB32);
-            sectionCanvas.fill(Qt::transparent);
-            QPainter sectionPainter(&sectionCanvas);
-
-            for (auto* img : images) {
-                drawAssImage(&sectionPainter, img, widthLeft, yRange.x());
-            }
-            painter.drawImage(0, targetY, sectionCanvas);
-        };
-
-        int yOffset = 0;
-        drawSection(topImages, _cachedTopYLR, yOffset);
-        if (!topImages.empty()) {
-            yOffset += _cachedTopYLR.y() - _cachedTopYLR.x() + middleGapHeight;
-        }
-        drawSection(bottomImages, _cachedBottomYLR, yOffset);
-
-        _lastImage = std::move(result);
+        _lastImage = std::move(res);
         Q_EMIT updateLyriced();
     }
 
@@ -373,9 +375,8 @@ private:
     QImage _lastImage;
     AssParse _assParse;
     LyricConfig _lyricConfig;
-    QPoint _cachedTopYLR;
-    QPoint _cachedBottomYLR;
-    bool _hasCachedY = false;
+    TwoBlockBounds _twoBlockBounds;
+    bool _hasCachedBlock = false;       // 是否计算了边界块
 
 #ifndef Q_MOC_RUN
     #define HX_QML_CONFIG_TYPE(name) decltype(_lyricConfig.name)
