@@ -55,7 +55,7 @@ public:
                 PlaylistApi::selectById(id).thenTry([id, &init](container::Try<Playlist> t) mutable {
                     if (!t) [[unlikely]] {
                         GlobalSingleton::get().guiPlaylist = {};
-                        log::hxLog.error("请求歌单错误:", t.what());
+                        MessageController::get().show<MsgType::Error>("请求歌单错误:" + t.what());
                         return;
                     }
                     if (!init) {
@@ -104,7 +104,9 @@ public:
                 if (auto& songList
                     = GlobalSingleton::get().nowPlaylist.songList; idx >= songList.size()
                 ) {
-                    log::hxLog.error("网络请求失败! 数据不存在, 导致: 歌单数组越界", idx);
+                    MessageController::get().show<MsgType::Error>(
+                        "网络请求失败! 数据不存在, 导致: 歌单数组越界" + std::to_string(idx)
+                    );
                 } else {
                     // 网络加载, 并且显示
                     MusicCommand::switchMusic<false, true>(
@@ -143,7 +145,7 @@ public:
             description.toStdString()
         }).thenTry([](container::Try<uint64_t> t) {
             if (!t) [[unlikely]] {
-                log::hxLog.error("创建歌单失败:", t.what());
+                MessageController::get().show<MsgType::Error>("创建歌单失败:" + t.what());
                 return;
             }
             Q_EMIT SignalBusSingleton::get().updatePlaylistList(t.move());
@@ -158,7 +160,7 @@ public:
     Q_INVOKABLE void delPlaylist(uint64_t id) {
         PlaylistApi::delPlaylist(id).thenTry([](auto t) {
             if (!t) [[unlikely]] {
-                log::hxLog.error("删除歌单失败:", t.what());
+                MessageController::get().show<MsgType::Error>("删除歌单失败:" + t.what());
                 return;
             }
             Q_EMIT SignalBusSingleton::get().updatePlaylistList(0);

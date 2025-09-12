@@ -23,6 +23,7 @@
 #include <singleton/GlobalSingleton.hpp>
 #include <singleton/SignalBusSingleton.h>
 #include <singleton/NetSingleton.hpp>
+#include <controller/MessageController.h>
 #include <api/MusicApi.hpp>
 
 namespace HX {
@@ -66,7 +67,7 @@ struct MusicCommand {
                     Qt::QueuedConnection
                 );
             } else {
-                log::hxLog.error("播放失败: 请求错误:", t.what());
+                MessageController::get().show<MsgType::Error>("播放失败: 请求错误:" + t.what());
             }
         });
     }

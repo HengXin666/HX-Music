@@ -31,6 +31,7 @@
 #include <utils/SpscQueue.hpp>
 #include <singleton/GlobalSingleton.hpp>
 #include <singleton/SignalBusSingleton.h>
+#include <controller/MessageController.h>
 #include <config/LyricConfig.hpp>
 #include <api/LyricsApi.hpp>
 
@@ -108,7 +109,7 @@ public:
                     //     info->getLengthInMilliseconds(),
                     //     data
                     // );
-                    log::hxLog.warning("ub: 歌词本地加载 @todo");
+                    MessageController::get().show<MsgType::Warning>("ub: 歌词本地加载 @todo");
                 } else {
                     _assParse.readMemory(internal::readQrcFile(":default/loading.ass"));
                     renderAFrameInstantly();
@@ -117,7 +118,7 @@ public:
                     LyricsApi::getAssLyrics(info->getId())
                         .thenTry([this, ms = info->getLengthInMilliseconds()](container::Try<std::string> t) {
                             if (!t) [[unlikely]] {
-                                log::hxLog.error("加载歌词失败:", t.what());
+                                MessageController::get().show<MsgType::Error>("加载歌词失败:" + t.what());
                                 return;
                             }
                             QMetaObject::invokeMethod(
@@ -359,10 +360,10 @@ public:
         LyricsApi::crawlKaRaOKAssLyrics(id)
             .thenTry([=](auto t) {
                 if (!t) [[unlikely]] {
-                    log::hxLog.error("爬取歌词失败:", t.what());
+                    MessageController::get().show<MsgType::Error>("爬取歌词失败:" + t.what());
                     return;
                 }
-                log::hxLog.info("成功获取到歌词!", id);
+                MessageController::get().show<MsgType::Info>("成功获取到歌词!" + std::to_string(id));
             });
     }
 Q_SIGNALS:

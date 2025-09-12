@@ -18,10 +18,23 @@
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <string_view>
+
 #include <QObject>
 #include <QString>
+#include <QStringView>
+
+#include <HXLibs/reflection/EnumName.hpp>
+#include <HXLibs/log/Log.hpp>
 
 namespace HX {
+
+enum class MsgType {
+    Info,
+    Error,
+    Warning,
+    Success
+};
 
 class MessageController : public QObject {
     Q_OBJECT
@@ -36,6 +49,28 @@ public:
         return s;
     }
 
+    template <MsgType Type>
+    void show(std::string_view msg) {
+        switch (Type) {
+            case MsgType::Error:
+                log::hxLog.error(msg);
+                break;
+            case MsgType::Success:
+                log::hxLog.info(msg);
+                break;
+            case MsgType::Info:
+                log::hxLog.debug(msg);
+                break;
+            case MsgType::Warning:
+                log::hxLog.warning(msg);
+                break;
+        }
+        constexpr auto typeStr = reflection::toEnumName(Type);
+        Q_EMIT showMessageRequested(
+            QString::fromUtf8(typeStr.data(), static_cast<int>(typeStr.size())),
+            QString::fromUtf8(msg.data(), static_cast<int>(msg.size()))
+        );
+    }
 Q_SIGNALS:
     // 发送消息的信号
     void showMessageRequested(const QString& type, const QString& message);
@@ -43,22 +78,22 @@ Q_SIGNALS:
 public Q_SLOTS:
     // 显示信息消息
     void showInfo(const QString& message) {
-        Q_EMIT showMessageRequested("info", message);
+        Q_EMIT showMessageRequested("Info", message);
     }
 
     // 显示错误消息
     void showError(const QString& message) {
-        Q_EMIT showMessageRequested("error", message);
+        Q_EMIT showMessageRequested("Error", message);
     }
 
     // 显示警告消息
     void showWarning(const QString& message) {
-        Q_EMIT showMessageRequested("warning", message);
+        Q_EMIT showMessageRequested("Warning", message);
     }
 
     // 显示成功消息
     void showSuccess(const QString& message) {
-        Q_EMIT showMessageRequested("success", message);
+        Q_EMIT showMessageRequested("Success", message);
     }
 };
 

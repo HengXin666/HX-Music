@@ -185,7 +185,7 @@ public:
             std::filesystem::path{path.toStdString()}.filename()
         ).thenTry([](container::Try<std::string> t) {
             if (!t) [[unlikely]] {
-                log::hxLog.error(t.what());
+                MessageController::get().show<MsgType::Error>("初始化上传任务失败:" + t.what());
                 t.rethrow();
             }
             auto uuid = t.move();
@@ -195,7 +195,6 @@ public:
             container::Try<std::string> t
         ) {
             if (!t) [[unlikely]] {
-                log::hxLog.error(t.what());
                 t.rethrow();
             }
             log::hxLog.debug("上传文件 (uuid =", t.get(), ")");
@@ -205,7 +204,7 @@ public:
                 t.move()
             ).thenTry([this, nowPlayListId](container::Try<uint64_t> t) {
                 if (!t) [[unlikely]] {
-                    log::hxLog.error("上传歌曲获取新歌曲的id失败:", t.what());
+                    MessageController::get().show<MsgType::Error>("上传歌曲获取新歌曲的id失败:" + t.what());
                     t.rethrow();
                 }
                 log::hxLog.info("获取到歌曲id:", t.get());
@@ -214,7 +213,7 @@ public:
                     nowPlayListId, t.get()
                 ).thenTry([this, nowPlayListId, musicId = t.get()](auto t) {
                     if (!t) [[unlikely]] {
-                        log::hxLog.error("添加歌曲到歌单失败:", t.what());
+                        MessageController::get().show<MsgType::Error>("添加歌曲到歌单失败:" + t.what());
                         return;
                     }
                     // 获取歌曲数据, 插入到本歌单. 而不是再次请求.
@@ -261,7 +260,7 @@ public:
                         }
                     }).thenTry([](container::Try<> t) {
                         if (!t) [[unlikely]] {
-                            log::hxLog.error("显示新歌曲失败:", t.what());
+                            MessageController::get().show<MsgType::Error>("显示新歌曲失败:" + t.what());
                         }
                     });
                 });
@@ -328,7 +327,7 @@ public:
      * @return Q_INVOKABLE 
      */
     Q_INVOKABLE void savePlaylist() {
-        log::hxLog.error("保存歌单@todo");
+        MessageController::get().show<MsgType::Error>("保存歌单@todo");
         // decltype(GlobalSingleton::get().guiPlaylist.songList) newSongList;
         // newSongList.reserve(_musicArr.size());
         // for (auto const& it : _musicArr) {

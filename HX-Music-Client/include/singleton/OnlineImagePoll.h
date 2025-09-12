@@ -26,6 +26,7 @@
 #include <QHash>
 
 #include <api/CoverApi.hpp>
+#include <controller/MessageController.h>
 
 namespace HX {
 
@@ -63,7 +64,7 @@ public:
                 return CoverApi::getCoverImg(uint64Id)
                     .thenTry([this, _idStr = id](container::Try<QImage> t) {
                         if (!t) [[unlikely]] {
-                            log::hxLog.error("封面失败:", t.what());
+                            MessageController::get().show<MsgType::Error>("封面失败:" + t.what());
                             return _noFindImg;
                         }
                         auto res = t.get();

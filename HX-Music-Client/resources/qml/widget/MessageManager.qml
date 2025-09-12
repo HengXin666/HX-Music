@@ -44,9 +44,9 @@ Item {
                 color: {
                     return '#60141414';
                     switch (messageItem.messageType) {
-                        case "error": return "#ffebee";
-                        case "warning": return "#fff8e1";
-                        case "success": return "#e8f5e9";
+                        case "Error": return "#ffebee";
+                        case "Warning": return "#fff8e1";
+                        case "Success": return "#e8f5e9";
                         default: return "#e3f2fd";
                     }
                 }
@@ -55,9 +55,9 @@ Item {
                 border.width: 1
                 border.color: {
                     switch (messageItem.messageType) {
-                        case "error": return "#f44336";
-                        case "warning": return "#ffc107";
-                        case "success": return "#4caf50";
+                        case "Error": return "#f44336";
+                        case "Warning": return "#ffc107";
+                        case "Success": return "#4caf50";
                         default: return "#2196f3";
                     }
                 }
@@ -72,17 +72,17 @@ Item {
                     height: 28
                     defaultColor: {
                         switch (messageItem.messageType) {
-                            case "error": return "#d32f2f";
-                            case "warning": return "#f57c00";
-                            case "success": return "#388e3c";
+                            case "Error": return "#d32f2f";
+                            case "Warning": return "#f57c00";
+                            case "Success": return "#388e3c";
                             default: return "#1976d2";
                         }
                     }
                     url: `qrc:/icons/${(() => {
                         switch (messageItem.messageType) {
-                            case "error": return "error";
-                            case "warning": return "warning";
-                            case "success": return "success";
+                            case "Error": return "error";
+                            case "Warning": return "warning";
+                            case "Success": return "success";
                             default: return "info";
                         }
                     })()}.svg`

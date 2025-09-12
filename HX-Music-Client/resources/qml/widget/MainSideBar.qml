@@ -352,9 +352,11 @@ Item {
                             console.log("创建歌单:", playlistNameField.text);
                             // 这里添加创建歌单的逻辑
                             PlaylistController.makePlaylist(playlistNameField.text, "");
+                            playlistNameField.text = "";
                         } else {
                             console.log("导入歌单:", playlistUrlField.text);
                             // 这里添加导入歌单的逻辑
+                            playlistUrlField.text = "";
                         }
                         addPlaylistPopup.close();
                     }

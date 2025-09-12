@@ -58,7 +58,8 @@ public:
                     PlaylistApi::selectAllPlaylist()
                         .thenTry([this](auto t) {
                             if (!t) [[unlikely]] {
-                                log::hxLog.error("更新歌单简介列表失败:", t.what());
+                                MessageController::get().show<MsgType::Error>(
+                                    "更新歌单简介列表失败:" + t.what());
                                 return;
                             }
                             QMetaObject::invokeMethod(
@@ -75,7 +76,8 @@ public:
                     PlaylistApi::getPlaylistInfo(newId)
                         .thenTry([this](auto t) {
                             if (!t) [[unlikely]] {
-                                log::hxLog.error("更新歌单简介失败:", t.what());
+                                MessageController::get().show<MsgType::Error>(
+                                    "更新歌单简介失败:" + t.what());
                                 return;
                             }
                             addData(t.move());
