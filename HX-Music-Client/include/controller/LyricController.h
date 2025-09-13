@@ -307,31 +307,30 @@ public:
         QImage res{w, h, QImage::Format_RGBA8888};
         res.fill(Qt::transparent);
         QPainter painter(&res);
-        if (_hasAutoCenter) {
-            // 自动居中
-            int left = std::numeric_limits<int>::max();
-            int right = 0;
-            for (ASS_Image* img = imgList; img; img = img->next) {
-                left = std::min(left, img->dst_x);
-                right = std::max(right, img->dst_x + img->w);
-            }
-
-            // 计算水平偏移量
-            int offsetX = (w - (right - left)) >> 1;
-
-            // 先平移, 再绘制
-            if (offsetX > 0 && offsetX + right <= w) [[likely]] {
-                painter.translate(offsetX, 0);
-            }
-
-            for (ASS_Image* img = imgList; img; img = img->next) {
-                drawAssImage(&painter, img, img->dst_y + (img->h >> 1) < midLine);
-            }
-        } else {
-            for (ASS_Image* img = imgList; img; img = img->next) {
-                drawAssImage(&painter, img, img->dst_y + (img->h >> 1) < midLine);
-            }
+        // 自动居中
+        int left = std::numeric_limits<int>::max();
+        int right = 0;
+        for (ASS_Image* img = imgList; img; img = img->next) {
+            left = std::min(left, img->dst_x);
+            right = std::max(right, img->dst_x + img->w);
         }
+
+        // 计算水平偏移量
+        int offsetX = (w - (right - left)) >> 1;
+
+        // 先平移, 再绘制
+        if (_hasAutoCenter && offsetX > 0 && offsetX + right <= w) [[likely]] {
+            painter.translate(offsetX, 0);
+        }
+
+        for (ASS_Image* img = imgList; img; img = img->next) {
+            drawAssImage(&painter, img, img->dst_y + (img->h >> 1) < midLine);
+        }
+
+        // 别问, 问就是 preprocessLyricBoundingBoxes 有bug, 无法准确计算 right ...
+        // 间歇性出现...
+        _twoBlockBounds.left = std::min(left, _twoBlockBounds.left);
+        _twoBlockBounds.right = std::max(right, _twoBlockBounds.right);
         _lastImage = std::move(res);
         Q_EMIT updateLyriced();
     }

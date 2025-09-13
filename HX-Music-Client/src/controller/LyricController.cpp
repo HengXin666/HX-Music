@@ -62,7 +62,7 @@ AssParse LyricController::preprocessLyricBoundingBoxes(
     });
     _hasCachedBlock = res.hasTop() || res.hasBtm();
     _twoBlockBounds = std::move(res);
-    log::hxLog.info(_twoBlockBounds);
+    // log::hxLog.info(_twoBlockBounds);
     return std::move(assArr.front());
 }
 

@@ -142,7 +142,6 @@ private:
 
 
 int main(int argc, char* argv[]) {
-    // return 0;
     HX::MusicClient app{argc, argv};
     return app.loadConfig()
               .buildQml()
