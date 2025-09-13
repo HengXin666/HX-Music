@@ -75,8 +75,11 @@ public:
     // 背景色
     HX_QML_QCOLOR_PROPERTY(backgroundColor          , "#121212");
 
-    // 背景图片, 默认为空, 应该使用背景色
+    // 背景图片
     HX_QML_TYPE_PROPERTY(QString, backgroundImgUrl  , "qrc:/img/background.jpg");
+    
+    // 默认背景图片路径, 不可修改
+    HX_QML_TYPE_PROPERTY(QString, defaultBackgroundImgUrl  , "qrc:/img/background.jpg");
 };
 
 #undef HX_QML_QCOLOR_PROPERTY

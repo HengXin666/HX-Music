@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import QtQuick.Window
 import HX.Music
 import "./widget"
+import "./widget/internal"
 import "./data"
 import "./window"
 
@@ -35,66 +36,61 @@ BorderlessWindow {
         }
         RowLayout {
             anchors.fill: parent
+            Image {
+                id: logoImg
+                Layout.preferredHeight: 50
+                Layout.preferredWidth: 180
+                source: "qrc:/logo/HXMusic_logo.png"
+                verticalAlignment: Qt.AlignVCenter
+                fillMode: Image.PreserveAspectFit
+            }
             Label {
                 text: mainWin.title
+                color: Theme.highlightingColor 
                 elide: Label.ElideRight
                 horizontalAlignment: Qt.AlignHCenter
                 verticalAlignment: Qt.AlignVCenter
                 Layout.fillWidth: true
             }
+
+            // 设置按钮
+            MusicActionButton {
+                Layout.preferredWidth: 26
+                Layout.preferredHeight: 26
+                Layout.rightMargin: 13
+                url: "qrc:/icons/setting.svg"
+                onClicked: {
+                    mainWin.delegateRef.stackViewRef.currentIndex = 4;
+                }
+            }
+
             // 最小化按钮
-            Item {
-                Layout.preferredWidth: 30
-                Layout.preferredHeight: 30
-                Image {
-                    anchors.centerIn: parent
-                    width: 16
-                    height: 16
-                    source: "qrc:/icons/dropdown.svg"
-                }
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: mainWin.showMinimized()
-                }
+            MusicActionButton {
+                Layout.preferredWidth: 26
+                Layout.preferredHeight: 26
+                url: "qrc:/icons/dropdown.svg"
+                onClicked: mainWin.showMinimized()
             }
 
             // 最大化/还原按钮
-            Item {
-                Layout.preferredWidth: 30
-                Layout.preferredHeight: 30
-                Image {
-                    anchors.centerIn: parent
-                    width: 16
-                    height: 16
-                    source: mainWin.visibility === Window.Maximized
-                            ? "qrc:/icons/restore.svg"   // 还原图标
-                            : "qrc:/icons/up.svg"  // 最大化图标
-                }
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: {
-                        if (mainWin.visibility === Window.Maximized)
-                            mainWin.showNormal();
-                        else
-                            mainWin.showMaximized();
-                    }
-                }
+            MusicActionButton {
+                Layout.preferredWidth: 26
+                Layout.preferredHeight: 26
+                url: mainWin.visibility === Window.Maximized
+                    ? "qrc:/icons/restore.svg"   // 还原图标
+                    : "qrc:/icons/up.svg"  // 最大化图标
+                onClicked: mainWin.visibility === Window.Maximized
+                    ? mainWin.showNormal()
+                    : mainWin.showMaximized()
             }
 
             // 关闭按钮
-            Item {
-                Layout.preferredWidth: 30
-                Layout.preferredHeight: 30
-                Image {
-                    anchors.centerIn: parent
-                    width: 16
-                    height: 16
-                    source: "qrc:/icons/close.svg"
-                }
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: mainWin.close()
-                }
+            MusicActionButton {
+                Layout.preferredWidth: 24
+                Layout.preferredHeight: 24
+                Layout.rightMargin: 13
+                url: "qrc:/icons/close.svg"
+                onClicked: mainWin.close()
             }
         }
     }
@@ -104,6 +100,9 @@ BorderlessWindow {
         focus: true
         anchors.fill: parent
         color: "transparent"
+
+        // 暴露 stackView 引用
+        property alias stackViewRef: stackView
 
         ColumnLayout {
             anchors.fill: parent
@@ -135,7 +134,7 @@ BorderlessWindow {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
 
-                    Rectangle { 
+                    Rectangle { // 0
                         color: "transparent"
                         Text {
                             anchors.centerIn: parent
@@ -144,7 +143,7 @@ BorderlessWindow {
                             font.pixelSize: 20
                         }
                     }
-                    Rectangle {
+                    Rectangle { // 1
                         color: "#25d0eaff"                        
                         // 测试按钮
                         Button {
@@ -157,10 +156,18 @@ BorderlessWindow {
                             }
                         }
                     }
-                    Rectangle { color: "#7e0b3f6a" }
-                    Rectangle {
+                    Rectangle { // 2
+                        color: "#7e0b3f6a"
+                    }
+                    Rectangle { // 3
                         color: "transparent"
                         MusicListView {
+                            anchors.fill: parent
+                        }
+                    }
+                    Rectangle { // 4
+                        color: "transparent"
+                        SettingView {
                             anchors.fill: parent
                         }
                     }
@@ -221,8 +228,8 @@ BorderlessWindow {
             opacity: 0
             onStatusChanged: {
                 if (status === Image.Ready) {
-                    bgCurrent.source = source
-                    bgNext.opacity = 0
+                    bgCurrent.source = source;
+                    bgNext.opacity = 0;
                 }
             }
             Behavior on opacity { NumberAnimation { duration: 150 } }
@@ -244,8 +251,16 @@ BorderlessWindow {
         onWidthChanged: resizeThrottle.restart()
         onHeightChanged: resizeThrottle.restart()
         Component.onCompleted: {
-            bgCurrent.sourceSize = bk.targetSizeForImage()
-            bgCurrent.source = Theme.backgroundImgUrl
+            bgCurrent.sourceSize = bk.targetSizeForImage();
+            bgCurrent.source = Theme.backgroundImgUrl;
+        }
+
+        // 监听 Theme.backgroundImgUrl 变化
+        Connections {
+            target: Theme
+            function onBackgroundImgUrlChanged() {
+                bk.updateBackground(bk.targetSizeForImage())
+            }
         }
     }
 }
