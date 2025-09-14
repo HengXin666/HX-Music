@@ -97,7 +97,8 @@ public:
                 400, 300,
                 800, 200,
                 0, false,
-                false, false
+                false, false,
+                true
             };
         }
 
@@ -319,7 +320,7 @@ public:
         int offsetX = (w - (right - left)) >> 1;
 
         // 先平移, 再绘制
-        if (_hasAutoCenter && offsetX > 0 && offsetX + right <= w) [[likely]] {
+        if (_lyricConfig.isAutoCenter && offsetX > 0 && offsetX + right <= w) [[likely]] {
             painter.translate(offsetX, 0);
         }
 
@@ -374,7 +375,7 @@ public:
         }
         return _lastImage;
     }
-
+    
     // 立即渲染一帧
     Q_INVOKABLE void renderAFrameInstantly() {
         if (_lyricConfig.isFullScreen) {
@@ -404,7 +405,6 @@ private:
     LyricConfig _lyricConfig;
     TwoBlockBounds _twoBlockBounds;
     bool _hasCachedBlock = false;       // 是否计算了边界块
-    bool _hasAutoCenter = true;         // 是否自动水平居中
 
 #ifndef Q_MOC_RUN
     #define HX_QML_CONFIG_TYPE(name) decltype(_lyricConfig.name)
@@ -445,6 +445,7 @@ Q_SIGNALS:                                                                     \
     HX_QML_CONFIG_PROPERTY(isWindowOpened);
     HX_QML_CONFIG_PROPERTY(isLocked);
     HX_QML_CONFIG_PROPERTY(isFullScreen);
+    HX_QML_CONFIG_PROPERTY(isAutoCenter);
 
 #undef HX_QML_CONFIG_PROPERTY
 };

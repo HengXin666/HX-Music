@@ -47,6 +47,9 @@ struct LyricConfig {
 
     // 是否全屏
     bool isFullScreen;
+
+    // 是否自动居中
+    bool isAutoCenter;
 };
 
 } // namespace HX

@@ -328,9 +328,11 @@ Item {
 
                     Switch {
                         id: autoCenterSwitch
-                        checked: true
+                        checked: LyricController.isAutoCenter
                         onCheckedChanged: {
-                            MessageController.showInfo("歌词设置已自动保存");
+                            LyricController.isAutoCenter = checked;
+                            LyricController.renderAFrameInstantly();
+                            MessageController.showInfo("自动居中歌词: " + checked);
                         }
                     }
                 }
