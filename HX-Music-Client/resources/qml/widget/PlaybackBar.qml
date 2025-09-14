@@ -58,6 +58,7 @@ ProgressBarRect {
                 LoopingScrollingText {
                     id: title
                     Layout.fillWidth: true
+                    textColor: Theme.textColor
                     itemData: [
                         {
                             text: "HX-Music",

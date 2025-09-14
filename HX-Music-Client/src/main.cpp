@@ -58,7 +58,7 @@ struct MusicClient {
         cp->setContextProperty("WindowMaskUtil", &_windowMaskUtil);
 
         // 主题数据类
-        static HX::Theme theme;
+        static HX::Theme theme{};
         cp->setContextProperty("Theme", &theme);
 
         // 歌单控制类

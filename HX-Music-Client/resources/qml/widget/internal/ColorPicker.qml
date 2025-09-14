@@ -7,7 +7,7 @@ Item {
     width: 50
     height: 50
 
-    property color selectedColor: "white"
+    property alias selectedColor: colorButton.color
     signal accepted(color c)
 
     // 当前颜色按钮
@@ -23,7 +23,10 @@ Item {
 
         MouseArea {
             anchors.fill: parent
-            onClicked: colorDialog.open();
+            onClicked: {
+                colorDialog.selectedColor = colorButton.color;
+                colorDialog.open();
+            }
         }
     }
 

@@ -21,6 +21,10 @@
 #include <QObject>
 #include <QColor>
 
+#include <HXLibs/utils/FileUtils.hpp>
+#include <HXLibs/reflection/json/JsonRead.hpp>
+#include <HXLibs/reflection/json/JsonWrite.hpp>
+
 namespace HX {
 
 /**
@@ -60,10 +64,57 @@ private:                                                                       \
  */
 class Theme : public QObject {
     Q_OBJECT
+
+    struct ThemeConfig {
+        std::string textColor;
+        std::string paratextColor;
+        std::string highlightingColor;
+        std::string backgroundColor;
+        std::string backgroundImgUrl;
+    };
 public:
     Theme(QObject* p = nullptr)
         : QObject{p}
-    {}
+    {
+        try {
+            ThemeConfig config;
+            coroutine::EventLoop loop;
+            utils::AsyncFile file{loop};
+            file.syncOpen("./themeConfig.json", utils::OpenMode::Read);
+            reflection::fromJson(config, file.syncReadAll());
+            file.syncClose();
+
+            _textColor = QColor{QString::fromStdString(config.textColor)};
+            _paratextColor = QColor{QString::fromStdString(config.paratextColor)};
+            _highlightingColor = QColor{QString::fromStdString(config.highlightingColor)};
+            _backgroundColor = QColor{QString::fromStdString(config.backgroundColor)};
+            _backgroundImgUrl = QString::fromStdString(config.backgroundImgUrl);
+
+            Q_EMIT textColorChanged();
+            Q_EMIT paratextColorChanged();
+            Q_EMIT highlightingColorChanged();
+            Q_EMIT backgroundColorChanged();
+            Q_EMIT backgroundImgUrlChanged();
+        } catch (std::exception const& e) {
+            log::hxLog.error("错误:", e.what());
+        }
+    }
+
+    ~Theme() noexcept {
+        coroutine::EventLoop loop;
+        utils::AsyncFile file{loop};
+        file.syncOpen("./themeConfig.json", utils::OpenMode::Write);
+        std::string json;
+        reflection::toJson<true, ThemeConfig>({
+            _textColor.name(QColor::HexArgb).toStdString(),
+            _paratextColor.name(QColor::HexArgb).toStdString(),
+            _highlightingColor.name(QColor::HexArgb).toStdString(),
+            _backgroundColor.name(QColor::HexArgb).toStdString(),
+            _backgroundImgUrl.toStdString()
+        }, json);
+        file.syncWrite(json);
+        file.syncClose();
+    }
 
     // 主色系
     HX_QML_QCOLOR_PROPERTY(textColor                , "#ffffff"); // 文本颜色
@@ -86,4 +137,3 @@ public:
 #undef HX_QML_TYPE_PROPERTY
 
 } // namespace HX
-

@@ -13,9 +13,6 @@ Item {
     property alias serverUrl: serverInput.text
     property alias autoCenterLyrics: autoCenterSwitch.checked
 
-    signal settingsChanged
-    signal cancelSettings
-
     Rectangle {
         anchors.fill: parent
         color: "transparent"
@@ -92,7 +89,6 @@ Item {
                         border.color: Theme.paratextColor
                     }
                     onTextChanged: {
-                        root.settingsChanged();
                         MessageController.showInfo("服务器地址已自动保存");
                     }
                 }
@@ -125,13 +121,19 @@ Item {
                 RowLayout {
                     spacing: 10
                     ColorPicker {
+                        id: textPicker
                         Layout.preferredWidth: 26
                         Layout.preferredHeight: 26
                         selectedColor: Theme.textColor
                         onAccepted: {
                             Theme.textColor = selectedColor;
-                            root.settingsChanged();
                             MessageController.showInfo("文本颜色已自动保存");
+                        }
+                        Connections {
+                            target: Theme
+                            function onTextColorChanged() {
+                                textPicker.selectedColor = Theme.textColor;
+                            }
                         }
                     }
                     Label {
@@ -143,13 +145,19 @@ Item {
                 RowLayout {
                     spacing: 10
                     ColorPicker {
+                        id: paratextPicker
                         Layout.preferredWidth: 26
                         Layout.preferredHeight: 26
                         selectedColor: Theme.paratextColor
                         onAccepted: {
                             Theme.paratextColor = selectedColor;
-                            root.settingsChanged();
                             MessageController.showInfo("副文本颜色已自动保存");
+                        }
+                        Connections {
+                            target: Theme
+                            function onParatextColorChanged() {
+                                paratextPicker.selectedColor = Theme.paratextColor;
+                            }
                         }
                     }
                     Label {
@@ -161,13 +169,19 @@ Item {
                 RowLayout {
                     spacing: 10
                     ColorPicker {
+                        id: highlightingPicker
                         Layout.preferredWidth: 26
                         Layout.preferredHeight: 26
                         selectedColor: Theme.highlightingColor
                         onAccepted: {
                             Theme.highlightingColor = selectedColor;
-                            root.settingsChanged();
                             MessageController.showInfo("高亮颜色已自动保存");
+                        }
+                        Connections {
+                            target: Theme
+                            function onHighlightingColorChanged() {
+                                highlightingPicker.selectedColor = Theme.highlightingColor;
+                            }
                         }
                     }
                     Label {
@@ -179,18 +193,41 @@ Item {
                 RowLayout {
                     spacing: 10
                     ColorPicker {
+                        id: backgroundPicker
                         Layout.preferredWidth: 26
                         Layout.preferredHeight: 26
                         selectedColor: Theme.backgroundColor
                         onAccepted: {
                             Theme.backgroundColor = selectedColor;
-                            root.settingsChanged();
                             MessageController.showInfo("背景颜色已自动保存");
+                        }
+                        Connections {
+                            target: Theme
+                            function onBackgroundColorChanged() {
+                                backgroundPicker.selectedColor = Theme.backgroundColor;
+                            }
                         }
                     }
                     Label {
                         text: "背景颜色"
                         color: Theme.backgroundColor
+                    }
+                }
+
+                Button {
+                    text: "重置颜色主题"
+                    background: Rectangle {
+                        color: Theme.backgroundColor
+                        radius: 6
+                        border.width: 1
+                        border.color: Theme.paratextColor
+                    }
+                    onClicked: {
+                        Theme.textColor = "#ffffff";
+                        Theme.paratextColor = "#b3b3b3";
+                        Theme.highlightingColor = "#ff13ff";
+                        Theme.backgroundColor = "#121212";
+                        MessageController.showWarning("重置颜色主题已重置!");
                     }
                 }
 
@@ -233,7 +270,6 @@ Item {
                         onAccepted: {
                             if (selectedFile !== "") {
                                 Theme.backgroundImgUrl = selectedFile;
-                                root.settingsChanged();
                                 MessageController.showInfo("背景图片已自动保存");
                             }
                         }
@@ -249,7 +285,6 @@ Item {
                         }
                         onClicked: {
                             Theme.backgroundImgUrl = Theme.defaultBackgroundImgUrl;
-                            root.settingsChanged();
                             MessageController.showInfo("背景图片已清除并自动保存");
                         }
                     }
@@ -294,7 +329,6 @@ Item {
                         id: autoCenterSwitch
                         checked: true
                         onCheckedChanged: {
-                            root.settingsChanged();
                             MessageController.showInfo("歌词设置已自动保存");
                         }
                     }
