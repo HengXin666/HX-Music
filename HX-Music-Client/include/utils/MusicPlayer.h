@@ -75,7 +75,13 @@ public:
      * @param position 单位: 毫秒(ms)
      */
     MusicPlayer& setPosition(qint64 position) {
-        _player.setPosition(position);
+        qint64 now = QDateTime::currentMSecsSinceEpoch();
+        // 50ms 内不重复 Seek, 避免频繁 Range 请求
+        if (now - _lastSeekTime > 50 && position != _lastPosition) {
+            _player.setPosition(position);
+            _lastPosition = position;
+            _lastSeekTime = now;
+        }
         return *this;
     }
 
@@ -115,6 +121,8 @@ public:
 private:
     QMediaPlayer _player;
     int _lengthInMilliseconds{0}; // 毫秒长度
+    qint64 _lastPosition = -1;
+    qint64 _lastSeekTime = 0;
 };
 
 } // namespace HX

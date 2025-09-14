@@ -39,9 +39,6 @@ HX_SERVER_API_BEGIN(PlaylistApi) {
         = dao::MemoryDAOPool::get<MusicDAO, "./file/db/music.db">();
     auto playlistDAO 
         = dao::MemoryDAOPool::get<PlaylistDAO, "./file/db/playlist.db">();
-    if (!playlistDAO) {
-        throw std::runtime_error{"wdf? this is nullptr"};
-    }
     HX_ENDPOINT_BEGIN
         // 创建歌单
         .addEndpoint<POST>("/playlist/make", [=] ENDPOINT {

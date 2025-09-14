@@ -260,7 +260,7 @@ public:
     SQLiteDB(std::string_view filePath) 
         : SQLiteDB{}
     {
-        log::hxLog.debug("make dbFile:", filePath);
+        log::hxLog.debug("make dbFile:", filePath); // debug
         if (::sqlite3_open(filePath.data(), &_db) != SQLITE_OK) [[unlikely]] {
             throw std::runtime_error{
                 "Failed to open database: " + std::string{::sqlite3_errmsg(_db)}
