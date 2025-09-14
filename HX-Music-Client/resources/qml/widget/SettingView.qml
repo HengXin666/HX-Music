@@ -81,7 +81,7 @@ Item {
                 TextField {
                     id: serverInput
                     placeholderText: "http://127.0.0.1:28205/"
-                    text: "http://127.0.0.1:28205/"
+                    text: Theme.getBackendUrl()
                     color: Theme.textColor
                     background: Rectangle {
                         color: Theme.backgroundColor
@@ -89,6 +89,7 @@ Item {
                         border.color: Theme.paratextColor
                     }
                     onTextChanged: {
+                        Theme.setBackendUrl(serverInput.text);
                         MessageController.showInfo("服务器地址已自动保存");
                     }
                 }

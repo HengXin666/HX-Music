@@ -25,6 +25,9 @@
 #include <HXLibs/reflection/json/JsonRead.hpp>
 #include <HXLibs/reflection/json/JsonWrite.hpp>
 
+#include <singleton/GlobalSingleton.hpp>
+#include <singleton/NetSingleton.hpp>
+
 namespace HX {
 
 /**
@@ -98,6 +101,20 @@ public:
         } catch (std::exception const& e) {
             log::hxLog.error("错误:", e.what());
         }
+
+        NetSingleton::get().setBackendUrl(
+            GlobalSingleton::get().musicConfig.backendUrl
+        );
+    }
+
+    Q_INVOKABLE QString getBackendUrl() const noexcept {
+        return QString::fromStdString(NetSingleton::get().getBackendUrl());
+    }
+
+    Q_INVOKABLE void setBackendUrl(QString const& url) {
+        NetSingleton::get().setBackendUrl(
+            GlobalSingleton::get().musicConfig.backendUrl = url.toStdString()
+        );
     }
 
     ~Theme() noexcept {

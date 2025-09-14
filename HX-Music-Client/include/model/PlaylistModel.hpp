@@ -123,6 +123,28 @@ public:
         Q_EMIT endInsertRows();
     }
 
+    // 更新全部歌单列表
+    Q_INVOKABLE void updateAllPlaylistInfoList() {
+        // @todo 区分是 自己创建的还是收藏的
+        // 全量更新
+        PlaylistApi::selectAllPlaylist(
+        ).thenTry([this](auto t) {
+            if (!t) [[unlikely]] {
+                MessageController::get().show<MsgType::Error>(
+                    "更新歌单简介列表失败:" + t.what());
+                return;
+            }
+            QMetaObject::invokeMethod(
+                QCoreApplication::instance(),
+                [this, infoList = t.move()] {
+                clear();
+                for (auto const& info : infoList) {
+                    addData(info);
+                }
+            });
+        });
+    }
+
     /**
      * @brief 获取指定索引的元素的id
      * @param idx 

@@ -23,6 +23,8 @@
 namespace HX {
 
 struct NetSingleton {
+    inline static constexpr std::size_t CliCnt = 4;
+
     static NetSingleton& get() {
         static NetSingleton net{};
         return net;
@@ -73,6 +75,13 @@ struct NetSingleton {
         return _cliPool.wsLoop(std::move(_url), std::forward<Lambda>(lambda));
     }
 
+    void setBackendUrl(std::string const& url) {
+        _backendUrl = url;
+        for (std::size_t i = 0; i < CliCnt; ++i) {
+            _cliPool.close();
+        }
+    }
+
     std::string const& getBackendUrl() const noexcept {
         return _backendUrl;
     }
@@ -86,7 +95,7 @@ private:
         // net::HttpClientOptions<
         // decltype(utils::operator""_s<"600">())>{}
     }) _cliPool{
-        4,
+        CliCnt,
         net::HttpClientOptions<
             // decltype(utils::operator""_s<"600">())
         >{}

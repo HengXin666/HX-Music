@@ -9,6 +9,8 @@ Item {
     id: root
     focus: true
 
+    property alias playlistModelRef: playlistModel
+
     PlaylistModel {
         id: playlistModel
     }
@@ -52,7 +54,7 @@ Item {
 
             // 是否选中
             property bool isSelected: listView.currentIndex == delegateRoot.index
-            
+
             width: listView.width
             height: 48
             z: mouseArea.pressed ? 10 : 1
@@ -99,7 +101,7 @@ Item {
                 // 右键开菜单
                 onPressed: (mouse) => {
                     if (mouse.button === Qt.RightButton) {
-                        // 设置菜单的当前索引（供菜单项使用）
+                        // 设置菜单的当前索引 (供菜单项使用)
                         menu.index = delegateRoot.index;
 
                         // 换算为父上控件的坐标系

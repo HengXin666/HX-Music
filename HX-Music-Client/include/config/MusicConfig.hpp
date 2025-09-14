@@ -42,6 +42,7 @@ using PlayMode = PlayListTypeWrapper::PlayMode;
  * @brief 音乐配置
  */
 struct MusicConfig {
+    std::string backendUrl;  // 服务器后端URL
     float volume;            // 音量大小
     PlayMode playMode;       // 播放模式
     qint64 position;         // 播放位置
