@@ -44,6 +44,7 @@ struct SQLiteSqlType<std::vector<U>> {
 #include <api/PlaylistApi.hpp>
 #include <api/CoverApi.hpp>
 #include <api/LyricsApi.hpp>
+#include <api/UserApi.hpp>
 
 #include <filesystem>
 
@@ -84,23 +85,15 @@ void ininDir() {
 
 container::FutureResult<bool> isStop;
 
-#include <token/TokenApi.hpp>
-
 int main() {
-    auto& t = token::TokenApi::get();
-    auto tokenStr = t.toToken(MusicDO{
-        1, "/loli/中文/日本語です/op.txt"
-    });
-    log::hxLog.info(tokenStr);
-    log::hxLog.info(t.fromToken<MusicDO>(tokenStr));
-    return 0;
-    
     ininDir();
     net::HttpServer server{"0.0.0.0", "28205"};
     api::addApi<MusicApi>(server);
     api::addApi<PlaylistApi>(server);
     api::addApi<CoverApi>(server);
     api::addApi<LyricsApi>(server);
+    api::addApi<UserApi>(server);
+
     std::signal(SIGINT, [](int s) {
         if (s == SIGINT) {
             isStop.getFutureResult()->setData(true);

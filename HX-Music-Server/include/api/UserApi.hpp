@@ -18,11 +18,29 @@
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <api/ApiMacro.hpp>
 #include <api/Api.hpp>
+#include <dao/MemoryDAOPool.hpp>
+
+#include <interceptor/TokenInterceptor.hpp>
+#include <dao/UserDAO.hpp>
+
+#include <api/ApiMacro.hpp>
 
 namespace HX {
 
+HX_SERVER_API_BEGIN(UserApi) {
+    
+    auto userDAO
+        = dao::MemoryDAOPool::get<UserDAO, "./file/db/user.db">();
 
+    HX_ENDPOINT_BEGIN
+        .addEndpoint<GET>("/login/test", [] ENDPOINT {
+            co_await api::setJsonSucceed<std::string>("ok", res).sendRes();
+        }, TokenInterceptor{})
+    HX_ENDPOINT_END;
+
+} HX_SERVER_API_END;
 
 } // namespace HX
+
+#include <api/UnApiMacro.hpp>
