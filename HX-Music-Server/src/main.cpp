@@ -84,7 +84,17 @@ void ininDir() {
 
 container::FutureResult<bool> isStop;
 
+#include <token/TokenApi.hpp>
+
 int main() {
+    auto& t = token::TokenApi::get();
+    auto tokenStr = t.toToken(MusicDO{
+        1, "/loli/中文/日本語です/op.txt"
+    });
+    log::hxLog.info(tokenStr);
+    log::hxLog.info(t.fromToken<MusicDO>(tokenStr));
+    return 0;
+    
     ininDir();
     net::HttpServer server{"0.0.0.0", "28205"};
     api::addApi<MusicApi>(server);

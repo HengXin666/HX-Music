@@ -22,6 +22,12 @@ target_link_libraries(HX-Music-Server
     PRIVATE HXLibs
 )
 
+# 查找 OpenSSL 库 (如果找不到, CMake 会自动报错)
+find_package(OpenSSL REQUIRED)
+
+# 链接 OpenSSL 库
+target_link_libraries(HX-Music-Server PUBLIC OpenSSL::SSL OpenSSL::Crypto)
+
 # 查找 Python
 find_package(Python COMPONENTS Interpreter Development REQUIRED)
 
