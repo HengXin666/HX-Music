@@ -33,10 +33,11 @@ struct MusicDAO : public dao::ThreadSafeInMemoryDAO<MusicDO> {
     MusicDAO(db::SQLiteDB db)
         : Base{std::move(db)}
     {
-        auto const& map = Base::getMap();
-        for (auto const& it: map) {
-            _pathSet.insert(it.second.path);
-        }
+        Base::lockSelect([&](auto const& mp) {
+            for (auto const& it: mp) {
+                _pathSet.insert(it.second.path);
+            }
+        });
     }
 
     template <typename U>
@@ -80,7 +81,6 @@ struct MusicDAO : public dao::ThreadSafeInMemoryDAO<MusicDO> {
             return _pathSet.contains(path);
         });
     }
-
 private:
     // 记录路径
     std::unordered_set<std::string_view> _pathSet;

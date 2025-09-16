@@ -18,16 +18,18 @@
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <api/ApiMacro.hpp>
 #include <api/Api.hpp>
 #include <dao/MemoryDAOPool.hpp>
 
+#include <config/DbPath.hpp>
 #include <pojo/vo/JsonVO.hpp>
 #include <pojo/vo/PlaylistInfoVO.hpp>
 #include <pojo/vo/PlaylistInfoListVO.hpp>
 #include <pojo/vo/PlaylistVO.hpp>
 #include <dao/MusicDAO.hpp>
 #include <dao/PlaylistDAO.hpp>
+
+#include <api/ApiMacro.hpp>
 
 namespace HX {
 
@@ -36,9 +38,9 @@ namespace HX {
  */
 HX_SERVER_API_BEGIN(PlaylistApi) {
     auto musicDAO 
-        = dao::MemoryDAOPool::get<MusicDAO, "./file/db/music.db">();
+        = dao::MemoryDAOPool::get<MusicDAO, config::MusicDbPath>();
     auto playlistDAO 
-        = dao::MemoryDAOPool::get<PlaylistDAO, "./file/db/playlist.db">();
+        = dao::MemoryDAOPool::get<PlaylistDAO, config::PlaylistDbPath>();
     HX_ENDPOINT_BEGIN
         // 创建歌单
         .addEndpoint<POST>("/playlist/make", [=] ENDPOINT {

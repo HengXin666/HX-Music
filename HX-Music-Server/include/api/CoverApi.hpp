@@ -18,11 +18,13 @@
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <api/ApiMacro.hpp>
 #include <api/Api.hpp>
 
+#include <config/DbPath.hpp>
 #include <dao/MusicDAO.hpp>
 #include <dao/MemoryDAOPool.hpp>
+
+#include <api/ApiMacro.hpp>
 
 namespace HX {
 
@@ -31,7 +33,7 @@ namespace HX {
  */
 HX_SERVER_API_BEGIN(CoverApi) {
     auto musicDAO 
-        = dao::MemoryDAOPool::get<MusicDAO, "./file/db/music.db">();
+        = dao::MemoryDAOPool::get<MusicDAO, config::MusicDbPath>();
     HX_ENDPOINT_BEGIN
         .addEndpoint<GET, HEAD>("/cover/select/{id}", [=] ENDPOINT {
             auto idStrView = req.getPathParam(0);

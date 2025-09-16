@@ -18,13 +18,13 @@
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <api/ApiMacro.hpp>
 #include <api/Api.hpp>
 #include <dao/MemoryDAOPool.hpp>
 
 #include <HXLibs/reflection/json/JsonRead.hpp>
 #include <HXLibs/utils/FileUtils.hpp>
 
+#include <config/DbPath.hpp>
 #include <dao/MusicDAO.hpp>
 #include <pojo/vo/MusicVO.hpp>
 #include <pojo/vo/InitUploadFileTaskVO.hpp>
@@ -32,6 +32,8 @@
 #include <utils/MusicInfo.hpp>
 #include <utils/Uuid.hpp>
 #include <utils/ThreadSafeMap.hpp>
+
+#include <api/ApiMacro.hpp>
 
 namespace HX {
 
@@ -48,7 +50,7 @@ HX_SERVER_API_BEGIN(MusicApi) {
         std::unique_ptr<std::atomic_bool> atWork;       // 记录是否开始任务
     };
     auto musicDAO 
-        = dao::MemoryDAOPool::get<MusicDAO, "./file/db/music.db">();
+        = dao::MemoryDAOPool::get<MusicDAO, config::MusicDbPath>();
 
     /**
      * @brief 扫描音乐信息, 并且保存到数据库.

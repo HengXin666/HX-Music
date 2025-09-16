@@ -38,6 +38,22 @@ struct SQLiteSqlType<std::vector<U>> {
     }
 };
 
+template <typename T>
+    requires (std::is_enum_v<T>)
+struct SQLiteSqlType<T> {
+    static constexpr std::string bind(T const& t) noexcept {
+        std::string res;
+        reflection::toJson(t, res);
+        return res;
+    }
+
+    static constexpr T columnType(std::string_view str) {
+        T t{};
+        reflection::fromJson(t, str);
+        return t;
+    }
+};
+
 } // namespace HX::db
 
 #include <api/MusicApi.hpp>
@@ -56,11 +72,29 @@ void ininDir() {
     std::filesystem::create_directories("file/lyrics");
     std::filesystem::create_directories("file/lyrics/ass");
 
+    // 初始化
+    auto userDAO = dao::MemoryDAOPool::get<UserDAO, config::UserDbPath>();
+
+    try {
+        userDAO->at(1);
+    } catch (...) {
+        auto nacl = utils::Uuid::makeV4();
+        userDAO->add<UserDO>({
+            {},
+            "hx",
+            {},
+            nacl,
+            "hx666" + nacl,
+            {},
+            {},
+            PermissionEnum::Administrator
+        });
+    }
+
     // 测试数据
     [&] {
         auto playlistDAO 
-            = dao::MemoryDAOPool::get<PlaylistDAO, "./file/db/playlist.db">();
-        using PathStr = meta::ToCharPack<"./file/db/playlist.db">;
+            = dao::MemoryDAOPool::get<PlaylistDAO, config::PlaylistDbPath>();
         try {
             playlistDAO->update<true, PlaylistDO>({
                 1, "HX-测试歌单", "测试没有描述...", {

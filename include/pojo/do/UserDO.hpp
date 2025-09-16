@@ -26,7 +26,8 @@
 
 namespace HX {
 
-enum class PermissionEnumeration : uint8_t {
+// 要求 越大的权限, 值越小
+enum class PermissionEnum : uint8_t {
     Administrator,  // 管理员, 可以新增用户
     RegularUser,    // 普通用户, 可以创建歌单、上传音乐、编辑自己创建的歌单等
     ReadOnlyUser,   // 只读用户
@@ -43,7 +44,7 @@ struct UserDO {
     std::string password;                   // 密码 (加密加盐)
     std::vector<uint64_t> createdPlaylist;  // 创建的歌单
     std::vector<uint64_t> savedPlaylist;    // 收藏的歌单
-    PermissionEnumeration permissionLevel;  // 权限分级
+    PermissionEnum permissionLevel;         // 权限分级
 };
 
 } // namespace HX

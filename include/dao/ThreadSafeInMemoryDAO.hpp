@@ -59,6 +59,7 @@ struct ThreadSafeInMemoryDAO {
     ThreadSafeInMemoryDAO& operator=(ThreadSafeInMemoryDAO&&) noexcept = delete;
 
     template <typename U>
+        requires (std::convertible_to<U, T>)
     const T& add(U&& u) {
         std::unique_lock _{_mtx};
         auto id = _db.insert(u);
@@ -68,6 +69,7 @@ struct ThreadSafeInMemoryDAO {
     }
 
     template <bool IsMustSucceed = false, typename U>
+        requires (std::convertible_to<U, T>)
     const T& update(U&& u) {
         using namespace std::string_literals;
         std::unique_lock _{_mtx};
@@ -111,10 +113,6 @@ struct ThreadSafeInMemoryDAO {
     decltype(auto) sharedLock(Lambda&& lambda) const {
         std::shared_lock _{_mtx};
         return lambda();
-    }
-
-    const auto& getMap() const noexcept {
-        return _map;
     }
 
     template <typename Lambda, typename Res = std::invoke_result_t<Lambda, MapType const&>>

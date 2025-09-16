@@ -18,11 +18,15 @@
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <api/ApiMacro.hpp>
 #include <api/Api.hpp>
 
+#include <config/DbPath.hpp>
 #include <token/TokenApi.hpp>
 #include <utils/Timestamp.hpp>
+#include <dao/UserDAO.hpp>
+#include <dao/MemoryDAOPool.hpp>
+
+#include <api/ApiMacro.hpp>
 
 namespace HX {
 
@@ -36,11 +40,19 @@ struct TokenData {
 /**
  * @brief 凭证拦截器
  */
+template <PermissionEnum Permission = PermissionEnum::ReadOnlyUser>
 struct TokenInterceptor {
+    // 凭证的 key
     inline static constexpr std::string_view HttpHeadTokenKay = "HX-Token";
+
+    // 凭证的持续时间: ms
+    inline static constexpr int64_t effectiveDuration = 24 * 60 * 60 * 1000; // 一天
 
     using Request = net::Request;
     using Response = net::Response;
+
+    decltype(dao::MemoryDAOPool::get<UserDAO, config::UserDbPath>()) userDAO
+        = dao::MemoryDAOPool::get<UserDAO, config::UserDbPath>();
 
     coroutine::Task<bool> before(Request& req, Response& res) {
         auto& head = req.getHeaders();
@@ -57,6 +69,9 @@ struct TokenInterceptor {
                 now > tokenData.endTime || now < tokenData.beginTime
             ) {
                 co_await api::setJsonError("凭证失效", res).sendRes();
+                ans = false;
+            } else if (userDAO->at(tokenData.userId).permissionLevel < Permission) {
+                co_await api::setJsonError("权限不足", res).sendRes();
                 ans = false;
             }
             co_return;
