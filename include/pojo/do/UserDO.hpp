@@ -45,6 +45,7 @@ struct UserDO {
     std::vector<uint64_t> createdPlaylist;  // 创建的歌单
     std::vector<uint64_t> savedPlaylist;    // 收藏的歌单
     PermissionEnum permissionLevel;         // 权限分级
+    std::string loggedInUuid;               // 登录 Uuid
 };
 
 } // namespace HX

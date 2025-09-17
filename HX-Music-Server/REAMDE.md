@@ -293,8 +293,37 @@ struct PlaylistDO {
 
 #### 2.5.2 用户登录
 
-> 接口描述: 用户注册
+> 接口描述: 用户登录
 - 请求方式: `POST`
 - 接口URL: `/user/login`
 - 参数描述: Json: {用户名, 密码}
 - 返回值描述: json str -> token
+
+### 2.5.3 修改密码
+
+> 接口描述: 修改密码, 修改密码后, 之前的凭证全部无效
+- 请求方式: `POST`
+- 接口URL: `/user/passwdUpdate`
+- 参数描述: json: str
+- 返回值描述: ok
+
+### 2.5.4 修改用户名
+
+> 接口描述: 修改用户名
+- 请求方式: `POST`
+- 接口URL: `/user/nameUpdate`
+- 参数描述: json: str
+- 返回值描述: ok
+
+### 2.5.5 修改签名
+
+> 接口描述: 修改签名
+- 请求方式: `POST`
+- 接口URL: `/user/signatureUpdate`
+- 参数描述: json: str
+- 返回值描述: ok
+
+### 2.5.6 删除用户
+
+> [!TIP]
+> 删除用户需要考虑是否删除该用户创建的歌单什么的... 不想搞 @todo

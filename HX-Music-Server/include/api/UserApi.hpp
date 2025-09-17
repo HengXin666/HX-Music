@@ -27,6 +27,7 @@
 #include <dao/UserDAO.hpp>
 #include <pojo/vo/UserAddVO.hpp>
 #include <pojo/vo/UserLoginVO.hpp>
+#include <pojo/vo/StrDataVO.hpp>
 #include <utils/Uuid.hpp>
 #include <utils/MD5.hpp>
 
@@ -90,6 +91,7 @@ HX_SERVER_API_BEGIN(UserApi) {
                 auto nowTime = utils::Timestamp::getTimestamp();
                 co_return co_await api::setJsonSucceed(
                     token::TokenApi::get().toToken<TokenData>({
+                        userDO.loggedInUuid,
                         userDO.id,
                         nowTime,
                         nowTime
@@ -99,6 +101,54 @@ HX_SERVER_API_BEGIN(UserApi) {
                 co_await api::setJsonError("数据非法", res).sendRes();
             });
         })
+        // 修改密码
+        .addEndpoint<POST>("/user/passwdUpdate", [=] ENDPOINT {
+            co_await api::coTryCatch([&] CO_FUNC {
+                auto strVO = co_await api::getVO<StrDataVO>(req);
+                uint64_t id = getTokenData(req).userId;
+                // 密码加盐
+                auto salt = utils::Uuid::makeV4();
+                strVO.data += salt;
+                // 计算 MD5
+                auto userDO = userDAO->at(id);
+                userDAO->update<UserDO>({
+                    id,
+                    std::move(userDO.name),
+                    std::move(userDO.signature),
+                    std::move(salt),
+                    utils::md5(strVO.data), // 计算 MD5
+                    std::move(userDO.createdPlaylist),
+                    std::move(userDO.savedPlaylist),
+                    userDO.permissionLevel,
+                    utils::Uuid::makeV4() // 重设 登录Id
+                });
+                co_await api::setJsonSucceed<std::string>("ok", res).sendRes();
+            }, [&] CO_FUNC {
+                co_await api::setJsonError("数据非法", res).sendRes();
+            });
+        }, TokenInterceptor<PermissionEnum::RegularUser>{})
+        // 修改用户名
+        .addEndpoint<POST>("/user/nameUpdate", [=] ENDPOINT {
+            co_await api::coTryCatch([&] CO_FUNC {
+                auto strVO = co_await api::getVO<StrDataVO>(req);
+                uint64_t id = getTokenData(req).userId;
+                auto userDO = userDAO->at(id);
+                userDAO->update<UserDO>({
+                    id,
+                    std::move(strVO.data),
+                    std::move(userDO.signature),
+                    std::move(userDO.salt),
+                    std::move(userDO.password),
+                    std::move(userDO.createdPlaylist),
+                    std::move(userDO.savedPlaylist),
+                    userDO.permissionLevel,
+                    std::move(userDO.loggedInUuid)
+                });
+                co_await api::setJsonSucceed<std::string>("ok", res).sendRes();
+            }, [&] CO_FUNC {
+                co_await api::setJsonError("数据非法", res).sendRes();
+            });
+        }, TokenInterceptor<PermissionEnum::RegularUser>{})
     HX_ENDPOINT_END;
 } HX_SERVER_API_END;
 

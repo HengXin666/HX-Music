@@ -21,6 +21,7 @@
 #include <api/Api.hpp>
 
 #include <config/DbPath.hpp>
+#include <config/Token.hpp>
 #include <token/TokenApi.hpp>
 #include <utils/Timestamp.hpp>
 #include <dao/UserDAO.hpp>
@@ -32,9 +33,10 @@ namespace HX {
 
 // 凭证内容
 struct TokenData {
-    uint64_t userId;    // 用户 Id
-    int64_t beginTime;  // 凭证生效时间: 毫秒级Unix时间戳
-    int64_t endTime;    // 凭证失效时间: 毫秒级Unix时间戳
+    std::string loginUuid;  // 登录 Id, 用于验证登录是否合法 (比如修改密码后, 用户会退出登录)
+    uint64_t userId;        // 用户 Id
+    int64_t beginTime;      // 凭证生效时间: 毫秒级Unix时间戳
+    int64_t endTime;        // 凭证失效时间: 毫秒级Unix时间戳
 };
 
 /**
@@ -42,12 +44,6 @@ struct TokenData {
  */
 template <PermissionEnum Permission = PermissionEnum::ReadOnlyUser>
 struct TokenInterceptor {
-    // 凭证的 key
-    inline static constexpr std::string_view HttpHeadTokenKay = "HX-Token";
-
-    // 凭证的持续时间: ms
-    inline static constexpr int64_t effectiveDuration = 24 * 60 * 60 * 1000; // 一天
-
     using Request = net::Request;
     using Response = net::Response;
 
@@ -56,7 +52,7 @@ struct TokenInterceptor {
 
     coroutine::Task<bool> before(Request& req, Response& res) {
         auto& head = req.getHeaders();
-        auto it = head.find(HttpHeadTokenKay);
+        auto it = head.find(config::HttpHeadTokenKay);
         if (it == head.end()) {
             co_await api::setJsonError("请携带凭证", res).sendRes();
             co_return false;
@@ -70,8 +66,13 @@ struct TokenInterceptor {
             ) {
                 co_await api::setJsonError("凭证失效", res).sendRes();
                 ans = false;
-            } else if (userDAO->at(tokenData.userId).permissionLevel < Permission) {
+            } else if (auto const& userDO = userDAO->at(tokenData.userId);
+                userDO.permissionLevel < Permission
+            ) {
                 co_await api::setJsonError("权限不足", res).sendRes();
+                ans = false;
+            } else if (userDO.loggedInUuid != tokenData.loginUuid) {
+                co_await api::setJsonError("凭证失效", res).sendRes();
                 ans = false;
             }
             co_return;
@@ -82,6 +83,18 @@ struct TokenInterceptor {
         co_return ans;
     }
 };
+
+/**
+ * @brief 获取凭证
+ * @warning 内部默认凭证存在, 即在此之前必须 通过 TokenInterceptor 的拦截. 否则不是期望的.
+ * @param req 
+ * @return TokenData 
+ */
+inline TokenData getTokenData(net::Request& req) {
+    return token::TokenApi::get().fromToken<TokenData>(
+        req.getHeaders().find(config::HttpHeadTokenKay)->second
+    );
+}
 
 } // namespace HX
 
