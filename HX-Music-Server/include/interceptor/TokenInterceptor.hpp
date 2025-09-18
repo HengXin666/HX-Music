@@ -67,7 +67,7 @@ struct TokenInterceptor {
                 co_await api::setJsonError("凭证失效", res).sendRes();
                 ans = false;
             } else if (auto const& userDO = userDAO->at(tokenData.userId);
-                userDO.permissionLevel < Permission
+                userDO.permissionLevel > Permission
             ) {
                 co_await api::setJsonError("权限不足", res).sendRes();
                 ans = false;

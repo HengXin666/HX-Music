@@ -23,6 +23,7 @@
 
 #include <config/DbPath.hpp>
 #include <dao/MusicDAO.hpp>
+#include <interceptor/TokenInterceptor.hpp>
 #include <pybind/ToKaRaOKAss.hpp>
 
 #include <api/ApiMacro.hpp>
@@ -52,7 +53,7 @@ HX_SERVER_API_BEGIN(LyricsApi) {
             }, [&] CO_FUNC {
                 co_await api::setJsonError("歌曲id不存在 或者 路径错误", res).sendRes();
             });
-        })
+        }, TokenInterceptor<PermissionEnum::ReadOnlyUser>{})
         // 网络爬取歌曲歌词并且日语注音卡拉ok化
         .addEndpoint<POST>("/lyrics/ass/karaok/{id}", [=] ENDPOINT {
             auto idStrView = req.getPathParam(0);
@@ -80,7 +81,7 @@ HX_SERVER_API_BEGIN(LyricsApi) {
             }, [&] CO_FUNC {
                 co_await api::setJsonError("歌曲id不存在 或者 路径错误", res).sendRes();
             });
-        })
+        }, TokenInterceptor<PermissionEnum::RegularUser>{})
     HX_ENDPOINT_END;
 } HX_SERVER_API_END;
 

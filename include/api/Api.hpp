@@ -144,6 +144,11 @@ T checkTryAndStatus(container::Try<net::ResponseData> t) {
     if (!t) [[unlikely]] {
         throw std::runtime_error{"check: " + t.what()};
     } else if (t.get().status / 100 != 2) [[unlikely]] {
+        try {
+            return getVO<T>(t.move());
+        } catch (...) {
+            ;
+        }
         throw std::runtime_error{"check: Status Err"};
     }
     return getVO<T>(t.move());

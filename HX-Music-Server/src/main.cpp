@@ -84,7 +84,7 @@ void ininDir() {
             "hx",
             {},
             nacl,
-            "hx666" + nacl,
+            utils::md5("hx666" + nacl),
             {},
             {},
             PermissionEnum::Administrator

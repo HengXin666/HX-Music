@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import "./internal"
+import HX.Music
 
 Item {
     ColumnLayout {
@@ -35,7 +36,6 @@ Item {
             text: Theme.getBackendUrl()
             onTextChanged: {
                 Theme.setBackendUrl(text);
-                MessageController.showInfo("服务器地址已自动保存");
             }
             // 连接 Theme 的 backendUrl 属性变化
             Connections {
@@ -57,6 +57,7 @@ Item {
                 Layout.alignment: Qt.AlignLeft
                 spacing: 15
                 IconTextField {
+                    id: usernameField
                     Layout.alignment: Qt.AlignRight
                     Layout.preferredWidth: 230
                     iconDefaultColor: Theme.textColor
@@ -80,6 +81,7 @@ Item {
                 Layout.alignment: Qt.AlignRight
                 spacing: 15
                 IconTextField {
+                    id: passwordField
                     Layout.alignment: Qt.AlignLeft
                     Layout.preferredWidth: 230
                     iconDefaultColor: Theme.textColor
@@ -95,6 +97,10 @@ Item {
                     baseColor: Theme.backgroundColor
                     glowColor: Theme.highlightingColor
                     accentColor: Theme.highlightingColor
+                    onClicked: {
+                        // 登录
+                        UserController.loginReq(usernameField.text, passwordField.text);
+                    }
                 }
             }
         }

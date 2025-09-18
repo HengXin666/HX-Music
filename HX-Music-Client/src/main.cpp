@@ -10,6 +10,7 @@
 #include <controller/MusicController.h>
 #include <controller/PlaylistController.h>
 #include <controller/MessageController.h>
+#include <controller/UserController.h>
 #include <cmd/MusicCommand.hpp>
 #include <config/MusicConfig.hpp>
 #include <config/Theme.hpp>
@@ -69,6 +70,10 @@ struct MusicClient {
         // 音乐控制类
         static HX::MusicController musicController{};
         cp->setContextProperty("MusicController", &musicController);
+
+        // 用户控制类
+        static HX::UserController userController{};
+        cp->setContextProperty("UserController", &userController);
 
         // 注册 歌单列表视图 到 qml
         qmlRegisterType<HX::PlaylistModel>(

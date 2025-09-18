@@ -26,8 +26,10 @@
 #include <pojo/vo/PlaylistInfoVO.hpp>
 #include <pojo/vo/PlaylistInfoListVO.hpp>
 #include <pojo/vo/PlaylistVO.hpp>
+#include <interceptor/TokenInterceptor.hpp>
 #include <dao/MusicDAO.hpp>
 #include <dao/PlaylistDAO.hpp>
+#include <dao/UserDAO.hpp>
 
 #include <api/ApiMacro.hpp>
 
@@ -41,6 +43,8 @@ HX_SERVER_API_BEGIN(PlaylistApi) {
         = dao::MemoryDAOPool::get<MusicDAO, config::MusicDbPath>();
     auto playlistDAO 
         = dao::MemoryDAOPool::get<PlaylistDAO, config::PlaylistDbPath>();
+    auto userDAO
+        = dao::MemoryDAOPool::get<UserDAO, config::UserDbPath>();
     HX_ENDPOINT_BEGIN
         // 创建歌单
         .addEndpoint<POST>("/playlist/make", [=] ENDPOINT {
@@ -52,11 +56,25 @@ HX_SERVER_API_BEGIN(PlaylistApi) {
                     std::move(vo.description),
                     {}
                 }).id;
+                // @todo 修改非原子, 有竞争风险!
+                auto userDO = userDAO->at(getTokenData(req).userId);
+                userDO.createdPlaylist.emplace_back(id);
+                userDAO->update<UserDO>({
+                    userDO.id,
+                    std::move(userDO.name),
+                    std::move(userDO.signature),
+                    std::move(userDO.salt),
+                    std::move(userDO.password),
+                    std::move(userDO.createdPlaylist),
+                    std::move(userDO.savedPlaylist),
+                    userDO.permissionLevel,
+                    std::move(userDO.loggedInUuid)
+                });
                 co_await api::setJsonSucceed(id, res).sendRes();
             }, [&] CO_FUNC {
                 co_await api::setJsonError("创建歌单失败", res).sendRes();
             });
-        })
+        }, TokenInterceptor<PermissionEnum::RegularUser>{})
         // 编辑歌单
         .addEndpoint<POST>("/playlist/update", [=] ENDPOINT {
             co_await api::coTryCatch([&] CO_FUNC {
@@ -68,7 +86,7 @@ HX_SERVER_API_BEGIN(PlaylistApi) {
             }, [&] CO_FUNC {
                 co_await api::setJsonError("编辑失败", res).sendRes();
             });
-        })
+        }, TokenInterceptor<PermissionEnum::RegularUser>{})
         // 删除歌单
         .addEndpoint<POST, DEL>("/playlist/del/{id}", [=] ENDPOINT {
             co_await api::coTryCatch([&] CO_FUNC {
@@ -79,7 +97,7 @@ HX_SERVER_API_BEGIN(PlaylistApi) {
             }, [&] CO_FUNC {
                 co_await api::setJsonError("删除失败", res).sendRes();
             });
-        })
+        }, TokenInterceptor<PermissionEnum::RegularUser>{})
         // 获取歌单
         .addEndpoint<GET>("/playlist/select/{id}", [=] ENDPOINT {
             co_await api::coTryCatch([&] CO_FUNC {
@@ -109,7 +127,7 @@ HX_SERVER_API_BEGIN(PlaylistApi) {
             }, [&] CO_FUNC {
                 co_await api::setJsonError("获取歌单失败", res).sendRes();
             });
-        })
+        }, TokenInterceptor<PermissionEnum::ReadOnlyUser>{})
         // 获取全部歌单
         .addEndpoint<GET>("/playlist/selectAll", [=] ENDPOINT {
             co_await api::setJsonSucceed(
@@ -120,7 +138,7 @@ HX_SERVER_API_BEGIN(PlaylistApi) {
                 }
                 return res;
             }), res).sendRes();
-        })
+        }, TokenInterceptor<PermissionEnum::ReadOnlyUser>{})
         // 获取歌单简介
         .addEndpoint<GET>("/playlist/info/{id}", [=] ENDPOINT {
             co_await api::coTryCatch([&] CO_FUNC {
@@ -138,12 +156,19 @@ HX_SERVER_API_BEGIN(PlaylistApi) {
             }, [&] CO_FUNC {
                 co_await api::setJsonError("获取歌单简介失败", res).sendRes();
             });
-        })
+        }, TokenInterceptor<PermissionEnum::ReadOnlyUser>{})
         // 为歌单添加歌曲
         .addEndpoint<POST>("/playlist/{id}/addMusic/{musicId}", [=] ENDPOINT {
             co_await api::coTryCatch([&] CO_FUNC {
                 uint64_t id, musicId;
                 reflection::fromJson(id, req.getPathParam(0));
+                if (userDAO->lockSelect([&](UserDAO::MapType const& mp) {
+                    auto const& arr
+                        = mp.at(getTokenData(req).userId).createdPlaylist;
+                    return std::ranges::find(arr, id) == arr.end();
+                })) {
+                    co_return co_await api::setJsonError("只能修改创建的歌单", res).sendRes();
+                }
                 reflection::fromJson(musicId, req.getPathParam(1));
                 auto listDO = playlistDAO->at(id);
                 listDO.songIdList.push_back(musicId);
@@ -152,15 +177,15 @@ HX_SERVER_API_BEGIN(PlaylistApi) {
             }, [&] CO_FUNC {
                 co_await api::setJsonError("歌单添加歌曲失败", res).sendRes();
             });
-        })
+        }, TokenInterceptor<PermissionEnum::RegularUser>{})
         // 为歌单删除歌曲
         .addEndpoint<POST, DEL>("/playlist/{id}/delMusic/{musicId}", [] ENDPOINT {
             co_return ;
-        })
+        }, TokenInterceptor<PermissionEnum::RegularUser>{})
         // 为歌单交换歌曲位置
         .addEndpoint<POST>("/playlist/{id}/swapMusic", [] ENDPOINT {
             co_return ;
-        })
+        }, TokenInterceptor<PermissionEnum::RegularUser>{})
     HX_ENDPOINT_END;
 } HX_SERVER_API_END;
 

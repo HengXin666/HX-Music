@@ -28,6 +28,7 @@
 #include <dao/MusicDAO.hpp>
 #include <pojo/vo/MusicVO.hpp>
 #include <pojo/vo/InitUploadFileTaskVO.hpp>
+#include <interceptor/TokenInterceptor.hpp>
 #include <utils/DirFor.hpp>
 #include <utils/MusicInfo.hpp>
 #include <utils/Uuid.hpp>
@@ -121,7 +122,7 @@ HX_SERVER_API_BEGIN(MusicApi) {
             co_await api::setJsonSucceed(
                 "OK: 扫描完成, 新增 " + std::to_string(cnt) + " 首音乐!",
             res).sendRes();
-        })
+        }, TokenInterceptor<PermissionEnum::Administrator>{})
         // 获取音乐信息
         .addEndpoint<GET>("/music/info/{id}", [=] ENDPOINT {
             co_await api::coTryCatch([&] CO_FUNC {
@@ -140,7 +141,7 @@ HX_SERVER_API_BEGIN(MusicApi) {
             }, [&] CO_FUNC {
                 co_await api::setJsonError("歌曲 ID 不存在", res).sendRes();
             });
-        })
+        }, TokenInterceptor<PermissionEnum::ReadOnlyUser>{})
         // 初始化上传音乐任务
         .addEndpoint<POST>("/music/upload/init", [=] ENDPOINT {
             co_await api::coTryCatch([&] CO_FUNC {
@@ -188,7 +189,7 @@ HX_SERVER_API_BEGIN(MusicApi) {
                 co_return co_await api::setJsonError(
                     "数据非法", res).sendRes();
             });
-        })
+        }, TokenInterceptor<PermissionEnum::RegularUser>{})
         // 上传音乐主任务
         .addEndpoint<WS>("/music/upload/push/{pushId}", [=] ENDPOINT {
             using namespace std::string_literals;
