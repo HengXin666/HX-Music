@@ -38,7 +38,6 @@ struct CoverApi {
                 } else if (t.get().status != 200) [[unlikely]] {
                     api::throwVoMsg(t.move());
                 }
-                log::hxLog.info("imgRes:", t.get().headers);
                 QImage res{};
                 auto imgBuf = std::move(t.move().body); 
                 if (res.loadFromData(QByteArrayView{

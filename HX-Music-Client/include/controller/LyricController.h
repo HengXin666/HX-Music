@@ -368,7 +368,8 @@ public:
     QImage requestImage(
         [[maybe_unused]] QString const& id,
         [[maybe_unused]] QSize* size,
-        [[maybe_unused]] QSize const& requestedSize) override {
+        [[maybe_unused]] QSize const& requestedSize
+    ) override {
         // 取最新一帧, 如果没有就返回上一帧的副本
         if (size) {
             *size = _lastImage.size();

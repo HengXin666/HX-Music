@@ -50,6 +50,9 @@
         <file alias="error.svg">icons/error.svg</file>
         <file alias="success.svg">icons/success.svg</file>
         <file alias="warning.svg">icons/warning.svg</file>
+        <file alias="img_err.svg">icons/img_err.svg</file>
+        <file alias="user.svg">icons/user.svg</file>
+        <file alias="cloud-server.svg">icons/cloud-server.svg</file>
     </qresource>
     <qresource prefix="/logo">
         <file alias="HXMusic_logo.png">logo/HXMusic_logo.png</file>

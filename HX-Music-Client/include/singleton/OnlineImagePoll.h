@@ -31,15 +31,14 @@
 namespace HX {
 
 /**
- * @brief 网络图片池 [封面]
- *  - 纯数字就是歌曲封面
+ * @brief 网络图片池 [仅歌曲封面]
  */
 class OnlineImagePoll : public QQuickImageProvider {
     Q_OBJECT
 
     OnlineImagePoll()
         : QQuickImageProvider{QQuickImageProvider::Image}
-        , _noFindImg{":/icons/audio.svg"}
+        , _errImg{":/icons/audio.svg"}
         , _imgPool{}
     {}
 
@@ -65,7 +64,7 @@ public:
                     .thenTry([this, _idStr = id](container::Try<QImage> t) {
                         if (!t) [[unlikely]] {
                             MessageController::get().show<MsgType::Error>("封面失败:" + t.what());
-                            return _noFindImg;
+                            return _errImg;
                         }
                         auto res = t.get();
                         QMetaObject::invokeMethod(
@@ -76,7 +75,7 @@ public:
                         return res;
                     }).get();
             }
-            return _noFindImg;
+            return _errImg;
         }
         auto& res = it.value();
         if (size) {
@@ -93,7 +92,7 @@ public:
         _imgPool.remove(key);
     }
 private:
-    QImage _noFindImg;
+    QImage _errImg;
     QHash<QString, QImage> _imgPool;
 };
 

@@ -63,10 +63,14 @@ qt_add_qml_module(HX-Music-Client
         resources/qml/widget/PlaylistView.qml
         resources/qml/widget/MessageManager.qml
         resources/qml/widget/SettingView.qml
+        resources/qml/widget/LoginView.qml
         # 内部控件组件
         resources/qml/widget/internal/MusicActionButton.qml
         resources/qml/widget/internal/AudioVisualizerBars.qml
         resources/qml/widget/internal/ColorPicker.qml
+        resources/qml/widget/internal/IconTextField.qml
+        resources/qml/widget/internal/SideNavItem.qml
+        resources/qml/widget/internal/GlowButton.qml
         # 全局状态数据
         resources/qml/data/LyricsState.qml
 )

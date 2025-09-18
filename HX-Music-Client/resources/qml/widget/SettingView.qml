@@ -92,6 +92,16 @@ Item {
                         Theme.setBackendUrl(serverInput.text);
                         MessageController.showInfo("服务器地址已自动保存");
                     }
+                    // 连接 Theme 的 backendUrl 属性变化
+                    Connections {
+                        target: Theme
+                        onBackendUrlChanged: {
+                            const url = Theme.getBackendUrl();
+                            if (url !== serverInput.text) {
+                                serverInput.text = url;
+                            }
+                        }
+                    }
                 }
             }
 

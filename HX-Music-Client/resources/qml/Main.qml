@@ -25,7 +25,8 @@ BorderlessWindow {
         Qt.quit(); // 强制退出应用
     }
 
-    titleBar: Rectangle { // 自绘标题栏, 可为null, 内部需要自定义 height
+    titleBar: Rectangle {
+        // 自绘标题栏, 可为null, 内部需要自定义 height
         height: 50
         color: "transparent"
         MouseArea {
@@ -46,7 +47,7 @@ BorderlessWindow {
             }
             Label {
                 text: mainWin.title
-                color: Theme.highlightingColor 
+                color: Theme.highlightingColor
                 elide: Label.ElideRight
                 horizontalAlignment: Qt.AlignHCenter
                 verticalAlignment: Qt.AlignVCenter
@@ -61,6 +62,7 @@ BorderlessWindow {
                 url: "qrc:/icons/setting.svg"
                 onClicked: {
                     mainWin.delegateRef.stackViewRef.currentIndex = 4;
+                    mainWin.delegateRef.settingStackView.currentIndex = 1;
                 }
             }
 
@@ -76,12 +78,9 @@ BorderlessWindow {
             MusicActionButton {
                 Layout.preferredWidth: 26
                 Layout.preferredHeight: 26
-                url: mainWin.visibility === Window.Maximized
-                    ? "qrc:/icons/restore.svg"   // 还原图标
-                    : "qrc:/icons/up.svg"  // 最大化图标
-                onClicked: mainWin.visibility === Window.Maximized
-                    ? mainWin.showNormal()
-                    : mainWin.showMaximized()
+                url: mainWin.visibility === Window.Maximized ? "qrc:/icons/restore.svg"   // 还原图标
+                 : "qrc:/icons/up.svg"  // 最大化图标
+                onClicked: mainWin.visibility === Window.Maximized ? mainWin.showNormal() : mainWin.showMaximized()
             }
 
             // 关闭按钮
@@ -103,6 +102,7 @@ BorderlessWindow {
 
         // 暴露 stackView 引用
         property alias stackViewRef: stackView
+        property alias settingStackView: settingStackView
 
         ColumnLayout {
             anchors.fill: parent
@@ -112,17 +112,17 @@ BorderlessWindow {
                 MainSideBar {
                     Layout.preferredWidth: 200
                     Layout.fillHeight: true
-                    onTabClicked: (index) => {
+                    onTabClicked: index => {
                         console.log("点击了标签页:", index);
                         stackView.currentIndex = index; // 属性存储当前标签索引
-                        if (index == 1) {
-                            // @todo 我的收藏
-                        } else if (index == 2) {
-                            // @todo 上传列表
-                        }
+                        if (index == 1)
+                        // @todo 我的收藏
+                        {} else if (index == 2)
+                        // @todo 上传列表
+                        {}
                     }
 
-                    onPlayListClicked: function (id: int) {
+                    onPlayListClicked: function (id) {
                         console.log("点击了歌单:", id);
                         stackView.currentIndex = 3;
                         PlaylistController.loadPlaylistById(id);
@@ -134,41 +134,110 @@ BorderlessWindow {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
 
-                    Rectangle { // 0
+                    Rectangle {
+                        // 0
                         color: "transparent"
                         Text {
                             anchors.centerIn: parent
                             text: "HX-Music"
-                            color: Theme.highlightingColor 
+                            color: Theme.highlightingColor
                             font.pixelSize: 20
                         }
                     }
-                    Rectangle { // 1
-                        color: "#25d0eaff"                        
-                        // 测试按钮
-                        Button {
-                            text: "测试消息"
-                            onClicked: {
-                                MessageController.showInfo("这是一条信息消息")
-                                MessageController.showError("这是一条错误消息")
-                                MessageController.showWarning("这是一条警告消息")
-                                MessageController.showSuccess("这是一条成功消息")
-                            }
-                        }
+                    Rectangle {
+                        // 1
+                        color: "transparent"
                     }
-                    Rectangle { // 2
+                    Rectangle {
+                        // 2
                         color: "#7e0b3f6a"
                     }
-                    Rectangle { // 3
+                    Rectangle {
+                        // 3
                         color: "transparent"
                         MusicListView {
                             anchors.fill: parent
                         }
                     }
-                    Rectangle { // 4
+                    Rectangle {
+                        // 4
                         color: "transparent"
-                        SettingView {
+                        RowLayout {
                             anchors.fill: parent
+                            spacing: 10
+
+                            // 侧边导航 (纯文本, 选择后右边会有 | 表示)
+                            ColumnLayout {
+                                Layout.preferredWidth: 50
+                                Layout.alignment: Qt.AlignTop
+                                spacing: 10
+                                SideNavItem {
+                                    id: loginButton
+                                    Layout.preferredWidth: 50
+                                    text: "登录"
+                                    textColor: Theme.textColor
+                                    highlightColor: Theme.highlightingColor
+                                    checked: settingStackView.currentIndex === 0
+                                    onClicked: {
+                                        settingStackView.currentIndex = 0;
+                                    }
+                                }
+                                SideNavItem {
+                                    id: settingButton
+                                    Layout.preferredWidth: 50
+                                    text: "设置"
+                                    textColor: Theme.textColor
+                                    highlightColor: Theme.highlightingColor
+                                    checked: settingStackView.currentIndex === 1
+                                    onClicked: {
+                                        settingStackView.currentIndex = 1;
+                                    }
+                                }
+                                SideNavItem {
+                                    id: aboutButton
+                                    Layout.preferredWidth: 50
+                                    text: "关于"
+                                    textColor: Theme.textColor
+                                    highlightColor: Theme.highlightingColor
+                                    checked: settingStackView.currentIndex === 2
+                                    onClicked: {
+                                        settingStackView.currentIndex = 2;
+                                    }
+                                }
+                            }
+
+                            // 内容区
+                            StackLayout {
+                                id: settingStackView
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+
+                                LoginView {}
+                                SettingView {}
+                                Rectangle {
+                                    // 关于页面 @todo
+                                    color: "transparent"
+                                    ColumnLayout {
+                                        anchors.fill: parent
+                                        spacing: 10
+                                        // 上 + 居中
+                                        Layout.alignment: Qt.AlignTop | Qt.AlignHCenter
+                                        Label {
+                                            text: "HX.Music"
+                                            font.pixelSize: 24
+                                            color: Theme.highlightingColor
+                                        }
+                                        Label {
+                                            text: "版本: 3.0.1-Beta"
+                                            color: Theme.textColor
+                                        }
+                                        Label {
+                                            text: "作者: Heng_Xin"
+                                            color: Theme.textColor
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -190,7 +259,7 @@ BorderlessWindow {
     }
 
     // 背景 (双缓冲渲染)
-    Item {
+    Rectangle {
         id: bk
         x: mainWin.bw
         y: mainWin.bw
@@ -204,9 +273,9 @@ BorderlessWindow {
         // 计算符合当前窗口的最佳解码分辨率(避免过大或过小)
         function targetSizeForImage(): size {
             // 可按需给点超采样裕量, 例如 ×1.2, 抗缩放抖动
-            const w = Math.max(1, Math.ceil(width  * dpr * 1.0))
-            const h = Math.max(1, Math.ceil(height * dpr * 1.0))
-            return Qt.size(w, h)
+            const w = Math.max(1, Math.ceil(width * dpr * 1.0));
+            const h = Math.max(1, Math.ceil(height * dpr * 1.0));
+            return Qt.size(w, h);
         }
 
         Image {
@@ -232,13 +301,17 @@ BorderlessWindow {
                     bgNext.opacity = 0;
                 }
             }
-            Behavior on opacity { NumberAnimation { duration: 150 } }
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: 150
+                }
+            }
         }
 
         function updateBackground(size) {
-            bgNext.sourceSize = size
-            bgNext.source = Theme.backgroundImgUrl
-            bgNext.opacity = 1
+            bgNext.sourceSize = size;
+            bgNext.source = Theme.backgroundImgUrl;
+            bgNext.opacity = 1;
         }
 
         Timer {
@@ -259,7 +332,7 @@ BorderlessWindow {
         Connections {
             target: Theme
             function onBackgroundImgUrlChanged() {
-                bk.updateBackground(bk.targetSizeForImage())
+                bk.updateBackground(bk.targetSizeForImage());
             }
         }
     }

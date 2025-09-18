@@ -115,6 +115,7 @@ public:
         NetSingleton::get().setBackendUrl(
             GlobalSingleton::get().musicConfig.backendUrl = url.toStdString()
         );
+        Q_EMIT backendUrlChanged();
     }
 
     ~Theme() noexcept {
@@ -132,6 +133,9 @@ public:
         file.syncWrite(json);
         file.syncClose();
     }
+
+Q_SIGNALS:
+    void backendUrlChanged();
 
     // 主色系
     HX_QML_QCOLOR_PROPERTY(textColor                , "#ffffff"); // 文本颜色
