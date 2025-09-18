@@ -135,6 +135,11 @@ Q_SIGNALS:
      * @param newId 新增的歌单id, 如果为 0. 则表示全部重新刷新
      */
     void updatePlaylistList(uint64_t newId);
+
+    /**
+     * @brief 跳转到登录界面信号
+     */
+    void gotoLoginViewSignal();
 };
 
 } // namespace HX

@@ -256,6 +256,15 @@ BorderlessWindow {
             focus: true
             anchors.fill: parent
         }
+
+        Connections {
+            target: SignalBusSingleton
+            // 绑定信号: token 过期, 跳转到登录界面
+            function onGotoLoginViewSignal() {
+                stackView.currentIndex = 4;
+                settingStackView.currentIndex = 0;
+            }
+        }
     }
 
     // 背景 (双缓冲渲染)

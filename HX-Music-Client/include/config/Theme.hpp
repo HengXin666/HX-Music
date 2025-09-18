@@ -26,7 +26,6 @@
 #include <HXLibs/reflection/json/JsonWrite.hpp>
 
 #include <singleton/GlobalSingleton.hpp>
-#include <singleton/NetSingleton.hpp>
 
 namespace HX {
 
@@ -63,7 +62,7 @@ private:                                                                       \
     HX_QML_TYPE_PROPERTY(QColor, name, defaultValue)
 
 /**
- * @brief 主题配置
+ * @brief 主题配置, 系统配置
  */
 class Theme : public QObject {
     Q_OBJECT
@@ -101,33 +100,6 @@ public:
         } catch (std::exception const& e) {
             log::hxLog.error("错误:", e.what());
         }
-
-        NetSingleton::get().setBackendUrl(
-            GlobalSingleton::get().musicConfig.backendUrl
-        );
-        NetSingleton::get().setToken(
-            GlobalSingleton::get().musicConfig.token
-        );
-    }
-
-    Q_INVOKABLE QString getBackendUrl() const noexcept {
-        return QString::fromStdString(NetSingleton::get().getBackendUrl());
-    }
-
-    Q_INVOKABLE void setBackendUrl(QString const& url) {
-        NetSingleton::get().setBackendUrl(
-            GlobalSingleton::get().musicConfig.backendUrl = url.toStdString()
-        );
-        Q_EMIT backendUrlChanged();
-    }
-
-    Q_INVOKABLE QString getName() const noexcept {
-        return QString::fromStdString(GlobalSingleton::get().musicConfig.name);
-    }
-
-    Q_INVOKABLE void setName(QString const& name) {
-        GlobalSingleton::get().musicConfig.name = name.toStdString();
-        Q_EMIT nameChanged();
     }
 
     ~Theme() noexcept {
@@ -145,10 +117,6 @@ public:
         file.syncWrite(json);
         file.syncClose();
     }
-
-Q_SIGNALS:
-    void backendUrlChanged();
-    void nameChanged();
 
     // 主色系
     HX_QML_QCOLOR_PROPERTY(textColor                , "#ffffff"); // 文本颜色

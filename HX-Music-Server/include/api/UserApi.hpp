@@ -41,10 +41,10 @@ HX_SERVER_API_BEGIN(UserApi) {
         = dao::MemoryDAOPool::get<UserDAO, config::UserDbPath>();
 
     HX_ENDPOINT_BEGIN
-        // 内部测试接口
-        .addEndpoint<GET>("/user/test", [] ENDPOINT {
+        // 测试凭证
+        .addEndpoint<GET>("/user/testToken", [] ENDPOINT {
             co_await api::setJsonSucceed<std::string>("ok", res).sendRes();
-        }, TokenInterceptor{})
+        }, TokenInterceptor<PermissionEnum::ReadOnlyUser>{})
         // 注册接口: 仅管理员可以创建用户
         .addEndpoint<POST>("/user/add", [=] ENDPOINT {
             co_await api::coTryCatch([&] CO_FUNC {

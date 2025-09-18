@@ -30,6 +30,14 @@ namespace HX {
  * @brief 用户相关请求 API
  */
 struct UserApi {
+    // 测试token
+    static container::FutureResult<> testTokenReq() {
+        return NetSingleton::get().getReq("/user/testToken")
+            .thenTry([](auto t) {
+                api::checkTryAndStatusAndJsonVO<std::string>(std::move(t));
+            });
+    }
+
     // 登录
     static container::FutureResult<> loginReq(std::string name, std::string passwd) {
         return NetSingleton::get().postReq("/user/login", UserLoginVO{
@@ -37,7 +45,6 @@ struct UserApi {
             std::move(passwd)
         }).thenTry([](container::Try<net::ResponseData> t) {
             auto token = api::checkTryAndStatusAndJsonVO<std::string>(std::move(t));
-            log::hxLog.info("获取到凭证", token);
             NetSingleton::get().setToken(
                 GlobalSingleton::get().musicConfig.token = std::move(token)
             );

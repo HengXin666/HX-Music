@@ -14,6 +14,7 @@
 #include <cmd/MusicCommand.hpp>
 #include <config/MusicConfig.hpp>
 #include <config/Theme.hpp>
+#include <config/UserConfig.hpp>
 #include <utils/SvgPars.hpp>
 #include <utils/WindowMaskUtil.h>
 #include <model/MusicListModel.hpp>
@@ -62,6 +63,10 @@ struct MusicClient {
         // 主题数据类
         static HX::Theme theme{};
         cp->setContextProperty("Theme", &theme);
+
+        // 用户数据类
+        static HX::UserConfig userConfig{};
+        cp->setContextProperty("UserConfig", &userConfig);
 
         // 歌单控制类
         static HX::PlaylistController playlistController{};

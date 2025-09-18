@@ -33,15 +33,15 @@ Item {
             borderHighlightColor: Theme.highlightingColor
             iconSource: "qrc://icons/cloud-server.svg"
             placeholderText: "https://..."
-            text: Theme.getBackendUrl()
+            text: UserConfig.getBackendUrl()
             onTextChanged: {
-                Theme.setBackendUrl(text);
+                UserConfig.setBackendUrl(text);
             }
-            // 连接 Theme 的 backendUrl 属性变化
+            // 连接 UserConfig 的 backendUrl 属性变化
             Connections {
-                target: Theme
+                target: UserConfig
                 onBackendUrlChanged: {
-                    const url = Theme.getBackendUrl();
+                    const url = UserConfig.getBackendUrl();
                     if (url !== backendUrlField.text) {
                         backendUrlField.text = url;
                     }
@@ -65,14 +65,14 @@ Item {
                     borderHighlightColor: Theme.highlightingColor
                     iconSource: "qrc://icons/user.svg"
                     placeholderText: "用户名"
-                    text: Theme.getName()
+                    text: UserConfig.getName()
                     onTextChanged: {
-                        Theme.setName(text);
+                        UserConfig.setName(text);
                     }
                     Connections {
-                        target: Theme
+                        target: UserConfig
                         onNameChanged: {
-                            const name = Theme.getName();
+                            const name = UserConfig.getName();
                             if (name !== usernameField.text) {
                                 usernameField.text = name;
                             }
