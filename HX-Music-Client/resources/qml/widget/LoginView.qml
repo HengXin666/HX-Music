@@ -65,6 +65,19 @@ Item {
                     borderHighlightColor: Theme.highlightingColor
                     iconSource: "qrc://icons/user.svg"
                     placeholderText: "用户名"
+                    text: Theme.getName()
+                    onTextChanged: {
+                        Theme.setName(text);
+                    }
+                    Connections {
+                        target: Theme
+                        onNameChanged: {
+                            const name = Theme.getName();
+                            if (name !== usernameField.text) {
+                                usernameField.text = name;
+                            }
+                        }
+                    }
                 }
                 GlowButton {
                     // 不要 tab 键聚焦

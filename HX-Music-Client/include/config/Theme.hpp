@@ -105,6 +105,9 @@ public:
         NetSingleton::get().setBackendUrl(
             GlobalSingleton::get().musicConfig.backendUrl
         );
+        NetSingleton::get().setToken(
+            GlobalSingleton::get().musicConfig.token
+        );
     }
 
     Q_INVOKABLE QString getBackendUrl() const noexcept {
@@ -116,6 +119,15 @@ public:
             GlobalSingleton::get().musicConfig.backendUrl = url.toStdString()
         );
         Q_EMIT backendUrlChanged();
+    }
+
+    Q_INVOKABLE QString getName() const noexcept {
+        return QString::fromStdString(GlobalSingleton::get().musicConfig.name);
+    }
+
+    Q_INVOKABLE void setName(QString const& name) {
+        GlobalSingleton::get().musicConfig.name = name.toStdString();
+        Q_EMIT nameChanged();
     }
 
     ~Theme() noexcept {
@@ -136,6 +148,7 @@ public:
 
 Q_SIGNALS:
     void backendUrlChanged();
+    void nameChanged();
 
     // 主色系
     HX_QML_QCOLOR_PROPERTY(textColor                , "#ffffff"); // 文本颜色

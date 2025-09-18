@@ -27,6 +27,6 @@ namespace HX::config {
 inline static constexpr std::string_view HttpHeadTokenKay = "HX-Token";
 
 // 凭证的持续时间: ms
-inline static constexpr int64_t effectiveDuration = 24 * 60 * 60 * 1000; // 一天
+inline static constexpr int64_t EffectiveDuration = 24 * 60 * 60 * 1000; // 一天
 
 } // namespace HX::config

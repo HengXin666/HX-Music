@@ -94,7 +94,7 @@ HX_SERVER_API_BEGIN(UserApi) {
                         userDO.loggedInUuid,
                         userDO.id,
                         nowTime,
-                        nowTime + config::effectiveDuration
+                        nowTime + config::EffectiveDuration
                     }), res
                 ).sendRes();
             }, [&] CO_FUNC {

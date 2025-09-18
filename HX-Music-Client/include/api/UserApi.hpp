@@ -19,6 +19,7 @@
  */
 
 #include <singleton/NetSingleton.hpp>
+#include <singleton/GlobalSingleton.hpp>
 
 #include <api/Api.hpp>
 #include <pojo/vo/UserLoginVO.hpp>
@@ -37,7 +38,9 @@ struct UserApi {
         }).thenTry([](container::Try<net::ResponseData> t) {
             auto token = api::checkTryAndStatusAndJsonVO<std::string>(std::move(t));
             log::hxLog.info("获取到凭证", token);
-            NetSingleton::get().setToken(std::move(token));
+            NetSingleton::get().setToken(
+                GlobalSingleton::get().musicConfig.token = std::move(token)
+            );
         });
     }
 };

@@ -56,6 +56,8 @@ public:
         } catch (...) {
             return {
                 "http://127.0.0.1:28205/",
+                "",
+                "",
                 100,
                 PlayMode::ListLoop,
                 0,
