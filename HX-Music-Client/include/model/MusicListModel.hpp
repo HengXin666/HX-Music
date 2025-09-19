@@ -110,7 +110,7 @@ public:
             && to >= 0
             && to < _musicArr.count()
         ) {
-            moveItem(static_cast<std::size_t>(from), static_cast<std::size_t>(to));
+            moveItemByGuiPlaylist(static_cast<std::size_t>(from), static_cast<std::size_t>(to));
             beginMoveRows(
                 QModelIndex(),
                 from,
@@ -139,7 +139,7 @@ public:
             return false;
         if (from == to || from + 1 == to)
             return false;
-        moveItem(static_cast<std::size_t>(from), static_cast<std::size_t>(to));
+        moveItemByGuiPlaylist(static_cast<std::size_t>(from), static_cast<std::size_t>(to));
         beginMoveRows(
             QModelIndex(),
             from,
@@ -319,7 +319,30 @@ public:
      * @return Q_INVOKABLE 
      */
     Q_INVOKABLE void savePlaylist() {
-        MessageController::get().show<MsgType::Error>("保存歌单@todo");
+        PlaylistApi::insertMusic(
+            _id,
+            [] {
+                std::vector<uint64_t> songIdList;
+                for (auto const& v : GlobalSingleton::get().guiPlaylist.songList) {
+                    songIdList.emplace_back(v.id);
+                }
+                return songIdList;
+            }()
+        ).thenTry([=, id = _id](auto t) {
+            QMetaObject::invokeMethod(
+                QCoreApplication::instance(),
+                [_t = std::move(t)] {
+                    if (!_t) [[unlikely]] {
+                        MessageController::get().show<MsgType::Error>("插入歌曲失败: " + _t.what());
+                    }
+                });
+        });
+        // 同步 now 的情况
+        if (GlobalSingleton::get().guiPlaylist.id == GlobalSingleton::get().nowPlaylist.id) {
+            GlobalSingleton::get().nowPlaylist.songList = GlobalSingleton::get().guiPlaylist.songList;
+        }
+        Q_EMIT SignalBusSingleton::get().listIndexChanged();
+
         // decltype(GlobalSingleton::get().guiPlaylist.songList) newSongList;
         // newSongList.reserve(_musicArr.size());
         // for (auto const& it : _musicArr) {
@@ -352,32 +375,19 @@ public:
     }
 
 private:
-    void moveItem(std::size_t from, std::size_t to) {
-        PlaylistApi::insertMusic(
-            _id,
-            from,
-            to
-        ).thenTry([=, id = _id](auto t) {
-            QMetaObject::invokeMethod(
-                QCoreApplication::instance(),
-                [id, _t = std::move(t), from, to] {
-                    if (!_t) [[unlikely]] {
-                        MessageController::get().show<MsgType::Error>("插入歌曲失败: " + _t.what());
-                    } else {
-                        auto& list = GlobalSingleton::get().guiPlaylist.songList;
-                        std::swap(list[from], list[to]);
-                        if (GlobalSingleton::get().musicConfig.playlistId != id) {
-                            return;
-                        }
-                        if (auto& idx = GlobalSingleton::get().musicConfig.listIndex;
-                            idx == from
-                        ) {
-                            idx = to;
-                            Q_EMIT SignalBusSingleton::get().listIndexChanged();
-                        }
-                    }
-                });
-        });
+    // 顺便同步全局的
+    void moveItemByGuiPlaylist(std::size_t from, std::size_t to) {
+        auto& list = GlobalSingleton::get().guiPlaylist.songList;
+        std::swap(list[from], list[to]);
+        if (GlobalSingleton::get().musicConfig.playlistId != _id) {
+            return;
+        }
+        auto& idx = GlobalSingleton::get().musicConfig.listIndex;
+        if (idx == from) {
+            idx = to;
+        } else if (idx == to) {
+            idx = from;
+        }
     }
 
     QVector<MusicInfoData> _musicArr{};

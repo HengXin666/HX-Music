@@ -28,7 +28,7 @@
 #include <pojo/vo/PlaylistInfoVO.hpp>
 #include <pojo/vo/PlaylistInfoListVO.hpp>
 #include <pojo/vo/PlaylistVO.hpp>
-#include <pojo/vo/InsertIndexVO.hpp>
+#include <pojo/vo/SongIdListVO.hpp>
 
 namespace HX {
 
@@ -171,11 +171,11 @@ struct PlaylistApi {
      * @return container::FutureResult<container::Try<>> 
      */
     static container::FutureResult<> insertMusic(
-        uint64_t playlistId, std::size_t from, std::size_t to
+        uint64_t playlistId, std::vector<uint64_t> songIdList
     ) {
         return NetSingleton::get().postReq(
-            "/playlist/" + std::to_string(playlistId) + "/insertMusic",
-            InsertIndexVO{from, to}
+            "/playlist/updateOrder/" + std::to_string(playlistId),
+            SongIdListVO{std::move(songIdList)}
         ).thenTry([](container::Try<net::ResponseData> t) {
             api::checkTryAndStatusAndJsonVO<std::string>(std::move(t));
         });

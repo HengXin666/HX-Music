@@ -233,12 +233,12 @@ struct PlaylistDO {
 - 参数描述: `id`-`歌单ID`; `musicId`-`歌曲ID`
 - 返回值描述: `ok`
 
-#### 2.2.8 为歌单插入歌曲位置
+#### 2.2.8 完整更新歌单顺序
 
-> 接口描述: 为歌单插入歌曲位置
+> 接口描述: 完整更新歌单顺序
 - 请求方式: `POST`
-- 接口URL: `/playlist/{id}/insertMusic`
-- 参数描述: `Body` 传递 `Json` (@todo)
+- 接口URL: `/playlist/updateOrder/{id}`
+- 参数描述: `Body` 传递 `Json`
 - 返回值描述: `ok`
 
 ### 2.2.9 获取歌单简介

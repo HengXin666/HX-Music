@@ -18,16 +18,16 @@
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <cstddef>
+#include <cstdint>
+#include <vector>
 
 namespace HX {
 
 /**
- * @brief 插入索引使用 (from 插入 to)
+ * @brief 歌曲id List JsonVO
  */
-struct InsertIndexVO {
-    std::size_t from;
-    std::size_t to;
+struct SongIdListVO {
+    std::vector<uint64_t> songList;
 };
 
 } // namespace HX
