@@ -229,8 +229,8 @@ struct PlaylistDO {
 
 > 接口描述: 为歌单删除歌曲
 - 请求方式: `POST`/`DEL`
-- 接口URL: `/playlist/{id}/delMusic/{musicId}`
-- 参数描述: `id`-`歌单ID`; `musicId`-`歌曲ID`
+- 接口URL: `/playlist/{id}/delMusic/{idx}`
+- 参数描述: `id`-`歌单ID`; `idx`-`歌曲所在idx`
 - 返回值描述: `ok`
 
 #### 2.2.8 完整更新歌单顺序

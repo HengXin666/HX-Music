@@ -266,7 +266,7 @@ Item {
         MenuItem {
             text: "删除"
             onTriggered: {
-                // @todo
+                musicListModel.delMusic(menu.index);
             }
         }
     }

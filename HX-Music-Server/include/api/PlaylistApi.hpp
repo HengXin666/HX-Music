@@ -210,8 +210,20 @@ HX_SERVER_API_BEGIN(PlaylistApi) {
             });
         }, TokenInterceptor<PermissionEnum::RegularUser>{})
         // 为歌单删除歌曲
-        .addEndpoint<POST, DEL>("/playlist/{id}/delMusic/{musicId}", [] ENDPOINT {
-            co_return ;
+        .addEndpoint<POST, DEL>("/playlist/{id}/delMusic/{idx}", [=] ENDPOINT {
+            co_await api::coTryCatch([&] CO_FUNC {
+                auto id = req.getPathParam(0).to<uint64_t>(),
+                     idx = req.getPathParam(1).to<uint64_t>();
+                auto playlistDO = playlistDAO->at(id);
+                if (idx >= playlistDO.songIdList.size()) [[unlikely]] {
+                    co_return co_await api::setJsonError("索引越界", res).sendRes();;
+                }
+                playlistDO.songIdList.erase(playlistDO.songIdList.begin() + idx);
+                playlistDAO->update(std::move(playlistDO));
+                co_await api::setJsonSucceed<std::string>("ok", res).sendRes();
+            }, [&] CO_FUNC {
+                co_await api::setJsonError("歌曲删除失败", res).sendRes();
+            });
         }, TokenInterceptor<PermissionEnum::RegularUser>{})
         // 为歌单交换歌曲位置
         .addEndpoint<POST>("/playlist/updateOrder/{id}", [=] ENDPOINT {

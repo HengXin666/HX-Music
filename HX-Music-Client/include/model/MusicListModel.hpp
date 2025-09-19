@@ -374,6 +374,41 @@ public:
         return _id;
     }
 
+    /**
+     * @brief 删除歌曲
+     * @param id 
+     * @param idx 
+     * @return Q_INVOKABLE 
+     */
+    Q_INVOKABLE void delMusic(uint64_t idx) {
+        PlaylistApi::delMusic(_id, idx).thenTry([this, idx](auto t) {
+            QMetaObject::invokeMethod(
+                QCoreApplication::instance(),
+                [this, _t = std::move(t), idx] {
+                    if (!_t) [[unlikely]] {
+                        MessageController::get().show<MsgType::Error>("删除歌曲失败:" + _t.what());
+                        return;
+                    }
+                    MessageController::get().show<MsgType::Success>("删除歌曲成功!");
+
+                    // 删除歌曲
+                    beginRemoveRows(QModelIndex(), static_cast<int>(idx), static_cast<int>(idx));
+                    _musicArr.removeAt(static_cast<int>(idx));
+                    endRemoveRows();
+
+                    GlobalSingleton::get().guiPlaylist.songList.erase(
+                        GlobalSingleton::get().guiPlaylist.songList.begin() + idx
+                    );
+                    if (GlobalSingleton::get().guiPlaylist.id == GlobalSingleton::get().nowPlaylist.id) {
+                        GlobalSingleton::get().nowPlaylist.songList.erase(
+                            GlobalSingleton::get().nowPlaylist.songList.begin() + idx
+                        );
+                    }
+                }
+            );
+        });
+    }
+
 private:
     // 顺便同步全局的
     void moveItemByGuiPlaylist(std::size_t from, std::size_t to) {

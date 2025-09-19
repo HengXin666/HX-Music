@@ -192,7 +192,9 @@ HX_SERVER_API_BEGIN(MusicApi) {
         .addEndpoint<WS>("/music/upload/push/{pushId}", [=] ENDPOINT {
             using namespace std::string_literals;
             log::hxLog.debug("ws: ", req.getReqPath());
-            auto [it, end] = musicUploadTaskMap->find(req.getPathParam(0));
+            auto [it, end] = musicUploadTaskMap->find(static_cast<std::string_view>(
+                req.getPathParam(0)
+            ));
             if (it == end) {
                 co_return co_await api::setJsonError(
                     "任务不存在", res).sendRes();

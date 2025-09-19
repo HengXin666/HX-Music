@@ -180,6 +180,23 @@ struct PlaylistApi {
             api::checkTryAndStatusAndJsonVO<std::string>(std::move(t));
         });
     }
+
+    /**
+     * @brief 从歌单中删除音乐
+     * @param playlistId 歌单id
+     * @param idx 该音乐在歌单中的id
+     * @return container::FutureResult<> 
+     */
+    static container::FutureResult<> delMusic(uint64_t playlistId, uint64_t idx) {
+        return NetSingleton::get().delReq(
+            "/playlist/"
+            + std::to_string(playlistId)
+            + "/delMusic/"
+            + std::to_string(idx)
+        ).thenTry([](container::Try<net::ResponseData> t) {
+            api::checkTryAndStatusAndJsonVO<std::string>(std::move(t));
+        });
+    }
 };
 
 } // namespace HX
