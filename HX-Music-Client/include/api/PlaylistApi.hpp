@@ -56,10 +56,8 @@ struct PlaylistApi {
         return NetSingleton::get().getReq("/playlist/select/" + std::to_string(id))
             .thenTry([](container::Try<net::ResponseData> t) -> Playlist {
                 if (!t) [[unlikely]] {
-                    log::hxLog.error("selectById:", t.what());
                     t.rethrow();
                 }
-                log::hxLog.info("selectById:", t.get());
                 auto res = t.move();
                 auto jsonVo = api::getVO<vo::JsonVO<PlaylistVO>>(res);
                 if (jsonVo.isError()) [[unlikely]] {
@@ -95,6 +93,28 @@ struct PlaylistApi {
      */
     static container::FutureResult<std::vector<PlaylistInfo>> selectAllPlaylist() {
         return NetSingleton::get().getReq("/playlist/selectAll")
+            .thenTry([](container::Try<net::ResponseData> t) {
+                return api::checkTryAndStatusAndJsonVO<PlaylistInfoListVO>(std::move(t)).infoList;
+            });
+    }
+
+    /**
+     * @brief 获取所有用户创建的歌单简介列表
+     * @return container::FutureResult<std::vector<PlaylistInfo>> 
+     */
+    static container::FutureResult<std::vector<PlaylistInfo>> selectUserCreatedAllPlaylist() {
+        return NetSingleton::get().getReq("/playlist/selectAll/created")
+            .thenTry([](container::Try<net::ResponseData> t) {
+                return api::checkTryAndStatusAndJsonVO<PlaylistInfoListVO>(std::move(t)).infoList;
+            });
+    }
+
+    /**
+     * @brief 获取所有用户保存的歌单简介列表
+     * @return container::FutureResult<std::vector<PlaylistInfo>> 
+     */
+    static container::FutureResult<std::vector<PlaylistInfo>> selectUserSavedAllPlaylist() {
+        return NetSingleton::get().getReq("/playlist/selectAll/saved")
             .thenTry([](container::Try<net::ResponseData> t) {
                 return api::checkTryAndStatusAndJsonVO<PlaylistInfoListVO>(std::move(t)).infoList;
             });

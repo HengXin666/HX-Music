@@ -96,11 +96,9 @@ HX_SERVER_API_BEGIN(MusicApi) {
                 auto idStrView = req.getPathParam(0);
                 MusicDAO::PrimaryKeyType id{};
                 reflection::fromJson(id, idStrView);
-                std::string_view path;
-                path = musicDAO->at(id).path;
                 co_await res.useRangeTransferFile(
                      req.getRangeRequestView(),
-                     "./file/music/"s += path
+                     "./file/music/"s += musicDAO->at(id).path
                 );
             }, [&] CO_FUNC {
                 co_await api::setJsonError("歌曲id不存在", res).sendRes();

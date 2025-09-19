@@ -111,13 +111,13 @@ HX_SERVER_API_BEGIN(PlaylistApi) {
                     [&] {
                         std::vector<MusicVO> songList;
                         for (auto const id : listDO.songIdList) {
-                            auto& musicDO = musicDAO->at(id);
+                            auto musicDO = musicDAO->at(id);
                             songList.emplace_back(
                                 musicDO.id,
-                                musicDO.path,
-                                musicDO.musicName,
-                                musicDO.singers,
-                                musicDO.musicAlbum,
+                                std::move(musicDO.path),
+                                std::move(musicDO.musicName),
+                                std::move(musicDO.singers),
+                                std::move(musicDO.musicAlbum),
                                 musicDO.millisecondsLen
                             );
                         }
@@ -139,18 +139,48 @@ HX_SERVER_API_BEGIN(PlaylistApi) {
                 return res;
             }), res).sendRes();
         }, TokenInterceptor<PermissionEnum::ReadOnlyUser>{})
+        // 获取用户创建的歌单
+        .addEndpoint<GET>("/playlist/selectAll/created", [=] ENDPOINT {
+            auto createdList = userDAO->at(
+                getTokenData(req).userId, &UserDO::createdPlaylist
+            );
+            co_await api::setJsonSucceed(
+                playlistDAO->lockSelect([&](PlaylistDAO::MapType const& mp) noexcept {
+                PlaylistInfoListVO res;
+                for (auto id : createdList) {
+                    auto const& val = mp.at(id);
+                    res.infoList.emplace_back(id, val.name, val.description, val.songIdList.size());
+                }
+                return res;
+            }), res).sendRes();
+        }, TokenInterceptor<PermissionEnum::ReadOnlyUser>{})
+        // 获取用户保存的歌单
+        .addEndpoint<GET>("/playlist/selectAll/saved", [=] ENDPOINT {
+            auto savedPlaylist = userDAO->at(
+                getTokenData(req).userId, &UserDO::savedPlaylist
+            );
+            co_await api::setJsonSucceed(
+                playlistDAO->lockSelect([&](PlaylistDAO::MapType const& mp) noexcept {
+                PlaylistInfoListVO res;
+                for (auto id : savedPlaylist) {
+                    auto const& val = mp.at(id);
+                    res.infoList.emplace_back(id, val.name, val.description, val.songIdList.size());
+                }
+                return res;
+            }), res).sendRes();
+        }, TokenInterceptor<PermissionEnum::ReadOnlyUser>{})
         // 获取歌单简介
         .addEndpoint<GET>("/playlist/info/{id}", [=] ENDPOINT {
             co_await api::coTryCatch([&] CO_FUNC {
                 uint64_t id;
                 reflection::fromJson(id, req.getPathParam(0));
                 co_await api::setJsonSucceed([&]() -> PlaylistInfoVO {
-                    auto const& listDO = playlistDAO->at(id);
+                    auto listDO = playlistDAO->at(id);
                     return {
                         id,
-                        listDO.name,
-                        listDO.description,
-                        listDO.songIdList.size()
+                        std::move(listDO.name),
+                        std::move(listDO.description),
+                        listDO.songIdList.size() // @todo 性能
                     };
                 }(), res).sendRes();
             }, [&] CO_FUNC {

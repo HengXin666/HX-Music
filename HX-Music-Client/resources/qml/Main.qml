@@ -221,7 +221,11 @@ BorderlessWindow {
                                         anchors.fill: parent
                                         spacing: 10
                                         // 上 + 居中
-                                        Layout.alignment: Qt.AlignTop | Qt.AlignHCenter
+                                        Layout.alignment: Qt.AlignTop | Qt.AlignCenter
+                                        Item {
+                                            Layout.fillHeight: true
+                                            Layout.alignment: Qt.AlignTop
+                                        }
                                         Label {
                                             text: "HX.Music"
                                             font.pixelSize: 24
@@ -234,6 +238,18 @@ BorderlessWindow {
                                         Label {
                                             text: "作者: Heng_Xin"
                                             color: Theme.textColor
+                                        }
+                                        Label {
+                                            text: 'Github: <a href="https://github.com/HengXin666/HX-Music">https://github.com/HengXin666/HX-Music</a>'
+                                            textFormat: Text.RichText
+                                            onLinkActivated: function(link) {
+                                                Qt.openUrlExternally(link);
+                                            }
+                                            color: Theme.textColor
+                                        }
+                                        Item {
+                                            Layout.fillHeight: true
+                                            Layout.alignment: Qt.AlignBottom
                                         }
                                     }
                                 }

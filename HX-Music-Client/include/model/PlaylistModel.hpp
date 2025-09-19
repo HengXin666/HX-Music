@@ -55,22 +55,7 @@ public:
             [this](uint64_t newId) {
                 if (!newId) {
                     // 全量更新
-                    PlaylistApi::selectAllPlaylist()
-                        .thenTry([this](auto t) {
-                            if (!t) [[unlikely]] {
-                                MessageController::get().show<MsgType::Error>(
-                                    "更新歌单简介列表失败:" + t.what());
-                                return;
-                            }
-                            QMetaObject::invokeMethod(
-                                QCoreApplication::instance(),
-                                [this, infoList = t.move()] {
-                                clear();
-                                for (auto const& info : infoList) {
-                                    addData(info);
-                                }
-                            });
-                        });
+                    updateAllPlaylistInfoList();
                 } else {
                     // 仅更新 id = newId
                     PlaylistApi::getPlaylistInfo(newId)
@@ -123,26 +108,43 @@ public:
         Q_EMIT endInsertRows();
     }
 
-    // 更新全部歌单列表
+    // 更新歌单列表
     Q_INVOKABLE void updateAllPlaylistInfoList() {
-        // @todo 区分是 自己创建的还是收藏的
-        // 全量更新
-        PlaylistApi::selectAllPlaylist(
-        ).thenTry([this](auto t) {
-            if (!t) [[unlikely]] {
-                MessageController::get().show<MsgType::Error>(
-                    "更新歌单简介列表失败:" + t.what());
-                return;
-            }
-            QMetaObject::invokeMethod(
-                QCoreApplication::instance(),
-                [this, infoList = t.move()] {
-                clear();
-                for (auto const& info : infoList) {
-                    addData(info);
+        if (_isShowCreated) {
+            PlaylistApi::selectUserCreatedAllPlaylist(
+            ).thenTry([this](auto t) {
+                if (!t) [[unlikely]] {
+                    MessageController::get().show<MsgType::Error>(
+                        "更新歌单简介列表失败:" + t.what());
+                    return;
                 }
+                QMetaObject::invokeMethod(
+                    QCoreApplication::instance(),
+                    [this, infoList = t.move()] {
+                    clear();
+                    for (auto const& info : infoList) {
+                        addData(info);
+                    }
+                });
             });
-        });
+        } else {
+            PlaylistApi::selectUserSavedAllPlaylist(
+            ).thenTry([this](auto t) {
+                if (!t) [[unlikely]] {
+                    MessageController::get().show<MsgType::Error>(
+                        "更新歌单简介列表失败:" + t.what());
+                    return;
+                }
+                QMetaObject::invokeMethod(
+                    QCoreApplication::instance(),
+                    [this, infoList = t.move()] {
+                    clear();
+                    for (auto const& info : infoList) {
+                        addData(info);
+                    }
+                });
+            });
+        }
     }
 
     /**
@@ -223,8 +225,13 @@ public:
         Q_EMIT endResetModel();
     }
 
+    Q_INVOKABLE void setShowCreatedPlaylist(bool isShowCreated) {
+        _isShowCreated = isShowCreated;
+    }
+
 private:
     QVector<PlayListData> _playListArr{};
+    bool _isShowCreated = true; // 当前是否展示是用户创建的歌单
 };
 
 } // namespace HX

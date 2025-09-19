@@ -69,6 +69,7 @@ void ininDir() {
     std::filesystem::create_directories("file/music");
     std::filesystem::create_directories("file/db");
     std::filesystem::create_directories("file/cover");
+    std::filesystem::create_directories("file/avatar");
     std::filesystem::create_directories("file/lyrics");
     std::filesystem::create_directories("file/lyrics/ass");
 

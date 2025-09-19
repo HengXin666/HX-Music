@@ -327,3 +327,21 @@ struct PlaylistDO {
 
 > [!TIP]
 > 删除用户需要考虑是否删除该用户创建的歌单什么的... 不想搞 @todo
+
+### 2.5.7 获取所有用户列表
+
+### 2.5.8 获取头像
+
+> 接口描述: 获取头像
+- 请求方式: `GET`
+- 接口URL: `/user/avatar/get`
+- 参数描述: token -> userId
+- 返回值描述: 头像
+
+### 2.5.9 修改头像
+
+> 接口描述: 修改头像
+- 请求方式: `POST`
+- 接口URL: `/user/avatar/update`
+- 参数描述: token -> userId, `.jpg 头像`
+- 返回值描述: ok

@@ -48,7 +48,7 @@ struct UserDAO : public dao::ThreadSafeInMemoryDAO<UserDO> {
     }
 
     template <typename U>
-    const T& update(U&& u) {
+    T update(U&& u) {
         std::string name = Base::at(u.id).name;
         const auto& t = Base::update(std::forward<U>(u));
         Base::uniqueLock([&] {

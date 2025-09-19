@@ -23,6 +23,7 @@
 #include <config/DbPath.hpp>
 #include <dao/MusicDAO.hpp>
 #include <dao/MemoryDAOPool.hpp>
+#include <interceptor/TokenInterceptor.hpp>
 
 #include <api/ApiMacro.hpp>
 
@@ -47,7 +48,7 @@ HX_SERVER_API_BEGIN(CoverApi) {
             }, [&] CO_FUNC {
                 co_await api::setJsonError("歌曲id不存在 或者 路径错误", res).sendRes();
             });
-        })
+        }, TokenInterceptor<PermissionEnum::ReadOnlyUser>{})
     HX_ENDPOINT_END;
 } HX_SERVER_API_END;
 

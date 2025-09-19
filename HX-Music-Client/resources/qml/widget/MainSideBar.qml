@@ -450,6 +450,7 @@ Item {
                         isSelected: playlistOperationBar.currentIndex === 0
                         onClicked: {
                             playlistOperationBar.currentIndex = 0;
+                            createdPlayListView.playlistModelRef.setShowCreatedPlaylist(true);
                             createdPlayListView.playlistModelRef.updateAllPlaylistInfoList();
                             // @todo 请求: 获取用户创建歌单
                         }
@@ -461,8 +462,8 @@ Item {
                         isSelected: playlistOperationBar.currentIndex === 1
                         onClicked: {
                             playlistOperationBar.currentIndex = 1;
+                            createdPlayListView.playlistModelRef.setShowCreatedPlaylist(false);
                             createdPlayListView.playlistModelRef.updateAllPlaylistInfoList();
-                            // @todo 请求: 获取用户收藏歌单
                         }
                     }
 

@@ -70,7 +70,7 @@ struct ThreadSafeInMemoryDAO {
 
     template <bool IsMustSucceed = false, typename U>
         requires (std::convertible_to<U, T>)
-    const T& update(U&& u) {
+    T update(U&& u) {
         using namespace std::string_literals;
         std::unique_lock _{_mtx};
         auto id = db::getFirstPrimaryKeyRef<T>(u);
@@ -98,9 +98,21 @@ struct ThreadSafeInMemoryDAO {
         _map.erase(id);
     }
 
-    const T& at(PrimaryKeyType id) const {
+    T at(PrimaryKeyType id) const {
         std::shared_lock _{_mtx};
         return _map.at(id);
+    }
+
+    template <typename... ClassPtr>
+        requires (sizeof...(ClassPtr) > 0 && (std::is_member_pointer_v<ClassPtr> && ...))
+    auto at(PrimaryKeyType id, ClassPtr&&... ptr) const {
+        std::shared_lock _{_mtx};
+        auto const& typeDO = _map.at(id);
+        if constexpr (sizeof...(ptr) == 1) {
+            return ((typeDO.*ptr), ...);
+        } else {
+            return std::make_tuple((typeDO.*ptr)...);
+        }
     }
 
     template <typename Lambda>
@@ -115,6 +127,14 @@ struct ThreadSafeInMemoryDAO {
         return lambda();
     }
 
+    /**
+     * @brief 共享的只读的对 MapType 进行读取.
+     * @warning 内部不应该再进行任何 DAO 操作, 可能会死锁.
+     * @tparam Lambda 
+     * @tparam Res 
+     * @param lambda 
+     * @return Res 
+     */
     template <typename Lambda, typename Res = std::invoke_result_t<Lambda, MapType const&>>
     Res lockSelect(Lambda&& lambda) const noexcept(noexcept(lambda(_map))) {
         std::shared_lock _{_mtx};

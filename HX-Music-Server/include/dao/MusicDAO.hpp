@@ -50,7 +50,7 @@ struct MusicDAO : public dao::ThreadSafeInMemoryDAO<MusicDO> {
     }
 
     template <typename U>
-    const T& update(U&& u) {
+    T update(U&& u) {
         std::string oldPath = Base::at(u.id).path;
         const auto& t = Base::update(std::forward<U>(u));
         Base::uniqueLock([&] {

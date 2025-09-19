@@ -46,12 +46,12 @@ public:
         [[maybe_unused]] QSize const& requestedSize
     ) override {
         auto stdUrl = url.toStdString();
-        return NetSingleton::get().getReq(stdUrl)
+        return NetSingleton::get().getReq("/" + stdUrl)
             .thenTry([&](container::Try<net::ResponseData> t) -> QImage {
                 if (!t) [[unlikely]] {
                     MessageController::get().show<MsgType::Error>("加载图片 [" + stdUrl + "] 失败: 网络错误");
                     return _errImg;
-                } else if (t.get().status != 200) [[unlikely]] {
+                } else if (t.get().status / 100 != 2) [[unlikely]] {
                     MessageController::get().show<MsgType::Error>("加载图片 [" + stdUrl + "] 失败: status != 200");
                     return _errImg;
                 }
@@ -60,9 +60,9 @@ public:
                 if (res.loadFromData(QByteArrayView{
                     imgBuf.data(), static_cast<qint64>(imgBuf.size())})
                 ) {
-                    MessageController::get().show<MsgType::Error>("加载图片 [" + stdUrl + "] 失败: 图片格式错误");
                     return res;
                 } else {
+                    MessageController::get().show<MsgType::Error>("加载图片 [" + stdUrl + "] 失败: 图片格式错误");
                     return _errImg;
                 }
             }).get();

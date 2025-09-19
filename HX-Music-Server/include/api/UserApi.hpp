@@ -45,6 +45,28 @@ HX_SERVER_API_BEGIN(UserApi) {
         .addEndpoint<GET>("/user/testToken", [] ENDPOINT {
             co_await api::setJsonSucceed<std::string>("ok", res).sendRes();
         }, TokenInterceptor<PermissionEnum::ReadOnlyUser>{})
+        // 获取头像
+        .addEndpoint<GET>("/user/avatar/get", [=] ENDPOINT {
+            co_await api::coTryCatch([&] CO_FUNC {
+                co_await res.useRangeTransferFile(
+                    req.getRangeRequestView(),
+                    "./file/avatar/" + std::to_string( getTokenData(req).userId) + ".jpg"
+                );
+            }, [&] CO_FUNC {
+                co_await api::setJsonError("用户没有上传头像", res).sendRes();
+            });
+        }, TokenInterceptor<PermissionEnum::ReadOnlyUser>{})
+        // 修改头像
+        .addEndpoint<GET>("/user/avatar/update", [=] ENDPOINT {
+            co_await api::coTryCatch([&] CO_FUNC {
+                co_await req.saveToFile(
+                    "./file/avatar/"
+                    + std::to_string( getTokenData(req).userId) + ".jpg");
+                co_await api::setJsonSucceed<std::string>("ok", res).sendRes();
+            }, [&] CO_FUNC {
+                co_await api::setJsonError("数据非法", res).sendRes();
+            });
+        }, TokenInterceptor<PermissionEnum::RegularUser>{})
         // 注册接口: 仅管理员可以创建用户
         .addEndpoint<POST>("/user/add", [=] ENDPOINT {
             co_await api::coTryCatch([&] CO_FUNC {

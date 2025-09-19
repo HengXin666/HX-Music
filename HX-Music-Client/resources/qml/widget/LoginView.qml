@@ -20,7 +20,7 @@ Item {
             Layout.preferredWidth: 150
             Layout.alignment: Qt.AlignCenter
             fillMode: Image.PreserveAspectFit
-            source: `image://netImagePoll/user/avatar/${1}` // @todo
+            source: `image://netImagePoll/user/avatar/get`
         }
 
         // 后端网址
