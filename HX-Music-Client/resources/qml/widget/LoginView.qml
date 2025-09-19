@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import "./internal"
 import HX.Music
 
@@ -22,6 +23,16 @@ Item {
             Layout.alignment: Qt.AlignCenter
             fillMode: Image.PreserveAspectFit
             source: "qrc:/icons/user.svg"
+            // 图片圆角
+            layer.enabled: true
+            layer.smooth: true
+            layer.effect: OpacityMask {
+                maskSource: Rectangle {
+                    width: avatarImage.width
+                    height: avatarImage.height
+                    radius: avatarImage.width / 2
+                }
+            }
             // 信号
             Connections {
                 target: UserController

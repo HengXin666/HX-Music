@@ -84,7 +84,6 @@ Item {
                         if (listView.isSwaped) {
                             listView.isSwaped = false;
                             // 保存歌单
-                            // console.log("我保存了", Date.now()); // @debug
                             musicListModel.savePlaylist();
                         }
                         return;

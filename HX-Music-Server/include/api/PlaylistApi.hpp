@@ -26,6 +26,7 @@
 #include <pojo/vo/PlaylistInfoVO.hpp>
 #include <pojo/vo/PlaylistInfoListVO.hpp>
 #include <pojo/vo/PlaylistVO.hpp>
+#include <pojo/vo/InsertIndexVO.hpp>
 #include <interceptor/TokenInterceptor.hpp>
 #include <dao/MusicDAO.hpp>
 #include <dao/PlaylistDAO.hpp>
@@ -213,8 +214,18 @@ HX_SERVER_API_BEGIN(PlaylistApi) {
             co_return ;
         }, TokenInterceptor<PermissionEnum::RegularUser>{})
         // 为歌单交换歌曲位置
-        .addEndpoint<POST>("/playlist/{id}/swapMusic", [] ENDPOINT {
-            co_return ;
+        .addEndpoint<POST>("/playlist/{id}/save", [=] ENDPOINT {
+            co_await api::coTryCatch([&] CO_FUNC {
+                auto [from, to] = co_await api::getVO<InsertIndexVO>(req);
+                uint64_t id;
+                reflection::fromJson(id, req.getPathParam(0));
+                auto playlistDO = playlistDAO->at(id);
+                std::swap(playlistDO.songIdList[from], playlistDO.songIdList[to]);
+                playlistDAO->update(std::move(playlistDO));
+                co_await api::setJsonSucceed<std::string>("ok", res).sendRes();
+            }, [&] CO_FUNC {
+                co_await api::setJsonError("调整歌曲位置失败", res).sendRes();
+            });
         }, TokenInterceptor<PermissionEnum::RegularUser>{})
     HX_ENDPOINT_END;
 } HX_SERVER_API_END;

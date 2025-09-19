@@ -28,6 +28,7 @@
 #include <pojo/vo/PlaylistInfoVO.hpp>
 #include <pojo/vo/PlaylistInfoListVO.hpp>
 #include <pojo/vo/PlaylistVO.hpp>
+#include <pojo/vo/InsertIndexVO.hpp>
 
 namespace HX {
 
@@ -157,6 +158,24 @@ struct PlaylistApi {
             + std::to_string(musicId),
             {},
             net::HttpContentType::None
+        ).thenTry([](container::Try<net::ResponseData> t) {
+            api::checkTryAndStatusAndJsonVO<std::string>(std::move(t));
+        });
+    }
+
+    /**
+     * @brief 交换歌单的歌曲
+     * @param playlistId 歌单id
+     * @param from 来源
+     * @param to 目的地
+     * @return container::FutureResult<container::Try<>> 
+     */
+    static container::FutureResult<> insertMusic(
+        uint64_t playlistId, std::size_t from, std::size_t to
+    ) {
+        return NetSingleton::get().postReq(
+            "/playlist/" + std::to_string(playlistId) + "/insertMusic",
+            InsertIndexVO{from, to}
         ).thenTry([](container::Try<net::ResponseData> t) {
             api::checkTryAndStatusAndJsonVO<std::string>(std::move(t));
         });

@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Window
+import Qt5Compat.GraphicalEffects
 import HX.Music
 import "./widget"
 import "./widget/internal"
@@ -63,6 +64,16 @@ BorderlessWindow {
                 fillMode: Image.PreserveAspectFit
                 smooth: true
                 clip: true
+                // 图片圆角
+                layer.enabled: true
+                layer.smooth: true
+                layer.effect: OpacityMask {
+                    maskSource: Rectangle {
+                        width: avatarImage.width
+                        height: avatarImage.height
+                        radius: avatarImage.width / 2
+                    }
+                }
                 // 信号
                 Connections {
                     target: UserController

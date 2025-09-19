@@ -110,6 +110,7 @@ public:
             && to >= 0
             && to < _musicArr.count()
         ) {
+            moveItem(static_cast<std::size_t>(from), static_cast<std::size_t>(to));
             beginMoveRows(
                 QModelIndex(),
                 from,
@@ -125,36 +126,28 @@ public:
 
     bool moveRows(
         const QModelIndex& sourceParent,
-        int sourceRow,
+        int from,
         int count,
         const QModelIndex& destinationParent,
-        int destinationRow
+        int to
     ) override {
-        // qDebug() << sourceParent << "-->" << destinationParent;
         if (count != 1 || sourceParent.isValid() || destinationParent.isValid())
             return false;
-        if (sourceRow < 0 || sourceRow >= static_cast<int>(_musicArr.size()))
+        if (from < 0 || from >= static_cast<int>(_musicArr.size()))
             return false;
-        if (destinationRow < 0 || destinationRow > static_cast<int>(_musicArr.size()))
+        if (to < 0 || to > static_cast<int>(_musicArr.size()))
             return false;
-        if (sourceRow == destinationRow || sourceRow + 1 == destinationRow)
+        if (from == to || from + 1 == to)
             return false;
-
+        moveItem(static_cast<std::size_t>(from), static_cast<std::size_t>(to));
         beginMoveRows(
             QModelIndex(),
-            sourceRow,
-            sourceRow,
+            from,
+            from,
             QModelIndex(),
-            (destinationRow > sourceRow) ? destinationRow + 1 : destinationRow
+            (to > from) ? to + 1 : to
         );
-        auto item = _musicArr[sourceRow];
-        _musicArr.erase(_musicArr.begin() + sourceRow);
-        _musicArr.insert(
-            _musicArr.begin()
-                + ((destinationRow > sourceRow) ? destinationRow - 1
-                                                : destinationRow),
-            item
-        );
+        _musicArr.swapItemsAt(from, to);
         endMoveRows();
         return true;
     }
@@ -231,7 +224,6 @@ public:
                         if (!t) [[unlikely]] {
                             t.rethrow();
                         }
-                        // @todo 此处应该要同步一下, 通过 QT 的同步?
                         if (nowPlayListId == GlobalSingleton::get().guiPlaylist.id) {
                             QMetaObject::invokeMethod(
                                 QCoreApplication::instance(),
@@ -360,6 +352,34 @@ public:
     }
 
 private:
+    void moveItem(std::size_t from, std::size_t to) {
+        PlaylistApi::insertMusic(
+            _id,
+            from,
+            to
+        ).thenTry([=, id = _id](auto t) {
+            QMetaObject::invokeMethod(
+                QCoreApplication::instance(),
+                [id, _t = std::move(t), from, to] {
+                    if (!_t) [[unlikely]] {
+                        MessageController::get().show<MsgType::Error>("插入歌曲失败: " + _t.what());
+                    } else {
+                        auto& list = GlobalSingleton::get().guiPlaylist.songList;
+                        std::swap(list[from], list[to]);
+                        if (GlobalSingleton::get().musicConfig.playlistId != id) {
+                            return;
+                        }
+                        if (auto& idx = GlobalSingleton::get().musicConfig.listIndex;
+                            idx == from
+                        ) {
+                            idx = to;
+                            Q_EMIT SignalBusSingleton::get().listIndexChanged();
+                        }
+                    }
+                });
+        });
+    }
+
     QVector<MusicInfoData> _musicArr{};
     uint64_t _id = 0; // 当前歌单id
     bool _isActiveUpdate = false;
