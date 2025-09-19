@@ -19,7 +19,11 @@
  */
 
 #include <QObject>
+#include <QApplication>
 
+#include <singleton/GlobalSingleton.hpp>
+#include <singleton/NetSingleton.hpp>
+#include <singleton/SignalBusSingleton.h>
 #include <api/UserApi.hpp>
 #include <controller/MessageController.h>
 
@@ -30,18 +34,90 @@ class UserController : public QObject {
 public:
     UserController(QObject* p = nullptr)
         : QObject{p}
-    {}
+    {
+        NetSingleton::get().setBackendUrl(
+            GlobalSingleton::get().musicConfig.backendUrl
+        );
+        NetSingleton::get().setToken(
+            GlobalSingleton::get().musicConfig.token
+        );
+        UserApi::testTokenReq().thenTry([this](auto t) {
+            QMetaObject::invokeMethod(
+                QCoreApplication::instance(),
+                [this, _t = std::move(t)] {
+                    if (!_t) {
+                        MessageController::get().show<MsgType::Warning>("凭证失效, 请重新登录");
+                        Q_EMIT SignalBusSingleton::get().gotoLoginViewSignal();
+                    } else {
+                        MessageController::get().show<MsgType::Info>("已登录");
+                        _isLogin = true;
+                        Q_EMIT loginChanged();
+                    }
+                },
+                Qt::QueuedConnection
+            );
+        });
+    }
 
-    Q_INVOKABLE void loginReq(QString const& name, QString const& passwd) const noexcept {
+    Q_INVOKABLE void loginReq(QString const& name, QString const& passwd) noexcept {
         UserApi::loginReq(name.toStdString(), passwd.toStdString())
-            .thenTry([](auto t) {
-                if (!t) {
-                    MessageController::get().show<MsgType::Error>(t.what());
-                } else {
-                    MessageController::get().show<MsgType::Success>("登录成功");
-                }
+            .thenTry([this](auto t) {
+                QMetaObject::invokeMethod(
+                    QCoreApplication::instance(),
+                    [this, _t = std::move(t)] {
+                        if (!_t) {
+                            MessageController::get().show<MsgType::Error>(_t.what());
+                            Q_EMIT SignalBusSingleton::get().gotoLoginViewSignal();
+                        } else {
+                            MessageController::get().show<MsgType::Success>("登录成功");
+                            _isLogin = true;
+                            Q_EMIT loginChanged();
+                        }
+                    },
+                    Qt::QueuedConnection
+                );
             });
     }
+
+    Q_INVOKABLE void logoutReq() {
+        NetSingleton::get().setToken(
+            GlobalSingleton::get().musicConfig.token = ""
+        );
+        _isLogin = false;
+        Q_EMIT loginChanged();
+    }
+
+    Q_INVOKABLE QString getBackendUrl() const noexcept {
+        return QString::fromStdString(NetSingleton::get().getBackendUrl());
+    }
+
+    Q_INVOKABLE void setBackendUrl(QString const& url) {
+        NetSingleton::get().setBackendUrl(
+            GlobalSingleton::get().musicConfig.backendUrl = url.toStdString()
+        );
+        Q_EMIT backendUrlChanged();
+    }
+
+    Q_INVOKABLE QString getName() const noexcept {
+        return QString::fromStdString(GlobalSingleton::get().musicConfig.name);
+    }
+
+    Q_INVOKABLE void setName(QString const& name) {
+        GlobalSingleton::get().musicConfig.name = name.toStdString();
+        Q_EMIT nameChanged();
+    }
+
+    Q_INVOKABLE bool isLoggedIn() const noexcept {
+        return _isLogin;
+    }
+
+Q_SIGNALS:
+    void backendUrlChanged();
+    void nameChanged();
+    void loginChanged();
+
+private:
+    bool _isLogin = false;
 };
 
 } // namespace HX

@@ -16,11 +16,26 @@ Item {
 
         // 图片
         Image {
+            id: avatarImage
             Layout.preferredHeight: 150
             Layout.preferredWidth: 150
             Layout.alignment: Qt.AlignCenter
             fillMode: Image.PreserveAspectFit
-            source: `image://netImagePoll/user/avatar/get`
+            source: "qrc:/icons/user.svg"
+            // 信号
+            Connections {
+                target: UserController
+                function onLoginChanged() {
+                    // 登录状态变化时, 刷新头像
+                    if (UserController.isLoggedIn()) {
+                        // 已登录, 刷新头像
+                        avatarImage.source = "image://netImagePoll/user/avatar/get?" + Date.now();
+                    } else {
+                        // 未登录, 使用默认头像
+                        avatarImage.source = "qrc:/icons/user.svg";
+                    }
+                }
+            }
         }
 
         // 后端网址
@@ -31,17 +46,17 @@ Item {
             iconDefaultColor: Theme.textColor
             iconHighlightColor: Theme.highlightingColor
             borderHighlightColor: Theme.highlightingColor
-            iconSource: "qrc://icons/cloud-server.svg"
+            iconSource: "qrc:/icons/cloud-server.svg"
             placeholderText: "https://..."
-            text: UserConfig.getBackendUrl()
+            text: UserController.getBackendUrl()
             onTextChanged: {
-                UserConfig.setBackendUrl(text);
+                UserController.setBackendUrl(text);
             }
-            // 连接 UserConfig 的 backendUrl 属性变化
+            // 连接 UserController 的 backendUrl 属性变化
             Connections {
-                target: UserConfig
-                onBackendUrlChanged: {
-                    const url = UserConfig.getBackendUrl();
+                target: UserController
+                function onBackendUrlChanged() {
+                    const url = UserController.getBackendUrl();
                     if (url !== backendUrlField.text) {
                         backendUrlField.text = url;
                     }
@@ -63,16 +78,16 @@ Item {
                     iconDefaultColor: Theme.textColor
                     iconHighlightColor: Theme.highlightingColor
                     borderHighlightColor: Theme.highlightingColor
-                    iconSource: "qrc://icons/user.svg"
+                    iconSource: "qrc:/icons/user.svg"
                     placeholderText: "用户名"
-                    text: UserConfig.getName()
+                    text: UserController.getName()
                     onTextChanged: {
-                        UserConfig.setName(text);
+                        UserController.setName(text);
                     }
                     Connections {
-                        target: UserConfig
-                        onNameChanged: {
-                            const name = UserConfig.getName();
+                        target: UserController
+                        function onNameChanged() {
+                            const name = UserController.getName();
                             if (name !== usernameField.text) {
                                 usernameField.text = name;
                             }
@@ -81,13 +96,25 @@ Item {
                 }
                 GlowButton {
                     // 不要 tab 键聚焦
+                    id: logoutButton
                     focusPolicy: Qt.NoFocus
                     Layout.alignment: Qt.AlignRight
                     text: "Logout"
                     baseColor: Theme.backgroundColor
                     glowColor: Theme.highlightingColor
                     accentColor: Theme.highlightingColor
-                    enabled: false
+                    enabled: UserController.isLoggedIn()
+                    onClicked: {
+                        UserController.logoutReq();
+                        MessageController.showWarning("已退出登录");
+                    }
+                    // 信号
+                    Connections {
+                        target: UserController
+                        function onLoginChanged() {
+                            logoutButton.enabled = UserController.isLoggedIn();
+                        }
+                    }
                 }
             }
             ColumnLayout {
@@ -100,7 +127,7 @@ Item {
                     iconDefaultColor: Theme.textColor
                     iconHighlightColor: Theme.highlightingColor
                     borderHighlightColor: Theme.highlightingColor
-                    iconSource: "qrc://icons/lock.svg"
+                    iconSource: "qrc:/icons/lock.svg"
                     placeholderText: "密码"
                     isPasswordMode: true
                 }

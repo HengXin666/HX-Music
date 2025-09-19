@@ -48,7 +48,6 @@ public:
                 GlobalSingleton::get().playQueue = {};
                 // 发送更新歌单信号
                 Q_EMIT SignalBusSingleton::get().playlistChanged(id);
-                log::hxLog.info("网络: 请求歌单", id);
                 if (id == Playlist::kNonePlaylist) {
                     return;
                 }
@@ -102,7 +101,7 @@ public:
             // 等待加载好歌单, 然后显示上次的结果
             QTimer::singleShot(500, this, [this, idx] {
                 if (auto& songList
-                    = GlobalSingleton::get().nowPlaylist.songList; idx >= songList.size()
+                        = GlobalSingleton::get().nowPlaylist.songList; idx >= songList.size()
                 ) {
                     MessageController::get().show<MsgType::Error>(
                         "网络请求失败! 数据不存在, 导致: 歌单数组越界" + std::to_string(idx)

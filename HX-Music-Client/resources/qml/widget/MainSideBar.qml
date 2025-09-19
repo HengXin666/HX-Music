@@ -91,7 +91,7 @@ Item {
                     }
                     width: 16
                     height: 16
-                    url: "qrc://icons/close.svg"
+                    url: "qrc:/icons/close.svg"
                     onClicked: addPlaylistPopup.close()
                 }
             }
@@ -354,7 +354,7 @@ Item {
                             PlaylistController.makePlaylist(playlistNameField.text, "");
                             playlistNameField.text = "";
                         } else {
-                            console.log("导入歌单:", playlistUrlField.text);
+                            console.log("导入歌单:", playlistUrlField.text, "没有支持!");
                             // 这里添加导入歌单的逻辑
                             playlistUrlField.text = "";
                         }
@@ -401,16 +401,15 @@ Item {
                     }
                 }
 
-                // 我的收藏
+                // 分类
                 SidebarItem {
-                    icon: "qrc:/icons/follow_gray.svg"
-                    text: "我的收藏"
+                    icon: isSelected ? "qrc:/icons/folder-open.svg" : "qrc:/icons/folder-close.svg"
+                    text: "分类"
                     isSelected: root.currentIndex === 1
                     onClicked: {
                         createdPlayListView.resetIndex();
                         root.currentIndex = 1;
                         root.tabClicked(1);
-                        // @todo 到时候跳转到 '我喜欢'
                     }
                 }
 
@@ -452,7 +451,6 @@ Item {
                             playlistOperationBar.currentIndex = 0;
                             createdPlayListView.playlistModelRef.setShowCreatedPlaylist(true);
                             createdPlayListView.playlistModelRef.updateAllPlaylistInfoList();
-                            // @todo 请求: 获取用户创建歌单
                         }
                     }
 
@@ -469,11 +467,8 @@ Item {
 
                     // 新建歌单 / 导入歌单
                     MusicActionButton {
-                        url: "qrc://icons/add.svg"
-                        onClicked: {
-                            console.log("添加歌单按钮点击");
-                            addPlaylistPopup.open();
-                        }
+                        url: "qrc:/icons/add.svg"
+                        onClicked: addPlaylistPopup.open();
                     }
 
                     Item {
@@ -482,7 +477,7 @@ Item {
                 }
             }
 
-            // 歌单列表 (个人创建)
+            // 歌单列表
             PlaylistView {
                 id: createdPlayListView
                 Layout.fillWidth: true
@@ -490,6 +485,16 @@ Item {
                 onPlayListClicked: function (id) {
                     root.currentIndex = -1;
                     root.playListClicked(id);
+                }
+
+                Connections {
+                    target: UserController
+                    function onLoginChanged() {
+                        if (!UserController.isLoggedIn()) {
+                            return;
+                        }
+                        createdPlayListView.playlistModelRef.updateAllPlaylistInfoList();
+                    }
                 }
             }
         }

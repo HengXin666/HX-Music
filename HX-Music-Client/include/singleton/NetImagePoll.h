@@ -45,7 +45,7 @@ public:
         [[maybe_unused]] QSize* size,
         [[maybe_unused]] QSize const& requestedSize
     ) override {
-        auto stdUrl = url.toStdString();
+        auto stdUrl = url.split('?')[0].toStdString();
         return NetSingleton::get().getReq("/" + stdUrl)
             .thenTry([&](container::Try<net::ResponseData> t) -> QImage {
                 if (!t) [[unlikely]] {

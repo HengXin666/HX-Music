@@ -54,6 +54,53 @@ BorderlessWindow {
                 Layout.fillWidth: true
             }
 
+            // 头像
+            Image {
+                id: avatarImage
+                source: "qrc:/icons/user.svg"
+                Layout.preferredWidth: 32
+                Layout.preferredHeight: 32
+                fillMode: Image.PreserveAspectFit
+                smooth: true
+                clip: true
+                // 信号
+                Connections {
+                    target: UserController
+                    function onLoginChanged() {
+                        // 登录状态变化时, 刷新头像
+                        if (UserController.isLoggedIn()) {
+                            // 已登录, 刷新头像
+                            avatarImage.source = "image://netImagePoll/user/avatar/get?" + Date.now();
+                        } else {
+                            // 未登录, 使用默认头像
+                            avatarImage.source = "qrc:/icons/user.svg";
+                        }
+                    }
+                }
+            }
+
+            // 名称
+            Label {
+                id: nameLabel
+                text: UserController.isLoggedIn() ? UserController.getName() : "未登录"
+                color: Theme.textColor
+                font.pixelSize: 14
+                horizontalAlignment: Qt.AlignHCenter
+                verticalAlignment: Qt.AlignVCenter
+                Layout.rightMargin: 10
+
+                // 连接 UserController 的 name 属性变化
+                Connections {
+                    target: UserController
+                    function onLoginChanged() {
+                        const name = UserController.isLoggedIn() ? UserController.getName() : "未登录";
+                        if (name !== nameLabel.text) {
+                            nameLabel.text = name;
+                        }
+                    }
+                }
+            }
+
             // 设置按钮
             MusicActionButton {
                 Layout.preferredWidth: 26
@@ -113,17 +160,19 @@ BorderlessWindow {
                     Layout.preferredWidth: 200
                     Layout.fillHeight: true
                     onTabClicked: index => {
-                        console.log("点击了标签页:", index);
+                        // console.log("点击了标签页:", index);
                         stackView.currentIndex = index; // 属性存储当前标签索引
-                        if (index == 1)
-                        // @todo 我的收藏
-                        {} else if (index == 2)
-                        // @todo 上传列表
-                        {}
+                        if (index == 1) {
+                            // @todo 我的收藏
+
+                        } else if (index == 2) {
+                            // @todo 上传列表
+
+                        }
                     }
 
                     onPlayListClicked: function (id) {
-                        console.log("点击了歌单:", id);
+                        // console.log("点击了歌单:", id);
                         stackView.currentIndex = 3;
                         PlaylistController.loadPlaylistById(id);
                     }

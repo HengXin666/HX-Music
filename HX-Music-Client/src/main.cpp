@@ -14,7 +14,6 @@
 #include <cmd/MusicCommand.hpp>
 #include <config/MusicConfig.hpp>
 #include <config/Theme.hpp>
-#include <config/UserConfig.hpp>
 #include <utils/SvgPars.hpp>
 #include <utils/WindowMaskUtil.h>
 #include <model/MusicListModel.hpp>
@@ -60,13 +59,13 @@ struct MusicClient {
         // 窗口掩码工具类
         cp->setContextProperty("WindowMaskUtil", &_windowMaskUtil);
 
+        // 用户控制类
+        static HX::UserController userController{};
+        cp->setContextProperty("UserController", &userController);
+
         // 主题数据类
         static HX::Theme theme{};
         cp->setContextProperty("Theme", &theme);
-
-        // 用户数据类
-        static HX::UserConfig userConfig{};
-        cp->setContextProperty("UserConfig", &userConfig);
 
         // 歌单控制类
         static HX::PlaylistController playlistController{};
@@ -75,10 +74,6 @@ struct MusicClient {
         // 音乐控制类
         static HX::MusicController musicController{};
         cp->setContextProperty("MusicController", &musicController);
-
-        // 用户控制类
-        static HX::UserController userController{};
-        cp->setContextProperty("UserController", &userController);
 
         // 注册 歌单列表视图 到 qml
         qmlRegisterType<HX::PlaylistModel>(

@@ -81,7 +81,7 @@ Item {
                 TextField {
                     id: serverInput
                     placeholderText: "http://127.0.0.1:28205/"
-                    text: UserConfig.getBackendUrl()
+                    text: UserController.getBackendUrl()
                     color: Theme.textColor
                     background: Rectangle {
                         color: Theme.backgroundColor
@@ -89,14 +89,14 @@ Item {
                         border.color: Theme.paratextColor
                     }
                     onTextChanged: {
-                        UserConfig.setBackendUrl(serverInput.text);
+                        UserController.setBackendUrl(serverInput.text);
                         MessageController.showInfo("服务器地址已自动保存");
                     }
                     // 连接 Theme 的 backendUrl 属性变化
                     Connections {
-                        target: UserConfig
+                        target: UserController
                         onBackendUrlChanged: {
-                            const url = UserConfig.getBackendUrl();
+                            const url = UserController.getBackendUrl();
                             if (url !== serverInput.text) {
                                 serverInput.text = url;
                             }
