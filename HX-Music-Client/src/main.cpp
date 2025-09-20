@@ -17,6 +17,7 @@
 #include <utils/SvgPars.hpp>
 #include <utils/WindowMaskUtil.h>
 #include <model/MusicListModel.hpp>
+#include <model/AllMusicListModel.hpp>
 #include <model/PlaylistModel.hpp>
 
 namespace HX {
@@ -80,6 +81,13 @@ struct MusicClient {
             "HX.Music",
             1, 0,
             "PlaylistModel"
+        );
+
+        // 注册 全部歌曲列表视图 到 qml
+        qmlRegisterType<HX::AllMusicListModel>(
+            "HX.Music",
+            1, 0,
+            "AllMusicListModel"
         );
 
         // 注册 歌曲列表视图 到 qml

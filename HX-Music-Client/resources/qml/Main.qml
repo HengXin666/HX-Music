@@ -173,7 +173,10 @@ BorderlessWindow {
                     onTabClicked: index => {
                         // console.log("点击了标签页:", index);
                         stackView.currentIndex = index; // 属性存储当前标签索引
-                        if (index == 1) {
+                        if (index == 0) {
+                            // 全部音乐
+                            allMusicListView.loadMoreRequested();
+                        } else if (index == 1) {
                             // @todo 我的收藏
 
                         } else if (index == 2) {
@@ -197,11 +200,9 @@ BorderlessWindow {
                     Rectangle {
                         // 0
                         color: "transparent"
-                        Text {
-                            anchors.centerIn: parent
-                            text: "HX-Music"
-                            color: Theme.highlightingColor
-                            font.pixelSize: 20
+                        AllMusicListView {
+                            id: allMusicListView
+                            anchors.fill: parent
                         }
                     }
                     Rectangle {

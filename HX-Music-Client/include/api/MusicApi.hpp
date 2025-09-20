@@ -26,6 +26,8 @@
 #include <api/Api.hpp>
 #include <pojo/vo/MusicVO.hpp>
 #include <pojo/vo/InitUploadFileTaskVO.hpp>
+#include <pojo/vo/SongListVO.hpp>
+#include <pojo/vo/SelectDataVO.hpp>
 
 namespace HX {
 
@@ -142,6 +144,22 @@ struct MusicApi {
                 }
                 co_return resId;
             });
+    }
+
+    /**
+     * @brief 分页查找歌曲
+     * @param beginId  歌曲起始id
+     * @param maxCnt 查找的最大数量
+     * @return container::FutureResult<std::vector<SongInformation>> 
+     */
+    static container::FutureResult<std::vector<SongInformation>> selectMusic(
+        uint64_t beginId, uint64_t maxCnt
+    ) {
+        return NetSingleton::get().postReq(
+            "/music/select", SelectDataVO{beginId, maxCnt}
+        ).thenTry([](container::Try<net::ResponseData> t) {
+            return api::checkTryAndStatusAndJsonVO<SongListVO>(std::move(t)).songList;
+        });
     }
 };
 

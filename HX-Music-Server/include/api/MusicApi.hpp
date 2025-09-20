@@ -28,6 +28,8 @@
 #include <dao/MusicDAO.hpp>
 #include <pojo/vo/MusicVO.hpp>
 #include <pojo/vo/InitUploadFileTaskVO.hpp>
+#include <pojo/vo/SelectDataVO.hpp>
+#include <pojo/vo/SongListVO.hpp>
 #include <interceptor/TokenInterceptor.hpp>
 #include <utils/DirFor.hpp>
 #include <utils/MusicInfo.hpp>
@@ -229,7 +231,7 @@ HX_SERVER_API_BEGIN(MusicApi) {
             }
             // 任务完成, 重命名文件
             std::filesystem::path filePath
-                    = "./file/music" / std::filesystem::path{task.path};
+                = "./file/music" / std::filesystem::path{task.path};
             std::filesystem::rename(tmpFilePath, filePath);
             // 刮削到数据库
             coroutine::EventLoop loop;
@@ -247,6 +249,32 @@ HX_SERVER_API_BEGIN(MusicApi) {
             co_await file.close();
             co_return;
         })
+        // 分页查找歌曲
+        .addEndpoint<POST>("/music/select", [=] ENDPOINT {
+            co_await api::coTryCatch([&] CO_FUNC {
+                auto [beginId, maxCnt] = co_await api::getVO<SelectDataVO>(req);
+                SongListVO resVO;
+                musicDAO->lockSelect([&](MusicDAO::MapType const& mp) mutable {
+                    auto it = mp.lower_bound(beginId + 1);
+                    if (it == mp.end())
+                        return;
+                    for (; maxCnt && it != mp.end(); ++it, --maxCnt) {
+                        auto const& musicDO = it->second;
+                        resVO.songList.emplace_back<MusicVO>({
+                            musicDO.id,
+                            musicDO.path,
+                            musicDO.musicName,
+                            musicDO.singers,
+                            musicDO.musicAlbum,
+                            musicDO.millisecondsLen
+                        });
+                    }
+                });
+                co_await api::setJsonSucceed(std::move(resVO), res).sendRes();
+            }, [&] CO_FUNC {
+                co_await api::setJsonError("查找数据非法", res).sendRes();
+            });
+        }, TokenInterceptor<PermissionEnum::ReadOnlyUser>{})
     HX_ENDPOINT_END;
 } HX_SERVER_API_END;
 
