@@ -69,8 +69,7 @@ struct MusicClient {
         cp->setContextProperty("Theme", &theme);
 
         // 歌单控制类
-        static HX::PlaylistController playlistController{};
-        cp->setContextProperty("PlaylistController", &playlistController);
+        cp->setContextProperty("PlaylistController", &HX::PlaylistController::get());
 
         // 音乐控制类
         static HX::MusicController musicController{};
@@ -110,6 +109,14 @@ struct MusicClient {
             1, 0,
             "MessageController",
             &HX::MessageController::get()
+        );
+
+        // 注册用于添加到歌单的菜单项的数据
+        qmlRegisterUncreatableType<HX::PlaylistInfoData>(
+            "HX.Music",
+            1, 0,
+            "PlaylistInfo",
+            "PlaylistInfo is a data type"
         );
 
         // 注册 音频信息

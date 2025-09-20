@@ -62,6 +62,7 @@ public:
                 PlayMode::ListLoop,
                 0,
                 Playlist::kNonePlaylist,
+                0,
                 -1,
                 false
             };

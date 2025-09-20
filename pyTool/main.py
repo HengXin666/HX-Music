@@ -39,29 +39,54 @@ def _addSy01(styles: List[ass.document.Style]) -> List[ass.document.Style]:
 
     styles.extend([
         makeStyle("noK-furigana", "TakaoPGothic", 40,
-                  "&H0039FFFF", "&H00FFFFFF",
-                  "&H00000000", "&H80000000",
-                  0, 0, 1, 2, 0, 2, 0, 0, 440, 1),
+                "&H0039FFFF", "&H00FFFFFF",
+                "&H00000000", "&H80000000",
+                0, 0, 1, 2, 0, 2, 0, 0, 440, 1),
+
         makeStyle("K2-furigana", "TakaoPGothic", 40,
-                  "&H00FFFFFF", "&H00FFFFFF",
-                  "&H00000000", "&H80000000",
-                  0, 0, 1, 2, 0, 3, 30, 120, 40, 1),
+                "&H00FFFFFF", "&H00FFFFFF",
+                "&H00000000", "&H80000000",
+                0, 0, 1, 2, 0, 3, 30, 120, 40, 1),
+
         makeStyle("K1-furigana", "TakaoPGothic", 40,
-                  "&H00FFFFFF", "&H00FFFFFF",
-                  "&H00000000", "&H80000000",
-                  0, 0, 1, 2, 0, 1, 120, 30, 240, 1),
+                "&H00FFFFFF", "&H00FFFFFF",
+                "&H00000000", "&H80000000",
+                0, 0, 1, 2, 0, 1, 120, 30, 240, 1),
+
         makeStyle("K1", "TakaoPGothic", 80,
-                  "&H00FFFFFF", "&H00FFFFFF",
-                  "&H00000000", "&H80000000",
-                  0, 0, 1, 4, 0, 1, 120, 30, 240, 1),
+                "&H00FFFFFF", "&H00FFFFFF",
+                "&H00000000", "&H80000000",
+                0, 0, 1, 4, 0, 1, 120, 30, 240, 1),
+
         makeStyle("K2", "Arial", 80,
-                  "&H00FFFFFF", "&H00FFFFFF",
-                  "&H00000000", "&H80000000",
-                  0, 0, 1, 4, 0, 3, 30, 120, 40, 1),
+                "&H00FFFFFF", "&H00FFFFFF",
+                "&H00000000", "&H80000000",
+                0, 0, 1, 4, 0, 3, 30, 120, 40, 1),
+
+        makeStyle("K3-furigana", "TakaoPGothic", 40,
+                "&H00FFFFFF", "&H00FFFFFF",
+                "&H00000000", "&H80000000",
+                0, 0, 1, 2, 0, 5, 60, 90, 200, 1),
+
+        makeStyle("K3", "TakaoPGothic", 80,
+                "&H00FFFFFF", "&H00FFFFFF",
+                "&H00000000", "&H80000000",
+                0, 0, 1, 4, 0, 5, 60, 90, 200, 1),
+
+        makeStyle("K4-furigana", "TakaoPGothic", 40,
+                "&H00FFFFFF", "&H00FFFFFF",
+                "&H00000000", "&H80000000",
+                0, 0, 1, 2, 0, 7, 90, 60, 80, 1),
+
+        makeStyle("K4", "Arial", 80,
+                "&H00FFFFFF", "&H00FFFFFF",
+                "&H00000000", "&H80000000",
+                0, 0, 1, 4, 0, 7, 90, 60, 80, 1),
+
         makeStyle("noK", "TakaoPGothic", 80,
-                  "&H0039FFFF", "&H00FFFFFF",
-                  "&H00000000", "&H80000000",
-                  0, 0, 1, 4, 0, 2, 0, 0, 440, 1),
+                "&H0039FFFF", "&H00FFFFFF",
+                "&H00000000", "&H80000000",
+                0, 0, 1, 4, 0, 2, 0, 0, 440, 1),
     ])
 
     return styles

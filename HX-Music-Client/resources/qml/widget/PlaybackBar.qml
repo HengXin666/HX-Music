@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Material
+import Qt5Compat.GraphicalEffects
 import QtQuick.Layouts
 import QtQuick.Window
 import HX.Music
@@ -41,13 +42,24 @@ ProgressBarRect {
                 }
 
                 Image {
+                    id: coverImage
                     source: cover.url
                     visible: cover.url != "qrc:/icons/audio.svg"
                     asynchronous: true
+                    // 图片圆角
+                    layer.enabled: true
+                    layer.smooth: true
+                    layer.effect: OpacityMask {
+                        maskSource: Rectangle {
+                            width: coverImage.width
+                            height: coverImage.height
+                            radius: 10
+                        }
+                    }
 
                     anchors.fill: parent
                     anchors.centerIn: parent
-                    fillMode: Image.PreserveAspectFit
+                    fillMode: Image.PreserveAspectCrop
                 }
             }
 

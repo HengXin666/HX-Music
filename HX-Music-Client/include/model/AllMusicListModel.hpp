@@ -95,6 +95,13 @@ public:
         return _musicArr[row].id;
     }
 
+    // 设置播放队列
+    Q_INVOKABLE void setPlayQueue(std::size_t idx) {
+        GlobalSingleton::get().musicConfig.playMusicId = _musicArr[idx].id;
+        GlobalSingleton::get().musicConfig.listIndex = -1;
+        Q_EMIT SignalBusSingleton::get().listIndexChanged();
+    }
+
     Q_INVOKABLE void addMusic(
         QString title,
         QStringList artist,

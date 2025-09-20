@@ -23,6 +23,7 @@
 #include <utils/MusicInfo.hpp>
 #include <singleton/GlobalSingleton.hpp>
 #include <singleton/SignalBusSingleton.h>
+#include <controller/PlaylistController.h>
 #include <api/PlaylistApi.hpp>
 
 #include <HXLibs/reflection/EnumName.hpp>
@@ -105,6 +106,10 @@ public:
             info.id,
             info.cnt
         );
+        PlaylistController::get()._playListArr.push_back({
+            info.id,
+            QString::fromStdString(info.name)
+        });
         Q_EMIT endInsertRows();
     }
 
@@ -122,6 +127,7 @@ public:
                     QCoreApplication::instance(),
                     [this, infoList = t.move()] {
                     clear();
+                    PlaylistController::get()._playListArr.clear();
                     for (auto const& info : infoList) {
                         addData(info);
                     }

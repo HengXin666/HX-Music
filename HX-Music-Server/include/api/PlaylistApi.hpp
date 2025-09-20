@@ -191,8 +191,7 @@ HX_SERVER_API_BEGIN(PlaylistApi) {
         // 为歌单添加歌曲
         .addEndpoint<POST>("/playlist/{id}/addMusic/{musicId}", [=] ENDPOINT {
             co_await api::coTryCatch([&] CO_FUNC {
-                uint64_t id, musicId;
-                reflection::fromJson(id, req.getPathParam(0));
+                auto id = req.getPathParam(0).to<uint64_t>();
                 if (userDAO->lockSelect([&](UserDAO::MapType const& mp) {
                     auto const& arr
                         = mp.at(getTokenData(req).userId).createdPlaylist;
@@ -200,8 +199,11 @@ HX_SERVER_API_BEGIN(PlaylistApi) {
                 })) {
                     co_return co_await api::setJsonError("只能修改创建的歌单", res).sendRes();
                 }
-                reflection::fromJson(musicId, req.getPathParam(1));
+                auto musicId = req.getPathParam(1).to<uint64_t>();
                 auto listDO = playlistDAO->at(id);
+                if (std::ranges::find(listDO.songIdList, musicId) != listDO.songIdList.end()) {
+                    co_return co_await api::setJsonError("添加失败: 音乐已存在", res).sendRes();
+                }
                 listDO.songIdList.push_back(musicId);
                 playlistDAO->update(std::move(listDO));
                 co_await api::setJsonSucceed<std::string>("ok", res).sendRes();

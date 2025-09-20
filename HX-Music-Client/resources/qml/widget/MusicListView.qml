@@ -161,10 +161,21 @@ Item {
                         Rectangle {
                             Layout.preferredWidth: 50
                             Layout.preferredHeight: 50
-                            color: delegateRoot.isSelected ? Theme.highlightingColor : Theme.textColor
+                            color: "transparent"
                             Image {
+                                id: coverImage
                                 anchors.fill: parent
                                 source: `image://onlineImagePoll/${delegateRoot.model.id}`
+                                // 图片圆角
+                                layer.enabled: true
+                                layer.smooth: true
+                                layer.effect: OpacityMask {
+                                    maskSource: Rectangle {
+                                        width: coverImage.width
+                                        height: coverImage.height
+                                        radius: 10
+                                    }
+                                }
                                 fillMode: Image.PreserveAspectCrop
                                 asynchronous: true
                             }

@@ -49,6 +49,7 @@ struct MusicConfig {
     PlayMode playMode;       // 播放模式
     qint64 position;         // 播放位置
     uint64_t playlistId;     // 处于歌单id
+    uint64_t playMusicId;    // 播放音乐的id, 用于非歌单情况, 比如音乐库. 0 是无效, 表示不是播放音乐库;
     int listIndex;           // 处于歌单的索引
     bool isPlay{false};      // 是正在播放
 };

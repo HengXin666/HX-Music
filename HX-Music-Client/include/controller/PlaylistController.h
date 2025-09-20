@@ -32,9 +32,21 @@
 
 namespace HX {
 
+struct PlaylistInfoData {
+    Q_GADGET
+    Q_PROPERTY(quint64 id MEMBER id CONSTANT)
+    Q_PROPERTY(QString name MEMBER name CONSTANT)
+public:
+    uint64_t id;
+    QString name;
+};
+
 class PlaylistController : public QObject {
     Q_OBJECT
-public:
+    friend class PlaylistModel;
+    
+    PlaylistController& operator=(PlaylistController&&) = delete;
+
     PlaylistController(QObject* p = nullptr)
         : QObject{p}
     {
@@ -84,16 +96,27 @@ public:
             // @todo 网络
             log::hxLog.warning("网络版本没有实现!, ErrId:", playlist.id);
         });
-
+    
         // === init ===
         // 加载配置歌单
         loadPlaylistById(GlobalSingleton::get().musicConfig.playlistId);
-
+    
         // 显示上次加载的歌曲
         QTimer::singleShot(0, this, [this] {
             // 加载歌单列表
             Q_EMIT SignalBusSingleton::get().updatePlaylistList(0);
-            
+            // 如果播放是音乐库, 而不是歌单
+            if (GlobalSingleton::get().musicConfig.playMusicId) {
+                MusicCommand::switchMusic<false, true>(GlobalSingleton::get().musicConfig.playMusicId);
+                QTimer::singleShot(500, [] {
+                    // 设置播放位置, 恢复之前的进度
+                    MusicCommand::setMusicPos(
+                        GlobalSingleton::get().musicConfig.position
+                    );
+                });
+                GlobalSingleton::get().musicConfig.listIndex = -1;
+                return;
+            }
             auto idx = GlobalSingleton::get().musicConfig.listIndex;
             if (idx == -1) {
                 return;
@@ -111,7 +134,7 @@ public:
                     MusicCommand::switchMusic<false, true>(
                         songList[idx].id
                     );
-                    QTimer::singleShot(200, [] {
+                    QTimer::singleShot(500, [] {
                         // 设置播放位置, 恢复之前的进度
                         MusicCommand::setMusicPos(
                             GlobalSingleton::get().musicConfig.position
@@ -120,6 +143,11 @@ public:
                 }
             });
         });
+    }
+public:
+    static PlaylistController& get() {
+        static PlaylistController s{};
+        return s;
     }
 
     /**
@@ -144,7 +172,7 @@ public:
             description.toStdString()
         }).thenTry([](container::Try<uint64_t> t) {
             if (!t) [[unlikely]] {
-                MessageController::get().show<MsgType::Error>("创建歌单失败:" + t.what());
+                MessageController::get().show<MsgType::Error>("创建歌单失败: " + t.what());
                 return;
             }
             Q_EMIT SignalBusSingleton::get().updatePlaylistList(t.move());
@@ -159,7 +187,7 @@ public:
     Q_INVOKABLE void delPlaylist(uint64_t id) {
         PlaylistApi::delPlaylist(id).thenTry([](auto t) {
             if (!t) [[unlikely]] {
-                MessageController::get().show<MsgType::Error>("删除歌单失败:" + t.what());
+                MessageController::get().show<MsgType::Error>("删除歌单失败: " + t.what());
                 return;
             }
             Q_EMIT SignalBusSingleton::get().updatePlaylistList(0);
@@ -173,6 +201,42 @@ public:
     Q_INVOKABLE void refreshPlaylist() {
         Q_EMIT SignalBusSingleton::get().updatePlaylistList(0);
     }
+
+    /**
+     * @brief 获取播放列表 (用于添加到歌单)
+     * @return Q_INVOKABLE 
+     */
+    Q_INVOKABLE QVariantList getPlaylists() {
+        QVariantList res;
+        res.reserve(static_cast<int>(_playListArr.size()));
+        for (const auto& item : _playListArr) {
+            QVariantMap map;
+            map["id"] = static_cast<qulonglong>(item.id);
+            map["name"] = item.name;
+            res.append(map);
+        }
+        return res;
+    }
+
+    /**
+     * @brief 把音乐添加到某歌单
+     * @param playlistId 歌单id
+     * @param musicId 音乐id
+     * @return Q_INVOKABLE 
+     */
+    Q_INVOKABLE void addMusicToPlaylist(uint64_t playlistId, uint64_t musicId) {
+        PlaylistApi::addMusic(
+            playlistId, musicId
+        ).thenTry([](auto t) {
+            if (!t) {
+                MessageController::get().show<MsgType::Error>("添加歌单失败: " + t.what());
+            } else {
+                MessageController::get().show<MsgType::Success>("添加歌单成功");
+            }
+        });
+    }
+private:
+    std::vector<PlaylistInfoData> _playListArr{}; // 仅 PlaylistModel 内部操作.
 };
 
 } // namespace HX

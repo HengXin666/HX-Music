@@ -207,6 +207,7 @@ public:
      * @param id 音乐id
      */
     Q_INVOKABLE void playMusic(uint64_t id) {
+        GlobalSingleton::get().musicConfig.playMusicId = 0;
         MusicCommand::switchMusic(id);
         Q_EMIT playingChanged(true);
     }
