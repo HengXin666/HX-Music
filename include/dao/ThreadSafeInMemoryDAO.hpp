@@ -77,7 +77,7 @@ struct ThreadSafeInMemoryDAO {
         _db.updateBy(u, ("where "s
                         += reflection::getMembersNames<T>()[db::GetFirstPrimaryKeyIndex<T>])
                         += " = ?")
-            .bind(id)
+            .template bind<true>(id)
             .execOnThrow();
         if constexpr (IsMustSucceed) {
             if (_db.lastLineChange() == 0) [[unlikely]] {
@@ -93,7 +93,7 @@ struct ThreadSafeInMemoryDAO {
         _db.deleteBy<T>(("where "s
                         += reflection::getMembersNames<T>()[db::GetFirstPrimaryKeyIndex<T>])
                         += " = ?")
-            .bind(id)
+            .template bind<true>(id)
             .execOnThrow();
         _map.erase(id);
     }

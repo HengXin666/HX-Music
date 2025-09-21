@@ -88,6 +88,11 @@ struct GetFirstPrimaryKeyTypeImpl<db::PrimaryKey<T>, Args...> {
     using Type = db::PrimaryKey<T>::PrimaryKeyType;
 };
 
+template <>
+struct GetFirstPrimaryKeyTypeImpl<void> {
+    using Type = void;
+};
+
 template <typename Idx, typename... Args>
 struct GetFirstPrimaryKeyIndex;
 
@@ -120,7 +125,7 @@ using GetFirstPrimaryKeyType = decltype([]() constexpr {
     constexpr auto tp = reflection::internal::getStaticObjPtrTuple<T>();
     return [&] <std::size_t... Is> (std::index_sequence<Is...>) {
         return typename internal::GetFirstPrimaryKeyTypeImpl<
-            meta::remove_cvref_t<decltype(*std::get<Is>(tp))>...
+            meta::remove_cvref_t<decltype(*std::get<Is>(tp))>..., void
         >::Type {};
     }(std::make_index_sequence<std::tuple_size_v<decltype(tp)>>{});
 }());

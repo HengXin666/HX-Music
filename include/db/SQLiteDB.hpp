@@ -26,9 +26,11 @@
 #include <sqlite3.h>
 
 #include <meta/StaticConstexpr.hpp>
+#include <meta/MemberPtrType.hpp>
 
 #include <HXLibs/meta/FixedString.hpp>
 #include <HXLibs/reflection/MemberName.hpp>
+#include <HXLibs/reflection/MemberPtr.hpp>
 #include <HXLibs/reflection/EnumName.hpp>
 #include <HXLibs/reflection/TypeName.hpp>
 #include <HXLibs/log/serialize/ToString.hpp>
@@ -40,6 +42,17 @@
 #include <db/SQLiteStmt.hpp>
 
 namespace HX::db {
+
+/**
+ * @brief 字段匹配对 (成员指针, 值)
+ * @tparam MemberPtr 
+ */
+template <typename MemberPtr>
+    requires (meta::IsMemberPtrVal<MemberPtr>)
+struct FieldPair {
+    MemberPtr ptr;                                      // 成员指针
+    meta::GetMemberPtrType<MemberPtr> const& dataView;  // 成员值
+};
 
 namespace internal {
 
@@ -205,28 +218,35 @@ struct [[nodiscard]] StmtCallChain {
         , _stmt{sql, _db}
     {}
 
-    template <typename... Args>
+    // 绑定, 不可重入
+    template <bool IsSetPrimaryKey, typename... Args>
     StmtCallChain& bind(Args&&... args) noexcept {
-        auto tp = std::make_tuple(std::forward<Args>(args)...);
+        auto tp = std::forward_as_tuple(std::forward<Args>(args)...);
+        std::size_t cnt = 1;
         [&] <std::size_t... Is> (std::index_sequence<Is...>) {
             (([&] <std::size_t Idx> (std::index_sequence<Idx>) {
                 auto& t = std::get<Idx>(tp);
-                using T = RemovePrimaryKeyType<meta::remove_cvref_t<decltype(t)>>;
-                if constexpr (std::is_integral_v<T>) {
-                    ::sqlite3_bind_int64(_stmt, Idx + 1, t); 
-                } else if constexpr (std::is_floating_point_v<T>) {
-                    ::sqlite3_bind_double(_stmt, Idx + 1, t); 
-                } else if constexpr (meta::StringType<T> || isSQLiteSqlTypeVal<T>) {
-                    if constexpr (isSQLiteSqlTypeVal<T>) {
-                        auto str = SQLiteSqlType<T>::bind(t);
-                        ::sqlite3_bind_text(_stmt, Idx + 1, str.data(), str.size(), SQLITE_TRANSIENT);
+                using T = meta::remove_cvref_t<decltype(t)>;
+                using RemoveKeyT = RemovePrimaryKeyType<T>;
+                if constexpr (isPrimaryKeyVal<T> && !IsSetPrimaryKey) {
+                    return; // 忽略
+                }
+                if constexpr (std::is_integral_v<RemoveKeyT>) {
+                    ::sqlite3_bind_int64(_stmt, cnt, t); 
+                } else if constexpr (std::is_floating_point_v<RemoveKeyT>) {
+                    ::sqlite3_bind_double(_stmt, cnt, t); 
+                } else if constexpr (meta::StringType<RemoveKeyT> || isSQLiteSqlTypeVal<RemoveKeyT>) {
+                    if constexpr (isSQLiteSqlTypeVal<RemoveKeyT>) {
+                        auto str = SQLiteSqlType<RemoveKeyT>::bind(t);
+                        ::sqlite3_bind_text(_stmt, cnt, str.data(), str.size(), SQLITE_TRANSIENT);
                     } else {
-                        ::sqlite3_bind_text(_stmt, Idx + 1, t.data(), t.size(), SQLITE_TRANSIENT);
+                        ::sqlite3_bind_text(_stmt, cnt, t.data(), t.size(), SQLITE_TRANSIENT);
                     }
                 } else {
                     // 不支持该类型
                     static_assert(!sizeof(T), "type is not sql type");
                 }
+                ++cnt;
             }(std::index_sequence<Is>{})), ...);
         } (std::make_index_sequence<std::tuple_size_v<decltype(tp)>>{});
         return *this;
@@ -238,9 +258,26 @@ struct [[nodiscard]] StmtCallChain {
     }
 
     // 带异常的
-    void execOnThrow() const {
+    StmtCallChain& execOnThrow() {
         if (!exec()) [[unlikely]] {
             throw std::runtime_error{"SQL Error: " + std::string{::sqlite3_errmsg(_db)}};
+        }
+        return *this;
+    }
+
+    // 获取上一个插入的数据的主键值
+    template <typename T>
+    auto getLastInsertPrimaryKeyId() {
+        if (_stmt.step() == SQLITE_DONE) [[likely]] {
+            if constexpr (!std::is_void_v<GetFirstPrimaryKeyType<T>>) {
+                return static_cast<GetFirstPrimaryKeyType<T>>(
+                    _stmt.getLastInsertPrimaryKeyId(_db)
+                );
+            } else {
+                return _stmt.getLastInsertPrimaryKeyId(_db);
+            }
+        } else [[unlikely]] {
+            throw std::runtime_error{"Insert failed: " + std::string{::sqlite3_errmsg(_db)}};
         }
     }
 private:
@@ -253,6 +290,66 @@ private:
 class SQLiteDB {
     void exec(std::string_view sql) const {
         internal::execSql(sql, _db);
+    }
+
+    template <typename T, bool IsSetPrimaryKey = false>
+    static std::string_view makeInsertSql() noexcept {
+        static auto sql = []() constexpr noexcept {
+            using U = meta::remove_cvref_t<T>;
+            std::string sqlName = "INSERT INTO ";
+            sqlName += reflection::getTypeName<U>();
+            sqlName += " (";
+            constexpr auto& obj = reflection::internal::getStaticObj<U>();
+            constexpr auto N = reflection::membersCountVal<U>;
+            std::string sqlVal = ") VALUES (";
+            reflection::forEach(obj, [&] <std::size_t Idx> (
+                std::index_sequence<Idx>, std::string_view name, auto&& val
+            ) constexpr {
+                using Type = meta::remove_cvref_t<decltype(val)>;
+                if constexpr (isPrimaryKeyVal<Type> && !IsSetPrimaryKey) {
+                    // 主键不会进行指定
+                    return;
+                } else {
+                    sqlName += name;
+                    sqlVal += '?';
+                    if constexpr (Idx + 1 != N) {
+                        sqlVal += ',';
+                        sqlName += ',';
+                    }
+                }
+            });
+            sqlName += std::move(sqlVal);
+            sqlName += ");";
+            return sqlName;
+        }();
+        return sql;
+    }
+
+    template <typename T, bool IsSetPrimaryKey = false, typename... MemberPtr>
+        requires (sizeof...(MemberPtr) >= 1 && (meta::IsMemberPtrVal<MemberPtr> && ...))
+    static std::string_view makeInsertSql(MemberPtr... ptrs) noexcept {
+        static auto sql = [&]() constexpr noexcept {
+            using U = meta::remove_cvref_t<T>;
+            std::string sqlName = "INSERT INTO ";
+            sqlName += reflection::getTypeName<U>();
+            sqlName += " (";
+            constexpr auto& obj = reflection::internal::getStaticObj<U>();
+            constexpr auto N = reflection::membersCountVal<U>;
+            std::string sqlVal = ") VALUES (";
+            auto map = reflection::makeMemberPtrToNameMap<U>();
+            (([&](){
+                sqlName += map.at(ptrs);
+                sqlName += ',';
+                sqlVal += '?';
+                sqlVal += ',';
+            }()), ...);
+            sqlName.pop_back();
+            sqlVal.back() = ')';
+            sqlName += std::move(sqlVal);
+            sqlName += ';';
+            return sqlName;
+        }();
+        return sql;
     }
 public:
     SQLiteDB() : _db{} {}
@@ -313,69 +410,25 @@ public:
         exec(sql);
     }
 
-    template <typename T>
+    template <typename T, bool IsSetPrimaryKey = false>
     auto insert(T&& t) const {
         using U = meta::remove_cvref_t<T>;
-        std::string sql = "INSERT INTO ";
-        sql += reflection::getTypeName<U>();
-        sql += " (";
-        auto obj = reflection::internal::getStaticObj<U>();
-        reflection::forEach(obj, [&] <std::size_t Idx> (
-            std::index_sequence<Idx>, std::string_view name, auto&& val
-        ) {
-            using Type = meta::remove_cvref_t<decltype(val)>;
-            if constexpr (isPrimaryKeyVal<Type>) {
-                // 主键不会进行指定
-                return;
-            } else {
-                sql += name;
-                sql += ',';
-            }
-        });
-        sql.pop_back();
-        sql += ") VALUES (";
-        reflection::forEach(std::forward<T>(t), [&] <std::size_t Idx> (
-            std::index_sequence<Idx>, std::string_view name, auto& val
-        ) {
-            using Type = meta::remove_cvref_t<decltype(val)>;
-            if constexpr (isPrimaryKeyVal<Type>) {
-                // 主键不会进行指定
-                return;
-            } else {
-                using ValType = RemovePrimaryKeyType<Type>;
-                if constexpr (std::is_arithmetic_v<ValType>) {
-                    log::toString(val, sql);
-                } else if constexpr (meta::StringType<ValType> || isSQLiteSqlTypeVal<ValType>) {
-                    sql += '\'';
-                    if constexpr (isSQLiteSqlTypeVal<ValType>) {
-                        sql += SQLiteSqlType<ValType>::bind(val);
-                    } else {
-                        log::toString(static_cast<const char*>(val.data()), sql);
-                    }
-                    sql += '\'';
-                } else {
-                    // 不支持该类型
-                    static_assert(!sizeof(T), "type is not sql type");
-                }
-                sql += ',';
-            }
-        });
-        sql.pop_back();
-        sql += ");";
-        SQLiteStmt stmt(sql, _db);
-        if (stmt.step() == SQLITE_DONE) [[likely]] {
-            if constexpr (requires {
-                GetFirstPrimaryKeyType<T> {};
-            }) {
-                return static_cast<GetFirstPrimaryKeyType<T>>(
-                    stmt.getLastInsertPrimaryKeyId(_db)
-                );
-            } else {
-                return stmt.getLastInsertPrimaryKeyId(_db);
-            }
-        } else [[unlikely]] {
-            throw std::runtime_error{"Insert failed: " + std::string{::sqlite3_errmsg(_db)}};
-        }
+        auto tp = reflection::internal::getObjTie(t);
+        return [&] <std::size_t... Idx> (std::index_sequence<Idx...>) {
+            return internal::StmtCallChain{SQLiteDB::makeInsertSql<U, IsSetPrimaryKey>(), _db}
+            .template bind<IsSetPrimaryKey>(std::get<Idx>(tp)...)
+            .template getLastInsertPrimaryKeyId<U>();
+        } (std::make_index_sequence<std::tuple_size_v<decltype(tp)>>{});
+    }
+
+    template <typename T, bool IsSetPrimaryKey = false, typename... MemberPtr>
+    auto insertBy(FieldPair<MemberPtr>... fmPair) const {
+        using U = meta::remove_cvref_t<T>;
+        return internal::StmtCallChain{
+            SQLiteDB::makeInsertSql<U, IsSetPrimaryKey, MemberPtr...>(fmPair.ptr...),
+            _db
+        }.template bind<IsSetPrimaryKey>(fmPair.dataView...)
+         .template getLastInsertPrimaryKeyId<U>();
     }
 
     template <typename T>
