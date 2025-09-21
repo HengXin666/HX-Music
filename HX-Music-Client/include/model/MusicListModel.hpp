@@ -160,7 +160,7 @@ public:
     Q_INVOKABLE uint64_t getUrl(int row) const {
         if (row < 0 || row >= _musicArr.size()) {
             log::hxLog.error("getUrl 越界:", row);
-            return {};
+            return 0;
         }
         return _musicArr[row].id;
     }

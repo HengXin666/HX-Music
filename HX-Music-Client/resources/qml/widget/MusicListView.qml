@@ -258,6 +258,11 @@ Item {
     Menu {
         id: menu
         property int index: -1
+        property var dynamicModel: [] // 用于绑定 Repeater 的临时数据
+
+        onAboutToShow: {
+            dynamicModel = PlaylistController.getPlaylists(); // 每次重新获取
+        }
 
         MenuItem {
             text: "播放"
@@ -266,6 +271,24 @@ Item {
                 MusicController.setPlaylistId(musicListModel.getPlaylistId());
                 MusicController.playMusic(musicListModel.getUrl(menu.index));
                 MusicController.listIndex = menu.index;
+            }
+        }
+        Menu {
+            title: "添加到歌单"
+            Repeater {
+                model: menu.dynamicModel
+                delegate: MenuItem {
+                    required property var modelData
+                    text: modelData.name
+                    onTriggered: {
+                        const musicId = musicListModel.getUrl(menu.index);
+                        if (musicId) {
+                            PlaylistController.addMusicToPlaylist(
+                                modelData.id, musicId
+                            );
+                        }
+                    }
+                }
             }
         }
         MenuItem {

@@ -19,6 +19,7 @@
 #include <model/MusicListModel.hpp>
 #include <model/AllMusicListModel.hpp>
 #include <model/PlaylistModel.hpp>
+#include <model/UploadListModel.hpp>
 
 namespace HX {
 
@@ -94,6 +95,13 @@ struct MusicClient {
             "HX.Music",
             1, 0,
             "MusicListModel"
+        );
+
+        // 注册 上传列表视图 到 qml
+        qmlRegisterType<HX::UploadListModel>(
+            "HX.Music",
+            1, 0,
+            "UploadListModel"
         );
 
         // 注册 音频信息

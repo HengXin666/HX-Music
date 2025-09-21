@@ -140,6 +140,13 @@ Q_SIGNALS:
      * @brief 跳转到登录界面信号
      */
     void gotoLoginViewSignal();
+
+    /**
+     * @brief 上传文件信号
+     * @param path 文件路径
+     * @param playlistId 需要加入的歌单id
+     */
+    void uploadFileSignal(QString const& path, uint64_t playlistId);
 };
 
 } // namespace HX

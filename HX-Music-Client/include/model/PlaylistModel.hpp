@@ -169,11 +169,10 @@ public:
      * @return bool 是否成功进行交换 
      */
     Q_INVOKABLE bool swapRow(int from, int to) {
-        // 第 0 个不能被移动
         if (from != to
-            && from > 0
+            && from >= 0
             && from < _playListArr.count()
-            && to > 0
+            && to >= 0
             && to < _playListArr.count()
         ) {
             beginMoveRows(
@@ -191,36 +190,29 @@ public:
 
     bool moveRows(
         const QModelIndex& sourceParent,
-        int sourceRow,
+        int from,
         int count,
         const QModelIndex& destinationParent,
-        int destinationRow
+        int to
     ) override {
         qDebug() << sourceParent << "-->" << destinationParent;
         if (count != 1 || sourceParent.isValid() || destinationParent.isValid())
             return false;
-        if (sourceRow < 0 || sourceRow >= static_cast<int>(_playListArr.size()))
+        if (from < 0 || from >= static_cast<int>(_playListArr.size()))
             return false;
-        if (destinationRow < 0 || destinationRow > static_cast<int>(_playListArr.size()))
+        if (to < 0 || to > static_cast<int>(_playListArr.size()))
             return false;
-        if (sourceRow == destinationRow || sourceRow + 1 == destinationRow)
+        if (from == to || from + 1 == to)
             return false;
 
         beginMoveRows(
             QModelIndex(),
-            sourceRow,
-            sourceRow,
+            from,
+            from,
             QModelIndex(),
-            (destinationRow > sourceRow) ? destinationRow + 1 : destinationRow
+            (to > from) ? to + 1 : to
         );
-        auto item = _playListArr[sourceRow];
-        _playListArr.erase(_playListArr.begin() + sourceRow);
-        _playListArr.insert(
-            _playListArr.begin()
-                + ((destinationRow > sourceRow) ? destinationRow - 1
-                                                : destinationRow),
-            item
-        );
+        _playListArr.swapItemsAt(from, to);
         endMoveRows();
         return true;
     }

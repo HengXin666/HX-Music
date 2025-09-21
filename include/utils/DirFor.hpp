@@ -80,7 +80,7 @@ void traverseDirectory(
         }
 
         // 回调
-        callback(relative);
+        callback(std::move(relative));
     }
 }
 
@@ -139,7 +139,7 @@ coroutine::Task<> coTraverseDirectory(
         }
 
         // 回调
-        co_await callback(relative);
+        co_await callback(std::move(relative));
     }
 }
 

@@ -65,6 +65,7 @@ qt_add_qml_module(HX-Music-Client
         resources/qml/widget/SettingView.qml
         resources/qml/widget/LoginView.qml
         resources/qml/widget/AllMusicListView.qml
+        resources/qml/widget/UploadListView.qml
         # 内部控件组件
         resources/qml/widget/internal/MusicActionButton.qml
         resources/qml/widget/internal/AudioVisualizerBars.qml

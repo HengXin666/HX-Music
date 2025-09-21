@@ -134,7 +134,7 @@ struct MusicApi {
                 uint64_t resId;
                 try {                
                     for (;;) { 
-                        // 服务器发送id后, 会关闭连接. 此次的第二次读取就是为了等待关闭连接.
+                        // 服务器发送id后, 会关闭连接. 此处的第二次读取就是为了等待关闭连接.
                         resId = utils::NumericBaseConverter::strToNum<uint64_t, 10>(
                             co_await ws.recvText()
                         );

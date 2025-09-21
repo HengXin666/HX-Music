@@ -32,7 +32,9 @@ Item {
 
     // 状态与信号
     property bool loading: false
-    signal itemClicked(int index, string title, string artist)
+    signal itemClicked(int index, string title, string artist) // @todo 更加深入的介绍
+
+    // 加载更多
     function loadMoreRequested() {
         musicModel.loadMoreRequested();
     }
@@ -122,8 +124,8 @@ Item {
 
                         Image {
                             anchors.centerIn: parent
-                            width: 32
-                            height: 32
+                            width: 24
+                            height: 24
                             source: `image://svgColored/qrc:/icons/play.svg?color=${Theme.highlightingColor}`
                         }
 
@@ -150,13 +152,14 @@ Item {
                     color: Theme.textColor
                 }
 
-                // 艺术家
+                // 艺术家 @todo 支持点击
                 Text {
                     id: artistText
                     // 动态生成文本
                     property string artistString: {
                         const list = itemRoot.model.artist;
-                        if (!list || list.length === 0) return "";
+                        if (!list || list.length === 0)
+                            return "";
                         return list.join("、");
                     }
 
@@ -181,9 +184,9 @@ Item {
                 acceptedButtons: Qt.RightButton
                 onPressed: (mouse) => {
                     if (mouse.button === Qt.RightButton) {
-                        contextMenu.index = itemRoot.index
-                        contextMenu.modelData = itemRoot.model
-                        contextMenu.popup()
+                        contextMenu.index = itemRoot.index;
+                        contextMenu.modelData = itemRoot.model;
+                        contextMenu.popup();
                     }
                 }
             }
@@ -246,12 +249,14 @@ Item {
         }
 
         onContentYChanged: {
-            if (!root.autoLoad || root.loading) return
-            if (contentHeight <= height) return
+            if (!root.autoLoad || root.loading)
+                return;
+            if (contentHeight <= height)
+                return;
 
             // 检查是否接近底部
             if (contentY + height >= contentHeight - root.loadThreshold) {
-                root.tryLoadMore()
+                root.tryLoadMore();
             }
         }
     }
@@ -266,24 +271,26 @@ Item {
 
     // 暴露的加载方法
     function tryLoadMore() {
-        if (loading) return
+        if (loading)
+            return;
 
-        loading = true
-        loadMoreRequested()  // 发出信号, 让外部处理加载
+        loading = true;
+        loadMoreRequested();  // 发出信号, 让外部处理加载
 
         // 启动防抖计时器
-        loadTimer.restart()
+        loadTimer.restart();
     }
 
     // 手动强制加载
     function forceLoadMore() {
-        if (loading) return
+        if (loading)
+            return;
 
-        loading = true
-        loadMoreRequested()  // 发出信号, 让外部处理加载
+        loading = true;
+        loadMoreRequested();  // 发出信号, 让外部处理加载
 
         // 启动防抖计时器
-        loadTimer.restart()
+        loadTimer.restart();
     }
 
     // 加载中指示器
@@ -303,7 +310,7 @@ Item {
 
     // 重置加载状态
     function resetLoading() {
-        loading = false
-        loadTimer.stop()
+        loading = false;
+        loadTimer.stop();
     }
 }

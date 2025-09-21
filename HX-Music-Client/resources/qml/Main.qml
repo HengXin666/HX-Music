@@ -177,7 +177,7 @@ BorderlessWindow {
                             // 全部音乐
                             allMusicListView.loadMoreRequested();
                         } else if (index == 1) {
-                            // @todo 我的收藏
+                            // @todo 分类
 
                         } else if (index == 2) {
                             // @todo 上传列表
@@ -211,7 +211,10 @@ BorderlessWindow {
                     }
                     Rectangle {
                         // 2
-                        color: "#7e0b3f6a"
+                        color: "transparent"
+                        UploadListView {
+                            anchors.fill: parent
+                        }
                     }
                     Rectangle {
                         // 3
