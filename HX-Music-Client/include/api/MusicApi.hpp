@@ -35,6 +35,14 @@ namespace HX {
  * @brief 客户端 歌曲相关请求 API
  */
 struct MusicApi {
+private:
+    struct _not_cb_ {};
+public:
+    inline static constexpr auto NotCbFunc
+        = []([[maybe_unused]] double progress, [[maybe_unused]] std::size_t uploadSpeed) -> _not_cb_ {
+            return {};
+        };
+    
     /**
      * @brief 查询 指定歌曲id 的歌曲信息
      * @param id 
@@ -86,18 +94,19 @@ struct MusicApi {
      * @brief 分块上传歌曲
      * @param localPath 待上传的本地文件路径
      * @param pushId 上传任务id
-     * @param progress 进度百分比
-     * @param uploadSpeed 上传速度, 单位: 字节 / 秒 (B/s)
+     * @param cb 回调函数
+     *  - @param progress 进度百分比
+     *  - @param uploadSpeed 上传速度, 单位: 字节 / 秒 (B/s)
      * @return container::FutureResult<container::Try<uint64_t>> 新歌曲的id
      */
+    template <typename Cb>
     static container::FutureResult<container::Try<uint64_t>> uploadMusic(
         std::string localPath,
         std::string pushId,
-        double* progress = nullptr,
-        std::size_t* uploadSpeed = nullptr
+        Cb&& cb
     ) {
         return NetSingleton::get().wsReq("/music/upload/push/" + std::move(pushId),
-            [_localPath = std::move(localPath), progress, uploadSpeed](
+            [_localPath = std::move(localPath), _cb = std::forward<Cb>(cb)](
                 net::WebSocketClient ws
             ) mutable -> coroutine::Task<uint64_t> {
                 using namespace std::chrono;
@@ -107,42 +116,52 @@ struct MusicApi {
                 buf.resize(1 << 22); // 4 MB
                 auto mae = std::chrono::system_clock::now();
                 std::size_t sum = 0;
-                for (;;) {
-                    // 发
-                    int len = co_await file.read(buf);
-                    if (len) [[likely]] {
-                        co_await ws.sendBytes({buf.data(), static_cast<std::size_t>(len)});
-                    } else {
-                        break; // 我发完了
-                    }
-                    if (uploadSpeed) {                    
-                        sum += len;
-                        if (auto now = std::chrono::system_clock::now(); now - mae >= 1s) {
-                            mae = now;
-                            *uploadSpeed = sum;
-                            sum = 0;
+                double progress = 0;
+                container::Try<> err;
+                try {
+                    for (;;) {
+                        // 发
+                        int len = co_await file.read(buf);
+                        if (len) [[likely]] {
+                            co_await ws.sendBytes({buf.data(), static_cast<std::size_t>(len)});
+                        } else {
+                            break; // 我发完了
                         }
+                        if constexpr (!std::is_same_v<std::invoke_result_t<Cb, double, std::size_t>, _not_cb_>) {
+                            sum += len;
+                            if (auto now = std::chrono::system_clock::now(); now - mae >= 1s) {
+                                mae = now;
+                                _cb(progress, sum);
+                                sum = 0;
+                            }
+                        }
+                        // 同步进度
+                        auto progressStr = co_await ws.recvText();
+                        if constexpr (!std::is_same_v<std::invoke_result_t<Cb, double, std::size_t>, _not_cb_>) {
+                            reflection::Numer::fromNumer(progress, progressStr.begin(), progressStr.end());
+                            _cb(progress, sum);
+                        }
+                        log::hxLog.debug("上传进度:", progressStr, "(+add:", 1.0 * len / (1 << 20), "MB)");
                     }
-                    // 同步进度
-                    auto progressStr = co_await ws.recvText();
-                    if (progress) {
-                        reflection::fromJson(*progress, progressStr);
+                    co_await file.close();
+                    uint64_t resId;
+                    try {                
+                        for (;;) { 
+                            // 服务器发送id后, 会关闭连接. 此处的第二次读取就是为了等待关闭连接.
+                            resId = utils::NumericBaseConverter::strToNum<uint64_t, 10>(
+                                co_await ws.recvText()
+                            );
+                        }
+                    } catch (...) {
+                        ;
                     }
-                    log::hxLog.debug("上传进度:", progressStr, "(+add:", 1.0 * len / (1 << 20), "MB)");
+                    co_return resId;
+                } catch (...) {
+                    // read 也是可能会抛出异常的~
+                    err.setException(std::current_exception());
                 }
                 co_await file.close();
-                uint64_t resId;
-                try {                
-                    for (;;) { 
-                        // 服务器发送id后, 会关闭连接. 此处的第二次读取就是为了等待关闭连接.
-                        resId = utils::NumericBaseConverter::strToNum<uint64_t, 10>(
-                            co_await ws.recvText()
-                        );
-                    }
-                } catch (...) {
-                    ;
-                }
-                co_return resId;
+                err.rethrow();
             });
     }
 

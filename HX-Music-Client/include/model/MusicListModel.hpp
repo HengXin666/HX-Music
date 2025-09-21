@@ -194,7 +194,8 @@ public:
             
             MusicApi::uploadMusic(
                 _localPath,
-                t.move()
+                t.move(),
+                MusicApi::NotCbFunc
             ).thenTry([this, nowPlayListId](container::Try<uint64_t> t) {
                 if (!t) [[unlikely]] {
                     MessageController::get().show<MsgType::Error>("上传歌曲获取新歌曲的id失败:" + t.what());

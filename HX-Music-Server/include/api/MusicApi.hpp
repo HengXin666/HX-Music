@@ -179,7 +179,10 @@ HX_SERVER_API_BEGIN(MusicApi) {
                         std::make_unique<std::atomic_bool>(false)
                     }
                 ));
-                // 3. 创建占位文件
+                // 3. 创建文件夹, 如果路径不存在
+                std::filesystem::create_directories(filePath.parent_path());
+
+                // 4. 创建占位文件
                 utils::AsyncFile file{req.getIO()};
                 co_await file.open(tmpFilePath.string(), utils::OpenMode::Write);
                 co_await file.close();
@@ -229,20 +232,23 @@ HX_SERVER_API_BEGIN(MusicApi) {
                 // 客户端ws断开了
                 *task.atWork = false;
             }
-            // 任务完成, 重命名文件
-            std::filesystem::path filePath
-                = "./file/music" / std::filesystem::path{task.path};
-            std::filesystem::rename(tmpFilePath, filePath);
-            // 刮削到数据库
-            coroutine::EventLoop loop;
-            auto id 
-                = saveMusicInfo(std::move(task.path), filePath, loop);
-            // 发送 id
-            co_await ws.sendText(std::to_string(id));
-            // 删除任务
-            musicUploadTaskMap->erase(it);
             try {
+                // 任务完成, 重命名文件
+                std::filesystem::path filePath
+                    = "./file/music" / std::filesystem::path{task.path};
+                log::hxLog.warning("重命名:", tmpFilePath, "->", filePath);
+                std::filesystem::rename(tmpFilePath, filePath);
+                // 刮削到数据库
+                coroutine::EventLoop loop;
+                auto id 
+                    = saveMusicInfo(std::move(task.path), filePath, loop);
+                // 发送 id
+                co_await ws.sendText(std::to_string(id));
+                // 删除任务
+                musicUploadTaskMap->erase(it);
                 co_await ws.close();
+            } catch (std::exception const& e) {
+                log::hxLog.error("e!", e.what());
             } catch (...) {
                 ;
             }

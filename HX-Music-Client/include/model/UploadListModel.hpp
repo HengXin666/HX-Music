@@ -20,6 +20,7 @@
 
 #include <filesystem>
 
+#include <QCoreApplication>
 #include <QAbstractListModel>
 
 #include <singleton/SignalBusSingleton.h>
@@ -36,27 +37,29 @@ class UploadListModel : public QAbstractListModel {
     enum UploadListRoles {
         NameRole = Qt::UserRole + 1,
         PathRole,
-        TaskUuidRole,
         ProgressRole,
         UploadSpeedRole,
         PlaylistIdRole,
-        UploadStatusRole
+        UploadStatusRole,
+        ErrMsgRole
     };
 
     enum UploadStatus {
         Waiting,
         Uploading,
-        uploadCompleted
+        UploadCompleted,
+        Error
     };
 
     struct UploadFileData {
-        QString fileName;           // 文件名
-        QString path;               // 文件路径
-        std::string taskUuid;       // 任务uuid
-        double progress;            // 上传进度百分比
-        std::size_t uploadSpeed;    // 上传速度 (B / s)
-        uint64_t addToPlaylistId;   // 需要添加的歌单id
-        UploadStatus uploadStatus;  // 上传状态
+        QString fileName;               // 文件名
+        std::filesystem::path path;     // 文件路径
+        std::filesystem::path basePath; // 基准路径
+        double progress;                // 上传进度百分比
+        std::size_t uploadSpeed;        // 上传速度 (B / s)
+        uint64_t addToPlaylistId;       // 需要添加的歌单id
+        UploadStatus uploadStatus;      // 上传状态
+        QString errMsg;                 // 错误信息
     };
 
     // 忽略大小写并且可靠排序的
@@ -97,6 +100,113 @@ public:
                 uploadFile(path, playlistId);
             }
         );
+
+        // 连接检查上传任务信号
+        connect(
+            this,
+            &UploadListModel::checkUploadTaskSignal,
+            this,
+            [this]() {
+                // 主线程安全递增（原子）
+                if (_uploadingTaskCnt.load(std::memory_order_relaxed) >= NetSingleton::CliCnt) {
+                    return; // 队列满了, 继续等待
+                }
+                // 开始任务
+                int idx = findTopWaitingTask();
+                if (idx == -1) {
+                    return;
+                }
+                _uploadingTaskCnt.fetch_add(1, std::memory_order_relaxed);
+                auto& data = _files[idx];
+                namespace fs = std::filesystem;
+                // 初始化任务
+                MusicApi::initUploadMusic(
+                    data.path.string(),
+                    data.basePath == fs::path {}
+                        ? data.path.filename()
+                        : fs::relative(data.path, data.basePath.parent_path()) // 取相对路径
+                ).thenTry([this, idx](container::Try<std::string> t) {
+                    auto& _data = _files[idx];
+                    if (!t) [[unlikely]] {
+                        MessageController::get().show<MsgType::Error>("初始化上传任务失败:" + t.what());
+                        // 同步进度
+                        QMetaObject::invokeMethod(
+                            QCoreApplication::instance(),
+                            [this, idx, errMsg = t.what()] {
+                                auto& _data = _files[idx];
+                                _data.uploadStatus = UploadStatus::Error;
+                                _data.errMsg = QString::fromStdString(errMsg);
+                                Q_EMIT dataChanged(
+                                    index(idx),
+                                    index(idx),
+                                    {ErrMsgRole, UploadStatusRole}
+                                );
+                            }
+                        );
+                        // 子线程安全递减
+                        _uploadingTaskCnt.fetch_sub(1, std::memory_order_relaxed);
+                        Q_EMIT checkUploadTaskSignal();
+                        t.rethrow();
+                    }
+                    // 上传任务
+                    return MusicApi::uploadMusic(
+                        _data.path,
+                        t.move(),
+                        [this, idx](double progress, std::size_t uploadSpeed) {
+                            auto& _data = _files[idx];
+                            // 同步进度
+                            QMetaObject::invokeMethod(
+                                QCoreApplication::instance(),
+                                [this, progress, uploadSpeed, idx] {
+                                    auto& _data = _files[idx];
+                                    _data.progress = progress * 100;
+                                    _data.uploadSpeed = uploadSpeed;
+                                    Q_EMIT dataChanged(
+                                        index(idx),
+                                        index(idx),
+                                        {ProgressRole, UploadSpeedRole}
+                                    );
+                                }
+                            );
+                        }
+                    ).thenTry([this, idx](container::Try<uint64_t> t) {
+                        auto& _data = _files[idx];
+                        // 子线程安全递减
+                        _uploadingTaskCnt.fetch_sub(1, std::memory_order_relaxed);
+                        QMetaObject::invokeMethod(
+                            QCoreApplication::instance(),
+                            [this, idx] {
+                                auto& _data = _files[idx];
+                                _data.uploadStatus = UploadStatus::UploadCompleted;
+                                Q_EMIT dataChanged(
+                                    index(idx),
+                                    index(idx),
+                                    {ProgressRole, UploadSpeedRole, UploadStatusRole}
+                                );
+                            }
+                        );
+                        Q_EMIT checkUploadTaskSignal();
+                        if (!t) [[unlikely]] {
+                            t.rethrow();
+                        }
+                        if (!_data.addToPlaylistId) {
+                            // id 为空, 啥歌单也不用添加
+                            return;
+                        }
+                        // 获取到歌曲id
+                        PlaylistApi::addMusic(
+                            _data.addToPlaylistId, t.move()
+                        ).thenTry([](auto t) {
+                            if (!t) [[unlikely]] {
+                                MessageController::get().show<MsgType::Error>(
+                                    "添加到歌单失败: " + t.what()
+                                );
+                            }
+                        });
+                    });
+                });
+            }
+        );
     }
 
     // 行数
@@ -115,12 +225,12 @@ public:
         const auto& file = _files.at(index.row());
         switch (role) {
         case NameRole: return file.fileName;
-        case PathRole: return file.path;
-        case TaskUuidRole: return QString::fromStdString(file.taskUuid);
+        case PathRole: return QString::fromStdString(file.path);
         case ProgressRole: return file.progress;
         case UploadSpeedRole: return static_cast<qlonglong>(file.uploadSpeed);
         case PlaylistIdRole: return static_cast<qlonglong>(file.addToPlaylistId);
         case UploadStatusRole: return file.uploadStatus;
+        case ErrMsgRole: return file.errMsg;
         default: return {};
         }
     }
@@ -130,11 +240,11 @@ public:
         QHash<int, QByteArray> roles;
         roles[NameRole] = "name";
         roles[PathRole] = "path";
-        roles[TaskUuidRole] = "taskUuid";
         roles[ProgressRole] = "progress";
         roles[UploadSpeedRole] = "uploadSpeed";
         roles[PlaylistIdRole] = "playlistId";
         roles[UploadStatusRole] = "uploadStatus";
+        roles[ErrMsgRole] = "errMsg";
         return roles;
     }
 
@@ -153,6 +263,7 @@ public:
                 [this, file, playlistId](std::filesystem::path relativePath) {
                 addFileIfAudio(
                     file / relativePath,
+                    file,
                     playlistId,
                     QString::fromStdString(file.filename().string() + " > " + relativePath.filename().string())
                 );
@@ -162,17 +273,27 @@ public:
             auto name = file.filename();
             addFileIfAudio(
                 std::move(file),
+                {},
                 playlistId,
                 QString::fromStdString(std::move(name))
             );
         }
     }
 
-    // emit dataChanged(idx, idx, {ProgressRole, UploadSpeedRole});
+Q_SIGNALS:
+    // 检查上传任务信号
+    void checkUploadTaskSignal();
+
 private:
-    QVector<UploadFileData> _files; // 上传队列
+    QVector<UploadFileData> _files;             // 上传队列
+    std::atomic_int8_t _uploadingTaskCnt = 0;   // 处于上传中的任务计数
     
-    void addFileIfAudio(std::filesystem::path path, uint64_t playlistId, QString name) {
+    void addFileIfAudio(
+        std::filesystem::path path,
+        std::filesystem::path basePath,
+        uint64_t playlistId,
+        QString name
+    ) {
         if (auto extension = path.extension().string(); _supportedAudioExt.find(extension) == _supportedAudioExt.end()) {
             MessageController::get().show<MsgType::Error>("不支持该拓展名: " + extension);
             return;
@@ -180,14 +301,36 @@ private:
         beginInsertRows(QModelIndex(), _files.size(), _files.size());
         _files.push_back({
             std::move(name),
-            QString::fromStdString(path.string()),
-            "",
+            std::move(path),
+            std::move(basePath),
             0.0,
             0,
             playlistId,
             UploadStatus::Waiting
         });
         endInsertRows();
+        Q_EMIT checkUploadTaskSignal();
+    }
+
+    /**
+     * @brief 查找第一个正在等待的任务
+     * @return int -1 是找不到
+     */
+    int findTopWaitingTask() {
+        int idx = 0;
+        for (auto& v : _files) {
+            if (v.uploadStatus == UploadStatus::Waiting) {
+                v.uploadStatus = UploadStatus::Uploading;
+                Q_EMIT dataChanged(
+                    index(idx),
+                    index(idx),
+                    {UploadStatusRole}
+                );
+                return idx;
+            }
+            ++idx;
+        }
+        return -1;
     }
 };
 
