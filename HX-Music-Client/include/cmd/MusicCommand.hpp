@@ -95,8 +95,8 @@ struct MusicCommand {
      * @brief 音乐播放、音乐继续
      */
     static void resume() {
-        if (GlobalSingleton::get().nowPlaylist.songList.empty())
-            return;
+        // if (GlobalSingleton::get().nowPlaylist.songList.empty())
+        //     return;
         GlobalSingleton::get().musicConfig.isPlay = true;
         // 不知道为什么, 暂停一段时间后, 重新播放会没有声音...
         // 但是跳转后又有... 那我只好给你手动跳转一下了

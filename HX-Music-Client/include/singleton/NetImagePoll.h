@@ -52,7 +52,9 @@ public:
                     MessageController::get().show<MsgType::Error>("加载图片 [" + stdUrl + "] 失败: 网络错误");
                     return _errImg;
                 } else if (t.get().status / 100 != 2) [[unlikely]] {
-                    MessageController::get().show<MsgType::Error>("加载图片 [" + stdUrl + "] 失败: status != 200");
+                    if (!stdUrl.starts_with("cover/select/")) {
+                        MessageController::get().show<MsgType::Error>("加载图片 [" + stdUrl + "] 失败: status != 200");
+                    }
                     return _errImg;
                 }
                 QImage res{};

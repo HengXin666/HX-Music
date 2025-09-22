@@ -175,6 +175,13 @@ public:
                 break;
             }
         });
+
+        // === init ===
+        QTimer::singleShot(1000, this, [this] {
+            // 暂停
+            MusicCommand::pause();
+            Q_EMIT playingChanged(GlobalSingleton::get().musicConfig.isPlay);
+        });
     }
 
     Q_INVOKABLE void prev() {

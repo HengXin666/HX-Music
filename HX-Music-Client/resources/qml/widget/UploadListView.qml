@@ -55,7 +55,7 @@ Item {
                 width: listView.width
                 height: 70
 
-                property int index: index
+                required property int index
                 required property var model
 
                 Rectangle {
@@ -120,6 +120,8 @@ Item {
                                             return "上传完成";
                                         if (delegateItem.model.uploadStatus === 3)
                                             return "上传失败: " + delegateItem.model.errMsg;
+                                        if (delegateItem.model.uploadStatus === 4)
+                                            return "暂停中";
                                         return "未知状态";
                                     }
                                     font.pixelSize: 12
@@ -130,6 +132,10 @@ Item {
                                             return "blue";
                                         if (delegateItem.model.uploadStatus === 2)
                                             return "green";
+                                        if (delegateItem.model.uploadStatus === 3)
+                                            return "red";
+                                        if (delegateItem.model.uploadStatus === 4)
+                                            return "orange";
                                         return "red";
                                     }
                                 }
@@ -137,17 +143,16 @@ Item {
                                 Item { Layout.fillWidth: true }
 
                                 Label {
-                                    text: {
-                                        if (delegateItem.model.uploadSpeed === 0)
-                                            return "";
-                                        const speed = delegateItem.model.uploadSpeed / 1024;
-                                        if (speed < 1024)
-                                            return speed.toFixed(1) + " KB/s";
-                                        return (speed / 1024).toFixed(1) + " MB/s";
-                                    }
+                                    text: `( ${root.formatSize(delegateItem.model.uploadSpeed)} )`
                                     font.pixelSize: 12
-                                    color: "gray"
+                                    color: Theme.highlightingColor
                                     visible: delegateItem.model.uploadStatus === 1
+                                }
+
+                                Label {
+                                    text: `${root.formatSize(delegateItem.model.nowUploadSize)} / ${root.formatSize(delegateItem.model.totalSize)}`
+                                    font.pixelSize: 12
+                                    color: "gold"
                                 }
                             }
                         }
@@ -159,13 +164,29 @@ Item {
                                     return "开始";
                                 if (delegateItem.model.uploadStatus === 1)
                                     return "暂停";
+                                if (delegateItem.model.uploadStatus === 2)
+                                    return "完成";
                                 if (delegateItem.model.uploadStatus === 3)
+                                    return "继续";
+                                if (delegateItem.model.uploadStatus === 4)
                                     return "重试";
                                 return "删除";
                             }
                             onClicked: {
-                                console.log("操作按钮点击:", delegateItem.index, delegateItem.model.name)
-                                // 这里需要实现开始/暂停/打开等操作
+                                if (delegateItem.model.uploadStatus === 1) {
+                                    MessageController.showInfo("已暂停");
+                                    uploadListModel.stopTask(delegateItem.index);
+                                } else if (delegateItem.model.uploadStatus === 3
+                                        || delegateItem.model.uploadStatus === 4
+                                ) {
+                                    MessageController.showInfo(delegateItem.model.uploadStatus === 3 ? "继续上传" : "重试上传");
+                                    uploadListModel.resumeTask(delegateItem.index);
+                                } else if (delegateItem.model.uploadStatus === 2) {
+                                    MessageController.showSuccess("上传已完成!");
+                                } else if (delegateItem.model.uploadStatus === 0) {
+                                    MessageController.showInfo("开始上传");
+                                    uploadListModel.resumeTask(delegateItem.index);
+                                }
                             }
                         }
                     }
@@ -200,7 +221,7 @@ Item {
             Label {
                 text: {
                     // 这里可以显示总上传速度
-                    return "总速度: 0 KB/s"
+                    return "总速度: 114514 KB/s"
                 }
             }
         }
@@ -227,7 +248,7 @@ Item {
             emptyHint.visible = false;
             for (const urlStr of drop.urls) {
                 const path = decodeURIComponent(urlStr).replace("file://", "")
-                // 默认歌单ID为0, 实际应用中可能需要用户选择
+                // 默认歌单ID为0, 
                 uploadListModel.uploadFile(path, 0)
             }
         }
@@ -250,5 +271,16 @@ Item {
             font.pixelSize: 24
             color: "white"
         }
+    }
+
+    // 计算进制
+    function formatSize(size) {
+        if (size < 1024)
+            return size + " B";
+        if (size < 1024 * 1024)
+            return (size / 1024).toFixed(1) + " KB";
+        if (size < 1024 * 1024 * 1024)
+            return (size / (1024 * 1024)).toFixed(1) + " MB";
+        return (size / (1024 * 1024 * 1024)).toFixed(1) + " GB";
     }
 }

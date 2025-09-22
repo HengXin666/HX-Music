@@ -39,7 +39,11 @@ private:
     struct _not_cb_ {};
 public:
     inline static constexpr auto NotCbFunc
-        = []([[maybe_unused]] double progress, [[maybe_unused]] std::size_t uploadSpeed) -> _not_cb_ {
+        = [](
+            [[maybe_unused]] std::size_t all,
+            [[maybe_unused]] double progress,
+            [[maybe_unused]] std::size_t uploadSpeed
+        ) -> _not_cb_ {
             return {};
         };
     
@@ -95,6 +99,7 @@ public:
      * @param localPath 待上传的本地文件路径
      * @param pushId 上传任务id
      * @param cb 回调函数
+     *  - @param all 总传输字节
      *  - @param progress 进度百分比
      *  - @param uploadSpeed 上传速度, 单位: 字节 / 秒 (B/s)
      * @return container::FutureResult<container::Try<uint64_t>> 新歌曲的id
@@ -114,11 +119,17 @@ public:
                 co_await file.open(_localPath, utils::OpenMode::Read);
                 std::vector<char> buf;
                 buf.resize(1 << 22); // 4 MB
-                auto mae = std::chrono::system_clock::now();
-                std::size_t sum = 0;
+                std::queue<std::tuple<decltype(std::chrono::system_clock::now()), std::size_t>> q;
+                std::size_t sum = 0; // 过去一秒内的总传输
+                std::size_t all = 0; // 总传输
                 double progress = 0;
                 container::Try<> err;
                 try {
+                    auto offsetStr = co_await ws.recvText();
+                    uint64_t offset = 0;
+                    reflection::Numer::fromNumer(offset, offsetStr.begin(), offsetStr.end());
+                    file.setOffset(offset);
+                    all += offset;
                     for (;;) {
                         // 发
                         int len = co_await file.read(buf);
@@ -127,21 +138,38 @@ public:
                         } else {
                             break; // 我发完了
                         }
-                        if constexpr (!std::is_same_v<std::invoke_result_t<Cb, double, std::size_t>, _not_cb_>) {
-                            sum += len;
-                            if (auto now = std::chrono::system_clock::now(); now - mae >= 1s) {
-                                mae = now;
-                                _cb(progress, sum);
-                                sum = 0;
-                            }
-                        }
                         // 同步进度
                         auto progressStr = co_await ws.recvText();
-                        if constexpr (!std::is_same_v<std::invoke_result_t<Cb, double, std::size_t>, _not_cb_>) {
+                        if constexpr (!std::is_same_v<std::invoke_result_t<Cb, std::size_t, double, std::size_t>, _not_cb_>) {
+                            auto now = std::chrono::system_clock::now();
                             reflection::Numer::fromNumer(progress, progressStr.begin(), progressStr.end());
-                            _cb(progress, sum);
+                            decltype(std::chrono::system_clock::now()) mae = now;
+                            std::size_t size = 0;
+                            if (q.size()) [[likely]] {
+                                std::tie(mae, size) = q.front();
+                            }
+                            sum += static_cast<std::size_t>(len);
+                            all += static_cast<std::size_t>(len);
+                            q.push({now, static_cast<std::size_t>(len)});
+                            while (now - mae >= 1s) {
+                                sum -= size;
+                                q.pop();
+                                std::tie(mae, size) = q.front();
+                            }
+                            if constexpr (requires {
+                                { _cb(all, progress, sum) } -> std::convertible_to<bool>;
+                            }) {
+                                if (_cb(all, progress, sum)) [[unlikely]] {
+                                    co_await ws.close();
+                                    throw std::runtime_error{"stop"};
+                                }
+                            } else {
+                                _cb(all, progress, sum);
+                            }
                         }
-                        log::hxLog.debug("上传进度:", progressStr, "(+add:", 1.0 * len / (1 << 20), "MB)");
+                        log::hxLog.debug("上传进度:", progressStr, "(+add:", 1.0 * len / (1 << 20), "MB)",
+                            "总:", 1.0 * (all) / (1 << 20), "MB"
+                        );
                     }
                     co_await file.close();
                     uint64_t resId;
@@ -162,6 +190,7 @@ public:
                 }
                 co_await file.close();
                 err.rethrow();
+                co_return -1; // 你警告你🐎呢
             });
     }
 

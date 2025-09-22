@@ -63,9 +63,9 @@ HX_SERVER_API_BEGIN(MusicApi) {
         const std::filesystem::path& fullPath,  // path 加上 ./file/music 的路径
         coroutine::EventLoop& loop              // 一个新建的事件循环, 不应该为 res/req .getIO!
     ) {
-        log::hxLog.info("新增歌曲:", path);
         MusicInfo info{fullPath};
         auto imgOpt = info.getAlbumArtAdvanced();
+        log::hxLog.info("新增歌曲:", path);
         auto const& dao = musicDAO->add<MusicDO>({
             {},
             std::move(path),
@@ -215,9 +215,12 @@ HX_SERVER_API_BEGIN(MusicApi) {
             std::filesystem::path tmpFilePath
                 = "./file/music" / std::filesystem::path{task.path + ".tmp"s};
             auto ws = co_await net::WebSocketFactory::accept(req, res);
-            co_await file.open(tmpFilePath.string());
+            // 设置为尾加
+            co_await file.open(tmpFilePath.string(), utils::OpenMode::Append);
             file.setOffset(task.nowOffset);
             try {
+                // 先协商进度
+                co_await ws.sendText(std::to_string(task.nowOffset));
                 while (task.nowOffset < task.fileSize) {
                     auto buf = co_await ws.recvBytes();
                     co_await file.write(buf);
@@ -228,32 +231,28 @@ HX_SERVER_API_BEGIN(MusicApi) {
                             static_cast<double>(task.nowOffset) / static_cast<double>(task.fileSize)
                     ));
                 }
+                try {
+                    // 任务完成, 重命名文件
+                    std::filesystem::path filePath
+                        = "./file/music" / std::filesystem::path{task.path};
+                    std::filesystem::rename(tmpFilePath, filePath);
+                    // 刮削到数据库
+                    coroutine::EventLoop loop;
+                    auto id 
+                        = saveMusicInfo(std::move(task.path), filePath, loop);
+                    // 发送 id
+                    co_await ws.sendText(std::to_string(id));
+                    // 删除任务
+                    musicUploadTaskMap->erase(it);
+                    co_await ws.close();
+                } catch (...) {
+                    ;
+                }
             } catch (...) {
                 // 客户端ws断开了
                 *task.atWork = false;
             }
-            try {
-                // 任务完成, 重命名文件
-                std::filesystem::path filePath
-                    = "./file/music" / std::filesystem::path{task.path};
-                log::hxLog.warning("重命名:", tmpFilePath, "->", filePath);
-                std::filesystem::rename(tmpFilePath, filePath);
-                // 刮削到数据库
-                coroutine::EventLoop loop;
-                auto id 
-                    = saveMusicInfo(std::move(task.path), filePath, loop);
-                // 发送 id
-                co_await ws.sendText(std::to_string(id));
-                // 删除任务
-                musicUploadTaskMap->erase(it);
-                co_await ws.close();
-            } catch (std::exception const& e) {
-                log::hxLog.error("e!", e.what());
-            } catch (...) {
-                ;
-            }
             co_await file.close();
-            co_return;
         })
         // 分页查找歌曲
         .addEndpoint<POST>("/music/select", [=] ENDPOINT {
