@@ -116,14 +116,12 @@ public:
             this,
             [this](int idx) {
                 // 开始任务
-                log::hxLog.warning("线程数:", _uploadingTaskCnt.load(std::memory_order_relaxed));
                 if (idx == -1 
                  || _uploadingTaskCnt.load(std::memory_order_relaxed) >= NetSingleton::CliCnt - 1
                 ) {
                     return; // 队列满了, 继续等待
                 }
                 // 主线程安全递增（原子）
-                log::hxLog.error("++_uploadingTaskCnt");
                 _uploadingTaskCnt.fetch_add(1, std::memory_order_relaxed);
                 QMetaObject::invokeMethod(
                     QCoreApplication::instance(),
@@ -150,6 +148,8 @@ public:
                     if (!t) [[unlikely]] {
                         if (_data.taskUuid.empty()) {                        
                             MessageController::get().show<MsgType::Error>("初始化上传任务失败:" + t.what());
+                            // 子线程安全递减
+                            _uploadingTaskCnt.fetch_sub(1, std::memory_order_relaxed);
                             // 同步进度
                             QMetaObject::invokeMethod(
                                 QCoreApplication::instance(),
@@ -162,11 +162,9 @@ public:
                                         index(idx),
                                         {ErrMsgRole, UploadStatusRole}
                                     );
+                                    Q_EMIT startUploadTaskSignal(findTopWaitingTask());
                                 }
                             );
-                            // 子线程安全递减
-                            _uploadingTaskCnt.fetch_sub(1, std::memory_order_relaxed);
-                            log::hxLog.error("--_uploadingTaskCnt");
                             t.rethrow();
                         }
                     } else {
@@ -204,7 +202,6 @@ public:
                         auto& _data = _files[idx];
                         // 子线程安全递减
                         _uploadingTaskCnt.fetch_sub(1, std::memory_order_relaxed);
-                        log::hxLog.error("--_uploadingTaskCnt");
                         {
                             std::unique_lock _{_mtx};
                             _totalUploadSpeed[std::this_thread::get_id()] = 0;
@@ -253,9 +250,9 @@ public:
                                     index(idx),
                                     {ProgressRole, UploadSpeedRole, UploadStatusRole}
                                 );
+                                Q_EMIT startUploadTaskSignal(findTopWaitingTask());
                             }
                         );
-                        Q_EMIT startUploadTaskSignal(findTopWaitingTask());
                         if (!_data.addToPlaylistId) {
                             // id 为空, 啥歌单也不用添加
                             return;

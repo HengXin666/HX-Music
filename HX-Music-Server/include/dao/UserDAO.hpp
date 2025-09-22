@@ -50,7 +50,7 @@ struct UserDAO : public dao::ThreadSafeInMemoryDAO<UserDO> {
     template <typename U>
     T update(U&& u) {
         std::string name = Base::at(u.id).name;
-        const auto& t = Base::update(std::forward<U>(u));
+        auto t = Base::update(std::forward<U>(u));
         Base::uniqueLock([&] {
             if (name != t.name) {
                 _nameMapId.erase(name);
@@ -58,6 +58,14 @@ struct UserDAO : public dao::ThreadSafeInMemoryDAO<UserDO> {
             }
         });
         return t;
+    }
+
+    void updateLoginUuid(uint64_t id, std::string const& loginUuid) {
+        std::unique_lock _{_mtx};
+        constexpr auto name = reflection::getMembersNames<T>()[db::GetFirstPrimaryKeyIndex<T>];
+        _db.updateBy<"where ", meta::FixedString<name.size() + 1>{name}, "=?">(
+            db::FieldPair{&UserDO::loggedInUuid, loginUuid}
+        ).execOnThrow();
     }
 
     void del(PrimaryKeyType id) {

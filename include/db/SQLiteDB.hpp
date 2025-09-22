@@ -48,7 +48,7 @@ namespace HX::db {
 
 /**
  * @brief 字段匹配对 (成员指针, 值)
- * @tparam MemberPtr 
+ * @tparam MemberPtr
  */
 template <typename MemberPtr>
     requires (meta::IsMemberPtrVal<MemberPtr>)
@@ -222,7 +222,7 @@ struct [[nodiscard]] StmtCallChain {
     {}
 
     StmtCallChain(StmtCallChain&) = delete;
-    StmtCallChain(StmtCallChain&& that) noexcept 
+    StmtCallChain(StmtCallChain&& that) noexcept
         : _stmt{std::move(that._stmt)}
         , _cnt{that._cnt}
     {}
@@ -250,9 +250,9 @@ struct [[nodiscard]] StmtCallChain {
                     return; // 忽略
                 }
                 if constexpr (std::is_integral_v<RemoveKeyT>) {
-                    ::sqlite3_bind_int64(_stmt, _cnt, t); 
+                    ::sqlite3_bind_int64(_stmt, _cnt, t);
                 } else if constexpr (std::is_floating_point_v<RemoveKeyT>) {
-                    ::sqlite3_bind_double(_stmt, _cnt, t); 
+                    ::sqlite3_bind_double(_stmt, _cnt, t);
                 } else if constexpr (meta::StringType<RemoveKeyT> || isSQLiteSqlTypeVal<RemoveKeyT>) {
                     if constexpr (isSQLiteSqlTypeVal<RemoveKeyT>) {
                         auto str = SQLiteSqlType<RemoveKeyT>::bind(t);
@@ -337,27 +337,10 @@ class SQLiteDB {
         }
         return it->second;
     }
-
-    template <typename T, meta::FixedString... SqlBody>
-    internal::StmtCallChain& updateByImpl(T&& t) {
-        using U = meta::remove_cvref_t<T>;
-        auto tp = reflection::internal::getObjTie<U>(t);
-        return [&] <std::size_t... Idx> (std::index_sequence<Idx...>) -> internal::StmtCallChain& {            
-            return getSqlCache(
-                meta::TypeId::make<&SQLiteDB::updateByImpl<T, SqlBody...>>(),
-                [this] {
-                    auto sql = MakeSqlStr::makeUpdateSqlFragment<U>();
-                    sql += ' ';
-                    ((sql += meta::ToCharPack<SqlBody>::view()), ...);
-                    return internal::StmtCallChain{sql, _db};
-                }
-            ).template bind<true>(std::get<Idx>(tp)...);
-        } (std::make_index_sequence<std::tuple_size_v<decltype(tp)>>{});
-    }
 public:
     SQLiteDB() : _db{} {}
 
-    SQLiteDB(std::string_view filePath) 
+    SQLiteDB(std::string_view filePath)
         : SQLiteDB{}
     {
         log::hxLog.debug("make dbFile:", filePath); // debug
@@ -369,7 +352,7 @@ public:
     }
 
     SQLiteDB(SQLiteDB const&) = delete;
-    SQLiteDB(SQLiteDB&& that) noexcept 
+    SQLiteDB(SQLiteDB&& that) noexcept
         : _db{that._db}
     {
         that._db = nullptr;
@@ -429,18 +412,20 @@ public:
         }(std::make_index_sequence<std::tuple_size_v<decltype(tp)>>{});
     }
 
-    template <typename T, bool IsSetPrimaryKey = false, typename... MemberPtr>
-    PrimaryKeyType<T> insertBy(FieldPair<MemberPtr>... fmPair) {
-        using U = meta::remove_cvref_t<T>;
+    template <
+        typename... MemberPtr,
+        typename U = meta::GetMemberPtrsClassType<MemberPtr...>
+    >
+    PrimaryKeyType<U> insertBy(FieldPair<MemberPtr>... fmPair) {
         return getSqlCache(
-            meta::TypeId::make<&SQLiteDB::insertBy<T, IsSetPrimaryKey, MemberPtr...>>(),
+            meta::TypeId::make<&SQLiteDB::insertBy<MemberPtr...>>(),
             [&] {
                 return internal::StmtCallChain{
-                    MakeSqlStr::makeInsertSql<U, IsSetPrimaryKey, MemberPtr...>(fmPair.ptr...),
+                    MakeSqlStr::makeInsertSql<U, MemberPtr...>(fmPair.ptr...),
                     _db
                 };
             }
-        ).template bind<IsSetPrimaryKey>(fmPair.dataView...)
+        ).template bind<true>(fmPair.dataView...)
          .template getLastInsertPrimaryKeyId<U>();
     }
 
@@ -471,14 +456,47 @@ public:
         return {sql, _db};
     }
 
+    // 默认不修改主键, 如果需要请使用 updateBy 显示指定
     template <meta::FixedString... SqlBody, typename T>
-    internal::StmtCallChain& updateBy(T&& t) {
-        return updateByImpl<T, SqlBody...>(std::forward<T>(t));
+    internal::StmtCallChain& update(T&& t) {
+        using U = meta::remove_cvref_t<T>;
+        auto tp = reflection::internal::getObjTie<U>(t);
+        return [&] <std::size_t... Idx> (std::index_sequence<Idx...>) -> internal::StmtCallChain& {
+            using Ptr = internal::StmtCallChain& (SQLiteDB::*) (T&&);
+            constexpr Ptr ptr = &SQLiteDB::update<SqlBody...>;
+            return getSqlCache(
+                meta::TypeId::make<ptr>(),
+                [this] {
+                    auto sql = MakeSqlStr::makeUpdateSqlFragment<U, false>();
+                    sql += ' ';
+                    ((sql += meta::ToCharPack<SqlBody>::view()), ...);
+                    return internal::StmtCallChain{sql, _db};
+                }
+            ).template bind<true>(std::get<Idx>(tp)...);
+        } (std::make_index_sequence<std::tuple_size_v<decltype(tp)>>{});
+    }
+
+    template <
+        meta::FixedString... SqlBody,
+        typename... MemberPtr,
+        typename U = meta::GetMemberPtrsClassType<MemberPtr...>
+    >
+    internal::StmtCallChain& updateBy(FieldPair<MemberPtr>... fmPair) {
+        using Ptr = internal::StmtCallChain& (SQLiteDB::*) (FieldPair<MemberPtr>...);
+        constexpr Ptr ptr = &SQLiteDB::updateBy<SqlBody...>;
+        return getSqlCache(
+            meta::TypeId::make<ptr>(),
+            [&] {
+                auto sql = MakeSqlStr::makeUpdateSqlFragment<U, MemberPtr...>(fmPair.ptr...);
+                ((sql += meta::ToCharPack<SqlBody>::view()), ...);
+                return internal::StmtCallChain{sql, _db};
+            }
+        ).template bind<true>(fmPair.dataView...);
     }
 
     /**
      * @brief 获取上一次行数变化
-     * @return int 
+     * @return int
      */
     int lastLineChange() const noexcept {
         return ::sqlite3_changes(_db);

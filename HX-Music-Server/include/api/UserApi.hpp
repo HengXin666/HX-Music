@@ -111,7 +111,7 @@ HX_SERVER_API_BEGIN(UserApi) {
                 }
                 // 计算凭证, 并且返回
                 auto nowTime = utils::Timestamp::getTimestamp();
-                co_return co_await api::setJsonSucceed(
+                co_await api::setJsonSucceed(
                     token::TokenApi::get().toToken<TokenData>({
                         userDO.loggedInUuid,
                         userDO.id,

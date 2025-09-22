@@ -18,6 +18,8 @@
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <type_traits>
+
 namespace HX::meta {
 
 namespace internal {
@@ -25,9 +27,10 @@ namespace internal {
 template <typename T>
 struct GetMemberPtrTypeImpl;
 
-template <typename T, typename ClassPtr>
-struct GetMemberPtrTypeImpl<T ClassPtr::*> {
+template <typename T, typename ClassT>
+struct GetMemberPtrTypeImpl<T ClassT::*> {
     using Type = T;
+    using ClassType = ClassT;
 };
 
 } // namespace internal
@@ -48,5 +51,31 @@ bool constexpr IsMemberPtrVal<T ClassPtr::*> = true;
  */
 template <typename T>
 using GetMemberPtrType = typename internal::GetMemberPtrTypeImpl<T>::Type;
+
+/**
+ * @brief 获取成员指针的类的类型
+ * @tparam T 
+ */
+template <typename T>
+using GetMemberPtrClassType = typename internal::GetMemberPtrTypeImpl<T>::ClassType;
+
+/**
+ * @brief 获取成员指针们的类的类型, 并且保证这些指针都来自于同一个类
+ * @tparam MemberPtr 
+ * @tparam MemberPtrs
+ */
+template <typename... MemberPtrTs>
+using GetMemberPtrsClassType = decltype([] <typename MP, typename... MemberPtrs> (MP, MemberPtrs...) {
+    // 别名模板不支持部分推导
+    // 不能 <typename MP, typename... MemberPtrs> 然后直接让 <typename... MemberPtrTs> 匹配
+    // 只能拆开
+    using MemberPtr = MP;
+    return std::conditional_t<
+    (std::is_same_v<
+        GetMemberPtrClassType<MemberPtr>,
+        GetMemberPtrClassType<MemberPtrs>
+    > && ...),
+    GetMemberPtrClassType<MemberPtr>, void> {};
+} (MemberPtrTs{}...));
 
 } // namespace HX::meta

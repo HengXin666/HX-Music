@@ -79,6 +79,7 @@ void ininDir() {
     try {
         userDAO->at(1);
     } catch (...) {
+        log::hxLog.warning("第一次启动! 用户名: hx, 密码: hx666 , 请尽快修改密码");
         auto nacl = utils::Uuid::makeV4();
         userDAO->add<UserDO>({
             {},
@@ -88,32 +89,10 @@ void ininDir() {
             utils::md5("hx666" + nacl),
             {},
             {},
-            PermissionEnum::Administrator
+            PermissionEnum::Administrator,
+            utils::Uuid::makeV4()
         });
     }
-
-    // 测试数据
-    [&] {
-        auto playlistDAO 
-            = dao::MemoryDAOPool::get<PlaylistDAO, config::PlaylistDbPath>();
-        try {
-            playlistDAO->update<true, PlaylistDO>({
-                1, "HX-测试歌单", "测试没有描述...", {
-                    1, 2, 3, 4, 5
-                }
-            });
-        } catch (...) {
-            playlistDAO->add<PlaylistDO>({
-                1, "HX-测试歌单", "测试没有描述...", {
-                    1, 2, 3, 4, 5
-                }
-            });
-        }
-
-        // auto musicDAO 
-        //     = dao::MemoryDAOPool::get<MusicDAO, "./file/db/music.db">();
-        // log::hxLog.info(musicDAO->at(1));
-    }();
 }
 
 #include <csignal>

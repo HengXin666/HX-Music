@@ -31,6 +31,9 @@ Item {
             property string messageType: model.messageType
             property string messageText: model.messageText
             property int messageIndex: index
+            property int repeatCount: model.repeatCount || 1  // 新增重复计数
+            property alias badgeRef: badge
+            property alias autoHideTimerRef: autoHideTimer
 
             // 消息矩形
             Rectangle {
@@ -103,6 +106,34 @@ Item {
                     color: Theme.highlightingColor 
                 }
 
+                // 数字角标
+                Rectangle {
+                    id: badge
+                    visible: messageItem.repeatCount > 1
+                    width: 20
+                    height: 20
+                    radius: 10
+                    color: {
+                        switch (messageItem.messageType) {
+                            case "Error": return "#d32f2f";
+                            case "Warning": return "#f57c00";
+                            case "Success": return "#388e3c";
+                            default: return "#1976d2";
+                        }
+                    }
+                    anchors.bottom: parent.bottom
+                    anchors.right: parent.right
+                    anchors.bottomMargin: 8
+                    anchors.rightMargin: 8
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: messageItem.repeatCount
+                        font.pixelSize: 12
+                        color: "white"
+                    }
+                }
+
                 // 关闭按钮
                 MusicActionButton {
                     focus: true
@@ -136,7 +167,6 @@ Item {
                     easing.type: Easing.OutCubic
                 }
                 onStarted: {
-                    // 在动画开始时计算并设置Y位置
                     const targetY = (messageModel.count - 1 - messageItem.messageIndex) *
                                  (messageItem.height + 10);
                     messageItem.y = targetY;
@@ -159,7 +189,6 @@ Item {
                     duration: 300
                 }
                 onFinished: {
-                    // 使用延时删除, 避免在动画过程中修改模型
                     deleteTimer.start()
                 }
             }
@@ -230,20 +259,29 @@ Item {
         }
     }
 
-    // 添加消息
+    // 添加消息（带重复角标逻辑）
     function addMessage(type, text) {
-        // 先添加消息到模型
+        for (let i = 0; i < messageModel.count; ++i) {
+            if (messageModel.get(i).messageText === text) {
+                // 已存在相同消息, 数字角标加1, 重置计时器
+                const existingItem = messageContainer.children[i];
+                if (existingItem) {
+                    existingItem.repeatCount += 1;
+                    existingItem.autoHideTimerRef.stop();
+                    existingItem.autoHideTimerRef.start(); // 重置计时器
+                    existingItem.badgeRef.visible = true;
+                }
+                return; // 不新增消息
+            }
+        }
+
+        // 新增消息
         messageModel.append({
             "messageType": type,
-            "messageText": text
+            "messageText": text,
+            "repeatCount": 1
         })
 
-        // 如果有太多消息, 移除最早的消息
-        // if (messageModel.count > 8) {
-        //     messageModel.remove(0);
-        // }
-
-        // 更新所有消息的位置
         updateMessagePositions();
     }
 
@@ -254,7 +292,6 @@ Item {
             if (currentItem) {
                 const targetY = (messageModel.count - 1 - i) * (currentItem.height + 10);
 
-                // 创建并启动Y位置动画
                 const yAnimation = Qt.createQmlObject(`
                     import QtQuick 2.0
                     NumberAnimation {

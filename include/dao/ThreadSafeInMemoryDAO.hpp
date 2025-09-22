@@ -71,11 +71,10 @@ struct ThreadSafeInMemoryDAO {
     template <bool IsMustSucceed = false, typename U>
         requires (std::convertible_to<U, T>)
     T update(U&& u) {
-        using namespace std::string_literals;
         std::unique_lock _{_mtx};
         auto id = db::getFirstPrimaryKeyRef<T>(u);
         constexpr auto name = reflection::getMembersNames<T>()[db::GetFirstPrimaryKeyIndex<T>];
-        _db.updateBy<"where ", meta::FixedString<name.size() + 1>{name}, "=?">(u)
+        _db.update<"where ", meta::FixedString<name.size() + 1>{name}, "=?">(u)
             .template bind<true>(id)
             .execOnThrow();
         if constexpr (IsMustSucceed) {
@@ -139,7 +138,7 @@ struct ThreadSafeInMemoryDAO {
         std::shared_lock _{_mtx};
         return lambda(_map);
     }
-private:
+protected:
     db::SQLiteDB _db;
     MapType _map;
     mutable std::shared_mutex _mtx;

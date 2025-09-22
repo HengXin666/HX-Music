@@ -57,7 +57,7 @@ struct MakeSqlStr {
         return sqlName;
     }
 
-    template <typename T, bool IsSetPrimaryKey = false, typename... MemberPtr>
+    template <typename T, typename... MemberPtr>
         requires (sizeof...(MemberPtr) >= 1 && (meta::IsMemberPtrVal<MemberPtr> && ...))
     static std::string makeInsertSql(MemberPtr... ptrs) noexcept {
         using U = meta::remove_cvref_t<T>;
@@ -102,9 +102,29 @@ struct MakeSqlStr {
                 sql += '?';
                 if constexpr (Idx + 1 != N) {
                     sql += ',';
+                } else {
+                    sql += ' ';
                 }
             }
         });
+        return sql;
+    }
+
+    template <typename T, typename... MemberPtr>
+        requires (sizeof...(MemberPtr) >= 1 && (meta::IsMemberPtrVal<MemberPtr> && ...))
+    static std::string makeUpdateSqlFragment(MemberPtr... ptrs) noexcept {
+        using U = meta::remove_cvref_t<T>;
+        std::string sql = "UPDATE ";
+        sql += reflection::getTypeName<U>();
+        sql += " SET ";
+        auto map = reflection::makeMemberPtrToNameMap<U>();
+        (([&](){
+            sql += map.at(ptrs);
+            sql += '=';
+            sql += '?';
+            sql += ',';
+        }()), ...);
+        sql.back() = ' ';
         return sql;
     }
 };
