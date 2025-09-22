@@ -32,11 +32,21 @@ Item {
                 Layout.fillWidth: true
             }
 
+            Switch {
+                id: autoCreatePlaylistSwitch
+                text: "自动创建歌单 (上传文件夹)"
+                checked: true
+                onCheckedChanged: {
+                    uploadListModel.setAutomaticallyCreatePlaylist(checked);
+                }
+            }
+
             Button {
                 text: "清空已完成"
                 onClicked: {
                     // 这里需要实现清空已完成项目的逻辑
-                    console.log("清空已完成点击")
+                    MessageController.showInfo("已清空已完成任务");
+                    uploadListModel.clearCompletedTask();
                 }
             }
         }
@@ -143,7 +153,7 @@ Item {
                                 Item { Layout.fillWidth: true }
 
                                 Label {
-                                    text: `( ${root.formatSize(delegateItem.model.uploadSpeed)} )`
+                                    text: `( ${root.formatSize(delegateItem.model.uploadSpeed)}/s )`
                                     font.pixelSize: 12
                                     color: Theme.highlightingColor
                                     visible: delegateItem.model.uploadStatus === 1
@@ -167,9 +177,9 @@ Item {
                                 if (delegateItem.model.uploadStatus === 2)
                                     return "完成";
                                 if (delegateItem.model.uploadStatus === 3)
-                                    return "继续";
-                                if (delegateItem.model.uploadStatus === 4)
                                     return "重试";
+                                if (delegateItem.model.uploadStatus === 4)
+                                    return "继续";
                                 return "删除";
                             }
                             onClicked: {
@@ -209,19 +219,35 @@ Item {
             Layout.fillWidth: true
 
             Label {
+                id: statusLabel
                 text: {
                     const total = listView.count;
-                    const completed = 0; // 这里需要计算已完成的数量
+                    const completed = 0;
                     return `总计: ${total} 已完成: ${completed}`;
+                }
+
+                // 绑定信号
+                Connections {
+                    target: uploadListModel
+                    function onUpdateTaskCnt() {
+                        const total = listView.count;
+                        const completed = uploadListModel.getTaskCnt();
+                        statusLabel.text = `总计: ${total} 已完成: ${completed}`;
+                    }
                 }
             }
 
             Item { Layout.fillWidth: true }
 
             Label {
-                text: {
-                    // 这里可以显示总上传速度
-                    return "总速度: 114514 KB/s"
+                id: speedLabel
+                text: "0 B/s"
+                // 绑定信号
+                Connections {
+                    target: uploadListModel
+                    function onUpdateTotalUploadSpeed() {
+                        speedLabel.text = root.formatSize(uploadListModel.getTotalUploadSpeed()) + "/s";
+                    }
                 }
             }
         }

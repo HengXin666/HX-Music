@@ -116,23 +116,29 @@ public:
             this,
             [this](int idx) {
                 // 开始任务
-                if (idx == -1) {
-                    return;
-                }
-                // 主线程安全递增（原子）
-                if (_uploadingTaskCnt.load(std::memory_order_relaxed) >= NetSingleton::CliCnt) {
-                    MessageController::get().show<MsgType::Warning>("上传队列已满, 请等待");
+                log::hxLog.warning("线程数:", _uploadingTaskCnt.load(std::memory_order_relaxed));
+                if (idx == -1 
+                 || _uploadingTaskCnt.load(std::memory_order_relaxed) >= NetSingleton::CliCnt - 1
+                ) {
                     return; // 队列满了, 继续等待
                 }
+                // 主线程安全递增（原子）
+                log::hxLog.error("++_uploadingTaskCnt");
                 _uploadingTaskCnt.fetch_add(1, std::memory_order_relaxed);
-                auto& data = _files[idx];
-                data.uploadStatus = UploadStatus::Uploading;
-                Q_EMIT dataChanged(
-                    index(idx),
-                    index(idx),
-                    {UploadStatusRole}
+                QMetaObject::invokeMethod(
+                    QCoreApplication::instance(),
+                    [this, idx] {
+                        auto& _data = _files[idx];
+                        _data.uploadStatus = UploadStatus::Uploading;
+                        Q_EMIT dataChanged(
+                            index(idx),
+                            index(idx),
+                            {UploadStatusRole}
+                        );
+                    }
                 );
                 namespace fs = std::filesystem;
+                auto& data = _files[idx];
                 // 初始化任务
                 MusicApi::initUploadMusic(
                     data.path.string(),
@@ -160,7 +166,7 @@ public:
                             );
                             // 子线程安全递减
                             _uploadingTaskCnt.fetch_sub(1, std::memory_order_relaxed);
-                            Q_EMIT startUploadTaskSignal(findTopWaitingTask());
+                            log::hxLog.error("--_uploadingTaskCnt");
                             t.rethrow();
                         }
                     } else {
@@ -180,11 +186,16 @@ public:
                                     _data.progress = progress * 100;
                                     _data.uploadSpeed = uploadSpeed;
                                     _data.nowUploadSize = all;
+                                    {
+                                        std::unique_lock _{_mtx};
+                                        _totalUploadSpeed[std::this_thread::get_id()] = uploadSpeed;
+                                    }
                                     Q_EMIT dataChanged(
                                         index(idx),
                                         index(idx),
                                         {ProgressRole, UploadSpeedRole, NowUploadSizeRole}
                                     );
+                                    Q_EMIT updateTotalUploadSpeed();
                                 }
                             );
                             return _data.isStop->load();
@@ -193,6 +204,12 @@ public:
                         auto& _data = _files[idx];
                         // 子线程安全递减
                         _uploadingTaskCnt.fetch_sub(1, std::memory_order_relaxed);
+                        log::hxLog.error("--_uploadingTaskCnt");
+                        {
+                            std::unique_lock _{_mtx};
+                            _totalUploadSpeed[std::this_thread::get_id()] = 0;
+                        }
+                        Q_EMIT updateTotalUploadSpeed();
                         if (!t) [[unlikely]] {
                             QMetaObject::invokeMethod(
                                 QCoreApplication::instance(),
@@ -200,6 +217,16 @@ public:
                                     auto& _data = _files[idx];
                                     if (msg == "stop") {
                                         _data.uploadStatus = UploadStatus::Stoped;
+                                        {
+                                            std::unique_lock _{_mtx};
+                                            _totalUploadSpeed[std::this_thread::get_id()] = 0;
+                                        }
+                                        Q_EMIT updateTotalUploadSpeed();
+                                    } else if (msg == "Failed to create a websocket connection (Connection header invalid)") {
+                                        // 服务端返回: 任务不存在 -> 任务已经完成, 部分没有接受到
+                                        _data.uploadStatus = UploadStatus::UploadCompleted;
+                                        // @todo ?
+                                        // 是否会导致不准确, 测试没有复现, 应该是小概率事件
                                     } else {
                                         _data.uploadStatus = UploadStatus::Error;
                                         _data.errMsg = QString::fromStdString(msg);
@@ -209,6 +236,7 @@ public:
                                         index(idx),
                                         {UploadStatusRole, ErrMsgRole}
                                     );
+                                    Q_EMIT startUploadTaskSignal(findTopWaitingTask());
                                 }
                             );
                             return;
@@ -218,6 +246,8 @@ public:
                             [this, idx] {
                                 auto& _data = _files[idx];
                                 _data.uploadStatus = UploadStatus::UploadCompleted;
+                                ++_taskCnt;
+                                Q_EMIT updateTaskCnt();
                                 Q_EMIT dataChanged(
                                     index(idx),
                                     index(idx),
@@ -299,16 +329,37 @@ public:
         namespace fs = std::filesystem;
         fs::path file{path.toStdString()};
         if (fs::is_directory(file)) {
-            // 新建一个新的歌单
-            utils::traverseDirectory(file, {},
-                [this, file, playlistId](std::filesystem::path relativePath) {
-                addFileIfAudio(
-                    file / relativePath,
-                    file,
-                    playlistId,
-                    QString::fromStdString(file.filename().string() + " > " + relativePath.filename().string())
-                );
-            });
+            if (_automaticallyCreatePlaylist) {           
+                // 新建一个新的歌单
+                PlaylistApi::makePlaylist({
+                    {},
+                    file.filename().string(),
+                }).thenTry([this, _file = std::move(file)](container::Try<uint64_t> t) {
+                    if (!t) [[unlikely]] {
+                        MessageController::get().show<MsgType::Error>("创建歌单失败: " + t.what());
+                        t.rethrow();
+                    }
+                    utils::traverseDirectory(_file, {},
+                        [this, _file, playlistId = t.get()](std::filesystem::path relativePath) {
+                        addFileIfAudio(
+                            _file / relativePath,
+                            _file,
+                            playlistId,
+                            QString::fromStdString(_file.filename().string() + " > " + relativePath.filename().string())
+                        );
+                    });
+                });
+            } else {
+                utils::traverseDirectory(file, {},
+                    [this, file, playlistId](std::filesystem::path relativePath) {
+                    addFileIfAudio(
+                        file / relativePath,
+                        file,
+                        playlistId,
+                        QString::fromStdString(file.filename().string() + " > " + relativePath.filename().string())
+                    );
+                });
+            }
         } else {
             // 仅上传文件
             auto name = file.filename();
@@ -321,6 +372,7 @@ public:
         }
     }
 
+    // 暂停任务
     Q_INVOKABLE void stopTask(int idx) {
         if (idx < 0 || idx >= _files.size()) [[unlikely]] {
             return;
@@ -328,6 +380,7 @@ public:
         _files[idx].isStop->store(true);
     }
 
+    // 继续任务
     Q_INVOKABLE void resumeTask(int idx) {
         if (idx < 0 || idx >= _files.size()) [[unlikely]] {
             return;
@@ -336,13 +389,57 @@ public:
         Q_EMIT startUploadTaskSignal(idx);
     }
 
+    // 获取总上传速度
+    Q_INVOKABLE std::size_t getTotalUploadSpeed() const {
+        std::shared_lock _{_mtx};
+        std::size_t res = 0;
+        for (auto const& [_, size] : _totalUploadSpeed)
+            res += size;
+        return res;
+    }
+
+    // 获取总完成的任务数量
+    Q_INVOKABLE std::size_t getTaskCnt() const noexcept {
+        return _taskCnt;
+    }
+
+    // 设置是否自动创建歌单 (上传文件夹)
+    Q_INVOKABLE void setAutomaticallyCreatePlaylist(bool isAutoMake) {
+        _automaticallyCreatePlaylist = isAutoMake;
+    }
+
+    // 清除以完成任务
+    Q_INVOKABLE void clearCompletedTask() {
+        for (auto it = _files.begin(); it != _files.end(); ) {
+            if (it->uploadStatus == UploadStatus::UploadCompleted) {
+                beginRemoveRows(QModelIndex(), static_cast<int>(it - _files.begin()), static_cast<int>(it - _files.begin()));
+                it = _files.erase(it);
+                endRemoveRows();
+            } else {
+                ++it;
+            }
+        }
+        _taskCnt = 0;
+        Q_EMIT updateTaskCnt();
+    }
+
 Q_SIGNALS:
     // 检查上传任务信号
     void startUploadTaskSignal(int idx);
 
+    // 总上传速度更新
+    void updateTotalUploadSpeed();
+
+    // 完成任务个数更新
+    void updateTaskCnt();
+
 private:
     std::vector<UploadFileData> _files;         // 上传队列
     std::atomic_int8_t _uploadingTaskCnt = 0;   // 处于上传中的任务计数
+    std::map<std::thread::id, std::size_t> _totalUploadSpeed; // 总上传速度
+    std::size_t _taskCnt = 0;                   // 总完成任务数
+    mutable std::shared_mutex _mtx;             // 总上传速度的锁
+    bool _automaticallyCreatePlaylist = true;   // 自动创建歌单
     
     void addFileIfAudio(
         std::filesystem::path path,
@@ -378,8 +475,7 @@ private:
      * @return int -1 是找不到
      */
     int findTopWaitingTask() {
-        int idx = 0;
-        for (auto& v : _files) {
+        for (int idx = 0; auto& v : _files) {
             if (v.uploadStatus == UploadStatus::Waiting) {
                 return idx;
             }
