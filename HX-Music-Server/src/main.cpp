@@ -121,6 +121,7 @@ void ininDir() {
 container::FutureResult<bool> isStop;
 
 int main() {
+    // return 0;
     ininDir();
     net::HttpServer server{"0.0.0.0", "28205"};
     api::addApi<MusicApi>(server);

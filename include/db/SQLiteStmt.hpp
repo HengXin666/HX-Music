@@ -31,7 +31,7 @@ namespace HX::db {
 
 class SQLiteStmt {
 public:
-    explicit SQLiteStmt(std::string_view sql, ::sqlite3* db)
+    SQLiteStmt(std::string_view sql, ::sqlite3* db)
         : _stmt{nullptr}
     {
         // 预编译
@@ -47,6 +47,13 @@ public:
         }
     }
 
+    SQLiteStmt(SQLiteStmt&) = delete;
+    SQLiteStmt(SQLiteStmt&& that) noexcept
+        : _stmt{that._stmt}
+    {
+        that._stmt = nullptr;
+    }
+
     int step() const noexcept {
         return ::sqlite3_step(_stmt);
     }
@@ -56,8 +63,34 @@ public:
      * @param db 
      * @return auto 
      */
-    auto getLastInsertPrimaryKeyId(::sqlite3* db) const noexcept {
-        return ::sqlite3_last_insert_rowid(db);;
+    auto getLastInsertPrimaryKeyId() const noexcept {
+        return ::sqlite3_last_insert_rowid(::sqlite3_db_handle(_stmt));;
+    }
+
+    /**
+     * @brief 重置 stmt
+     */
+    void reset() {
+        if (::sqlite3_reset(_stmt) != SQLITE_OK) [[unlikely]] {
+            throw std::runtime_error{"reset: " + getErrMsg()};
+        }
+    }
+
+    /**
+     * @brief 清除绑定值
+     */
+    void clearBind() {
+        if (::sqlite3_clear_bindings(_stmt) != SQLITE_OK) [[unlikely]] {
+            throw std::runtime_error{"clearBind: " + getErrMsg()};
+        }
+    }
+
+    /**
+     * @brief 获取错误字符串
+     * @return std::string 
+     */
+    std::string getErrMsg() const noexcept {
+        return ::sqlite3_errmsg(::sqlite3_db_handle(_stmt));
     }
 
     template <typename U>
@@ -85,6 +118,15 @@ public:
 
     operator ::sqlite3_stmt*() noexcept {
         return _stmt;
+    }
+
+    SQLiteStmt& operator=(SQLiteStmt&) = delete;
+    SQLiteStmt& operator=(SQLiteStmt&& that) noexcept {
+        if (this == std::addressof(that)) {
+            return *this;
+        }
+        std::swap(that._stmt, _stmt);
+        return *this;
     }
 
     ~SQLiteStmt() noexcept {

@@ -74,9 +74,8 @@ struct ThreadSafeInMemoryDAO {
         using namespace std::string_literals;
         std::unique_lock _{_mtx};
         auto id = db::getFirstPrimaryKeyRef<T>(u);
-        _db.updateBy(u, ("where "s
-                        += reflection::getMembersNames<T>()[db::GetFirstPrimaryKeyIndex<T>])
-                        += " = ?")
+        constexpr auto name = reflection::getMembersNames<T>()[db::GetFirstPrimaryKeyIndex<T>];
+        _db.updateBy<"where ", meta::FixedString<name.size() + 1>{name}, "=?">(u)
             .template bind<true>(id)
             .execOnThrow();
         if constexpr (IsMustSucceed) {
