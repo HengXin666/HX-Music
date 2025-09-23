@@ -21,24 +21,38 @@ Item {
         onDropped: drop => {
             for (const urlStr of drop.urls) {
                 let path = decodeURIComponent(urlStr).replace("file://", "");
-                // @todo 要实现上传
                 musicListModel.addFromPath(path);
             }
         }
     }
+
     property real maxTitleColumnWidth: 0
     property real maxAlbumColumnWidth: 0
 
+    // 拖拽相关属性
+    property int dragSourceIndex: -1
+    property int dragTargetIndex: -1
+    property bool isDragging: false
+    property real dragY: 0
+
+    // 拖拽指示器
+    Rectangle {
+        id: dragIndicator
+        visible: isDragging
+        width: listView.width
+        height: 2
+        color: Theme.highlightingColor
+        x: 0
+        y: dragY
+        z: 100
+    }
+
     ListView {
         id: listView
-        property bool isSwaped: false // 是否进行了交换
-
         model: musicListModel
         anchors.fill: parent
         clip: true
         interactive: true
-        // snapMode: ListView.SnapToItem   // 松手自动对齐
-        // boundsBehavior: Flickable.DragOverBounds // 允许拖出时自动滚动
 
         // 当前项动画
         move: Transition {
@@ -50,25 +64,51 @@ Item {
             NumberAnimation { property: "y"; duration: 200; easing.type: Easing.OutQuad }
         }
 
+        // 添加滚动区域识别, 防止拖拽时误触发滚动
+        boundsBehavior: Flickable.StopAtBounds
+
         delegate: Item {
             id: delegateRoot
             required property int index
             required property var model
 
-            // 是否选中
             property bool isSelected: listView.currentIndex == delegateRoot.index
-            
+            property bool isDragTarget: root.dragTargetIndex === delegateRoot.index
+
             width: listView.width
             height: 60
-            z: mouseArea.pressed ? 10 : 1
+            z: dragArea.drag.active ? 10 : (isSelected ? 2 : 1)
 
+            // 使用DragHandler替代MouseArea来处理拖拽
+            DragHandler {
+                id: dragHandler
+                target: null // 我们不移动实际的item, 只是处理手势
+                acceptedDevices: PointerDevice.Mouse | PointerDevice.Stylus
+                grabPermissions: PointerHandler.CanTakeOverFromAnything
+
+                onActiveChanged: {
+                    if (active) {
+                        // 开始拖拽
+                        root.startDrag(delegateRoot.index, mapToItem(listView, width / 2, height / 2).y);
+                    } else {
+                        // 结束拖拽
+                        root.endDrag();
+                    }
+                }
+            }
+
+            // 单独的MouseArea处理点击和悬停
             MouseArea {
                 id: mouseArea
-                property bool _hovered: false // 是否悬浮
                 anchors.fill: parent
-                preventStealing: true // 防止信号被窃取
+                hoverEnabled: true
+                preventStealing: false // 允许DragHandler接管
+                acceptedButtons: Qt.LeftButton | Qt.RightButton
 
-                // 双击是选择
+                onEntered: _hovered = true;
+                onExited: _hovered = false;
+                property bool _hovered: false
+
                 onDoubleClicked: (mouse) => {
                     if (mouse.button === Qt.LeftButton) {
                         listView.currentIndex = delegateRoot.index;
@@ -78,42 +118,56 @@ Item {
                     }
                 }
 
-                // 拖拽
-                onPositionChanged: (mouse) => {
-                    if (!mouseArea.pressed) {
-                        if (listView.isSwaped) {
-                            listView.isSwaped = false;
-                            // 保存歌单
-                            musicListModel.savePlaylist();
-                        }
-                        return;
-                    }
-                    let from = delegateRoot.index;
-                    // 换算为父上控件的坐标系
-                    let p = mouseArea.mapToItem(listView, mouse.x, mouse.y);
-                    let to = listView.indexAt(p.x, p.y);
-                    if (to !== -1 && to !== from) {
-                        listView.isSwaped |= musicListModel.swapRow(from, to);
-                    }
-                }
-
-                hoverEnabled: true
-                onEntered: _hovered = true;
-                onExited: _hovered = false;
-
-                acceptedButtons: Qt.LeftButton | Qt.RightButton
-                // 右键开菜单
                 onPressed: (mouse) => {
                     if (mouse.button === Qt.RightButton) {
-                        // 设置菜单的当前索引（供菜单项使用）
                         menu.index = delegateRoot.index;
-
-                        // 换算为父上控件的坐标系
-                        let p = mouseArea.mapToItem(root, mouse.x, mouse.y);
+                        let p = mapToItem(root, mouse.x, mouse.y);
                         menu.x = p.x;
                         menu.y = p.y;
                         menu.visible = true;
                     }
+                }
+            }
+
+            // 拖拽区域 - 只在特定区域可拖拽 (比如左侧拖拽手柄)
+            MouseArea {
+                id: dragArea
+                width: 40
+                height: parent.height
+                anchors.left: parent.left
+                drag.target: dragItem
+                drag.axis: Drag.YAxis
+                cursorShape: Qt.SizeVerCursor
+
+                property real startY: 0
+
+                onPressed: (mouse) => {
+                    startY = mapToItem(listView, 0, mouse.y).y;
+                    root.startDrag(delegateRoot.index, startY);
+                }
+
+                onPositionChanged: (mouse) => {
+                    if (pressed) {
+                        let currentY = mapToItem(listView, 0, mouse.y).y;
+                        root.updateDragPosition(currentY);
+                    }
+                }
+
+                onReleased: {
+                    root.endDrag();
+                }
+
+                onCanceled: {
+                    root.endDrag();
+                }
+
+                Rectangle {
+                    id: dragItem
+                    width: parent.width
+                    height: parent.height
+                    x: 0
+                    y: 0
+                    visible: false // 只是用于拖拽计算, 不显示
                 }
             }
 
@@ -124,17 +178,42 @@ Item {
                         return "#2bffffff";
                     else if (mouseArea._hovered)
                         return "#3fffffff";
+                    else if (delegateRoot.isDragTarget)
+                        return "#1affffff";
                     return "transparent";
+                }
+
+                // 拖拽手柄图标
+                Rectangle {
+                    width: 20
+                    height: parent.height
+                    color: "transparent"
+
+                    Column {
+                        anchors.centerIn: parent
+                        spacing: 2
+                        Repeater {
+                            model: 3
+                            Rectangle {
+                                width: 12
+                                height: 2
+                                radius: 1
+                                color: delegateRoot.isSelected ? Theme.highlightingColor : "#666"
+                            }
+                        }
+                    }
                 }
 
                 RowLayout {
                     anchors.fill: parent
+                    anchors.leftMargin: 40 // 为拖拽手柄留出空间
                     anchors.margins: 5
                     spacing: 10
 
                     // 编号图标
                     PlayStatusButton {
                         Layout.preferredWidth: 40
+                        Layout.leftMargin: -10
                         Layout.alignment: Qt.AlignCenter
                         text: (delegateRoot.index + 1).toString()
                         isSelected: delegateRoot.isSelected
@@ -145,7 +224,7 @@ Item {
                         }
                     }
 
-                    // 封面 + 标题 + 歌手(靠左, 自适应宽度)
+                    // 封面 + 标题 + 歌手
                     RowLayout {
                         id: titleColumn
                         Layout.alignment: Qt.AlignLeft
@@ -166,7 +245,6 @@ Item {
                                 id: coverImage
                                 anchors.fill: parent
                                 source: `image://onlineImagePoll/${delegateRoot.model.id}`
-                                // 图片圆角
                                 layer.enabled: true
                                 layer.smooth: true
                                 layer.effect: OpacityMask {
@@ -187,7 +265,6 @@ Item {
                             Layout.alignment: Qt.AlignLeft
                             Layout.fillWidth: true
 
-                            // 标题
                             Text {
                                 text: delegateRoot.model.title
                                 color: delegateRoot.isSelected ? Theme.highlightingColor : Theme.textColor
@@ -196,7 +273,6 @@ Item {
                                 Layout.fillWidth: true
                             }
 
-                            // 歌手
                             Text {
                                 id: artistText
                                 font.pixelSize: 14
@@ -204,11 +280,11 @@ Item {
                                 color: delegateRoot.isSelected ? Theme.highlightingColor : Theme.paratextColor
                                 elide: Text.ElideRight
 
-                                // 动态生成文本
                                 property string artistString: {
-                                    const list = delegateRoot.model.artist
-                                    if (!list || list.length === 0) return ""
-                                    return list.join("、")
+                                    const list = delegateRoot.model.artist;
+                                    if (!list || list.length === 0)
+                                        return "";
+                                    return list.join("、");
                                 }
 
                                 text: artistString
@@ -216,7 +292,7 @@ Item {
                         }
                     }
 
-                    // 专辑(靠左, 自适应宽度)
+                    // 专辑
                     Text {
                         id: albumColumn
                         text: delegateRoot.model.album.length > 16
@@ -233,7 +309,7 @@ Item {
                         }
                     }
 
-                    // 时长(固定宽度, 永远贴最右)
+                    // 时长
                     Text {
                         text: root.formatDuration(delegateRoot.model.duration)
                         font.pixelSize: 14
@@ -247,21 +323,81 @@ Item {
         }
 
         Component.onCompleted: {
-            // 绑定 当前选择项更新信号
             MusicController.listIndexChanged.connect((idx) => {
                 listView.currentIndex = idx;
             });
         }
     }
 
-    // 右键菜单 @todo 美化: 支持圆边
+    // 开始拖拽
+    function startDrag(sourceIndex, yPos) {
+        dragSourceIndex = sourceIndex;
+        isDragging = true;
+        dragY = yPos;
+        dragTargetIndex = -1;
+    }
+
+    // 更新拖拽位置
+    function updateDragPosition(yPos) {
+        if (!isDragging) return;
+
+        dragY = yPos;
+
+        // 考虑ListView的contentY偏移
+        let adjustedY = yPos + listView.contentY;
+        let targetIndex = listView.indexAt(10, adjustedY);
+
+        if (targetIndex !== -1 && targetIndex !== dragTargetIndex) {
+            dragTargetIndex = targetIndex;
+
+            // 立即交换(提供即时反馈)
+            if (dragTargetIndex !== dragSourceIndex) {
+                musicListModel.swapRow(dragSourceIndex, dragTargetIndex);
+                dragSourceIndex = dragTargetIndex; // 更新源索引
+            }
+        }
+
+        // 自动滚动当拖拽到边缘时
+        autoScroll(yPos);
+    }
+
+    // 自动滚动功能
+    function autoScroll(yPos) {
+        const scrollMargin = 50; // 距离边缘多少像素开始滚动
+        const scrollSpeed = 10; // 滚动速度
+
+        if (yPos < scrollMargin && listView.contentY > 0) {
+            // 向上滚动
+            listView.contentY = Math.max(0, listView.contentY - scrollSpeed);
+        } else if (yPos > listView.height - scrollMargin &&
+                  listView.contentY < listView.contentHeight - listView.height) {
+            // 向下滚动
+            listView.contentY = Math.min(listView.contentHeight - listView.height,
+                                        listView.contentY + scrollSpeed);
+        }
+    }
+
+    // 结束拖拽
+    function endDrag() {
+        if (isDragging) {
+            isDragging = false;
+            dragTargetIndex = -1;
+
+            // 保存歌单
+            if (dragSourceIndex !== -1) {
+                musicListModel.savePlaylist();
+            }
+        }
+    }
+
+    // 右键菜单
     Menu {
         id: menu
         property int index: -1
-        property var dynamicModel: [] // 用于绑定 Repeater 的临时数据
+        property var dynamicModel: []
 
         onAboutToShow: {
-            dynamicModel = PlaylistController.getPlaylists(); // 每次重新获取
+            dynamicModel = PlaylistController.getPlaylists();
         }
 
         MenuItem {
@@ -305,7 +441,6 @@ Item {
         }
     }
 
-    // 时间格式化
     function formatDuration(seconds) {
         let min = Math.floor(seconds / 60);
         let sec = seconds % 60;

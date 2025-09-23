@@ -216,6 +216,27 @@ private:
 #endif
 
 struct [[nodiscard]] StmtCallChain {
+    struct [[nodiscard]] ChangeLine {
+        using ChangeCntType = decltype(std::declval<SQLiteStmt>().getLastChanges());
+
+        constexpr ChangeLine(ChangeCntType cnt)
+            : _cnt{cnt}
+        {}
+
+        template <ChangeCntType MinCnt = 1>
+        constexpr void check() const {
+            if (_cnt < MinCnt) {
+                throw std::runtime_error{"check: Change < " + std::to_string(MinCnt)};
+            }
+        }
+
+        constexpr operator ChangeCntType() const noexcept {
+            return _cnt;
+        }
+
+        ChangeCntType _cnt;
+    };
+
     StmtCallChain(std::string_view sql, ::sqlite3* db)
         : _stmt{sql, db}
         , _cnt{1}
@@ -278,10 +299,19 @@ struct [[nodiscard]] StmtCallChain {
     }
 
     // 带异常的
-    void execOnThrow() {
+    StmtCallChain& execOnThrow() {
         if (!exec()) [[unlikely]] {
             throw std::runtime_error{"SQL Error: " + _stmt.getErrMsg()};
         }
+        return *this;
+    }
+
+    /**
+     * @brief 获取最后一次成功的操作修改的行数
+     * @return ChangeLine 修改的行数
+     */
+    ChangeLine getLastChanges() const noexcept {
+        return {_stmt.getLastChanges()};
     }
 
     // 执行SQL, 并获取上一个插入的数据的主键值
@@ -468,11 +498,10 @@ public:
                 meta::TypeId::make<ptr>(),
                 [this] {
                     auto sql = MakeSqlStr::makeUpdateSqlFragment<U, false>();
-                    sql += ' ';
                     ((sql += meta::ToCharPack<SqlBody>::view()), ...);
                     return internal::StmtCallChain{sql, _db};
                 }
-            ).template bind<true>(std::get<Idx>(tp)...);
+            ).template bind<false>(std::get<Idx>(tp)...);
         } (std::make_index_sequence<std::tuple_size_v<decltype(tp)>>{});
     }
 

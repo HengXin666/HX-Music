@@ -66,6 +66,7 @@ class UploadListModel : public QAbstractListModel {
         QString errMsg;                             // 错误信息
         std::size_t nowUploadSize;                  // 已经上传的大小
         std::size_t totalSize;                      // 总大小
+        std::optional<std::function<void(uint64_t)>> cb;    // 任务完成后的回调
         std::unique_ptr<std::atomic_bool> isStop    // 是否暂停
             = std::make_unique<std::atomic_bool>(false);
     };
@@ -106,6 +107,16 @@ public:
             this,
             [this](QString const& path, uint64_t playlistId) {
                 uploadFile(path, playlistId);
+            }
+        );
+
+        // 连接上传文件信号 (带回调)
+        connect(
+            &SignalBusSingleton::get(),
+            &SignalBusSingleton::uploadFileByCallBackSignal,
+            this,
+            [this](QString const& path, uint64_t playlistId, std::function<void(uint64_t)> cb) {
+                uploadFile(path, playlistId, std::move(cb));
             }
         );
 
@@ -255,16 +266,25 @@ public:
                         );
                         if (!_data.addToPlaylistId) {
                             // id 为空, 啥歌单也不用添加
+                            if (_data.cb) {
+                                // 回调, 传入歌曲 Id
+                                _data.cb.value()(t.get());
+                            }
                             return;
                         }
                         // 获取到歌曲id
                         PlaylistApi::addMusic(
-                            _data.addToPlaylistId, t.move()
-                        ).thenTry([](auto t) {
+                            _data.addToPlaylistId, t.get()
+                        ).thenTry([_cb = std::move(_data.cb), musicId= t.get()](auto t) {
                             if (!t) [[unlikely]] {
                                 MessageController::get().show<MsgType::Error>(
                                     "添加到歌单失败: " + t.what()
                                 );
+                                return;
+                            }
+                            if (_cb) {
+                                // 回调, 传入歌曲 Id
+                                _cb.value()(musicId);
                             }
                         });
                     });
@@ -320,12 +340,18 @@ public:
      * @brief 上传文件
      * @param path 上传文件的本地路径
      * @param playlistId 上传后添加到的歌单Id, 如果为 0, 表示不自动添加到歌单
+     * @param cbOpt 回调函数
      * @return Q_INVOKABLE 
      */
-    Q_INVOKABLE void uploadFile(QString const& path, uint64_t playlistId) {
+    Q_INVOKABLE void uploadFile(
+        QString const& path,
+        uint64_t playlistId,
+        std::optional<std::function<void(uint64_t)>> cbOpt = {}
+    ) {
         namespace fs = std::filesystem;
         fs::path file{path.toStdString()};
         if (fs::is_directory(file)) {
+            // 上传文件夹, 不支持回调
             if (_automaticallyCreatePlaylist) {           
                 // 新建一个新的歌单
                 PlaylistApi::makePlaylist({
@@ -364,7 +390,8 @@ public:
                 std::move(file),
                 {},
                 playlistId,
-                QString::fromStdString(std::move(name))
+                QString::fromStdString(std::move(name)),
+                cbOpt
             );
         }
     }
@@ -442,7 +469,8 @@ private:
         std::filesystem::path path,
         std::filesystem::path basePath,
         uint64_t playlistId,
-        QString name
+        QString name,
+        std::optional<std::function<void(uint64_t)>> cbOpt = {}
     ) {
         if (auto extension = path.extension().string(); _supportedAudioExt.find(extension) == _supportedAudioExt.end()) {
             MessageController::get().show<MsgType::Error>("不支持该拓展名: " + extension);
@@ -461,7 +489,8 @@ private:
             UploadStatus::Waiting,
             "",
             0,
-            tSize
+            tSize,
+            std::move(cbOpt)
         });
         endInsertRows();
         Q_EMIT startUploadTaskSignal(findTopWaitingTask());

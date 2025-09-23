@@ -68,6 +68,14 @@ public:
     }
 
     /**
+     * @brief 获取最后一次成功的操作修改的行数
+     * @return auto (int) 修改的行数
+     */
+    auto getLastChanges() const noexcept {
+        return ::sqlite3_changes(::sqlite3_db_handle(_stmt));
+    }
+
+    /**
      * @brief 重置 stmt
      */
     void reset() {

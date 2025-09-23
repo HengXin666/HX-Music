@@ -47,15 +47,20 @@ auto sb___ = [] {
     db.insertBy(db::FieldPair{
         &MyTable::name, "张三"
     });
-    db.insertBy(db::FieldPair{
-        &MyTable::name, "张三"
-    });
     log::hxLog.info(db.queryAll<MyTable>());
-    db.updateBy<"where name = ?">(db::FieldPair{
-        &MyTable::name, "李四"
-    }).bind<true>(std::string{"张三"}).execOnThrow();
-    log::hxLog.info(db.queryAll<MyTable>());
-    db.deleteBy<MyTable>("where id = 1").execOnThrow();
+    // db.updateBy<"where name = ?">(db::FieldPair{
+    //     &MyTable::name, "李四"
+    // }).bind<true>(std::string{"张三"}).execOnThrow();
+    // log::hxLog.info(db.queryAll<MyTable>());
+    // db.deleteBy<MyTable>("where id = 1").execOnThrow();
+
+
+    db.update<"where id = ?">(MyTable{{}, "樟树市"})
+        .bind<true>(1)
+        .execOnThrow()
+        .getLastChanges()
+        .check();
+
     log::hxLog.info(db.queryAll<MyTable>());
     return 0;
 }();
