@@ -60,7 +60,7 @@ struct ThreadSafeInMemoryDAO {
 
     template <typename U>
         requires (std::convertible_to<U, T>)
-    const T& add(U&& u) {
+    T add(U&& u) {
         std::unique_lock _{_mtx};
         auto id = _db.insert(u);
         db::getFirstPrimaryKeyRef<T>(u) = id;
@@ -83,6 +83,23 @@ struct ThreadSafeInMemoryDAO {
             }
         }
         return _map[id] = std::forward<U>(u);
+    }
+
+    template <bool IsMustSucceed = false, typename... MemberPtr>
+        requires (std::is_same_v<meta::GetMemberPtrsClassType<MemberPtr...>, T>)
+    void updateBy(db::GetFirstPrimaryKeyType<T> id, db::FieldPair<MemberPtr>... mbPair) {
+        std::unique_lock _{_mtx};
+        constexpr auto name = reflection::getMembersNames<T>()[db::GetFirstPrimaryKeyIndex<T>];
+        _db.updateBy<"where ", meta::FixedString<name.size() + 1>{name}, "=?">(mbPair...)
+            .template bind<true>(id)
+            .execOnThrow();
+        if constexpr (IsMustSucceed) {
+            if (_db.lastLineChange() == 0) [[unlikely]] {
+                throw std::runtime_error{"update By KeyId Fail: The data is" + log::formatString(id)};
+            }
+        }
+        auto& data = _map[id];
+        ((data.*(mbPair.ptr) = mbPair.dataView), ...);
     }
 
     void del(PrimaryKeyType id) {

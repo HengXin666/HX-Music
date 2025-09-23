@@ -41,8 +41,8 @@ struct MusicDAO : public dao::ThreadSafeInMemoryDAO<MusicDO> {
     }
 
     template <typename U>
-    const T& add(U&& u) {
-        const auto& t = Base::add(std::forward<U>(u));
+    T add(U&& u) {
+        auto t = Base::add(std::forward<U>(u));
         Base::uniqueLock([&] {
             _pathSet.insert(t.path);
         });

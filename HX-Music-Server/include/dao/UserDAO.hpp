@@ -39,10 +39,10 @@ struct UserDAO : public dao::ThreadSafeInMemoryDAO<UserDO> {
     }
 
     template <typename U>
-    const T& add(U&& u) {
-        const auto& t = Base::add(std::forward<U>(u));
+    T add(U&& u) {
+        auto t = Base::add(std::forward<U>(u));
         Base::uniqueLock([&] {
-            _nameMapId.emplace(u.name, u.id);
+            _nameMapId.emplace(t.name, u.id);
         });
         return t;
     }
@@ -60,12 +60,22 @@ struct UserDAO : public dao::ThreadSafeInMemoryDAO<UserDO> {
         return t;
     }
 
+    template <typename... MemberPtr>
+    void updateBy(db::GetFirstPrimaryKeyType<T> id, db::FieldPair<MemberPtr>... mbPair) {
+        Base::updateBy(id, mbPair...);
+        if constexpr ((std::is_same_v<MemberPtr, decltype(&UserDO::name)> || ...)) {
+            // 没有打算支持
+            static_assert(false, "@todo");
+        }
+    }
+
     void updateLoginUuid(uint64_t id, std::string const& loginUuid) {
         std::unique_lock _{_mtx};
         constexpr auto name = reflection::getMembersNames<T>()[db::GetFirstPrimaryKeyIndex<T>];
         _db.updateBy<"where ", meta::FixedString<name.size() + 1>{name}, "=?">(
             db::FieldPair{&UserDO::loggedInUuid, loginUuid}
-        ).execOnThrow();
+        ).bind<true>(id)
+         .execOnThrow();
     }
 
     void del(PrimaryKeyType id) {

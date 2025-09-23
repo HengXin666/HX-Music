@@ -57,19 +57,13 @@ HX_SERVER_API_BEGIN(PlaylistApi) {
                     std::move(vo.description),
                     {}
                 }).id;
-                // @todo 修改非原子, 有竞争风险!
-                auto userDO = userDAO->at(getTokenData(req).userId);
-                userDO.createdPlaylist.emplace_back(id);
-                userDAO->update<UserDO>({
-                    userDO.id,
-                    std::move(userDO.name),
-                    std::move(userDO.signature),
-                    std::move(userDO.salt),
-                    std::move(userDO.password),
-                    std::move(userDO.createdPlaylist),
-                    std::move(userDO.savedPlaylist),
-                    userDO.permissionLevel,
-                    std::move(userDO.loggedInUuid)
+                auto userId = getTokenData(req).userId;
+                auto createdPlaylist
+                    = userDAO->at(userId, &UserDO::createdPlaylist);
+                createdPlaylist.emplace_back(id);
+                userDAO->updateBy(userId, db::FieldPair{
+                    &UserDO::createdPlaylist,
+                    createdPlaylist
                 });
                 co_await api::setJsonSucceed(id, res).sendRes();
             }, [&] CO_FUNC {
@@ -91,9 +85,16 @@ HX_SERVER_API_BEGIN(PlaylistApi) {
         // 删除歌单
         .addEndpoint<POST, DEL>("/playlist/del/{id}", [=] ENDPOINT {
             co_await api::coTryCatch([&] CO_FUNC {
-                uint64_t id;
-                reflection::fromJson(id, req.getPathParam(0));
+                auto id = req.getPathParam(0).to<uint64_t>();
                 playlistDAO->del(id);
+                auto userId = getTokenData(req).userId;
+                auto createdPlaylist
+                    = userDAO->at(userId, &UserDO::createdPlaylist);
+                createdPlaylist.erase(std::ranges::find(createdPlaylist, id));
+                userDAO->updateBy(userId, db::FieldPair{
+                    &UserDO::createdPlaylist,
+                    createdPlaylist
+                });
                 co_await api::setJsonSucceed<std::string>("ok", res).sendRes();
             }, [&] CO_FUNC {
                 co_await api::setJsonError("删除失败", res).sendRes();

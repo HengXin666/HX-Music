@@ -11,7 +11,9 @@ struct Wdf {
     }
 };
 
+// test
 auto sb___ = [] {
+    return 0;
     struct A {
         int a, b, c;
     };
@@ -35,5 +37,25 @@ auto sb___ = [] {
             db::FieldPair{&A::b, 1}
         )
     );
+
+    db::SQLiteDB db{"del.db"};
+    struct MyTable {
+        db::PrimaryKey<uint64_t> id;
+        std::string name;
+    };
+    db.createDatabase<MyTable>();
+    db.insertBy(db::FieldPair{
+        &MyTable::name, "张三"
+    });
+    db.insertBy(db::FieldPair{
+        &MyTable::name, "张三"
+    });
+    log::hxLog.info(db.queryAll<MyTable>());
+    db.updateBy<"where name = ?">(db::FieldPair{
+        &MyTable::name, "李四"
+    }).bind<true>(std::string{"张三"}).execOnThrow();
+    log::hxLog.info(db.queryAll<MyTable>());
+    db.deleteBy<MyTable>("where id = 1").execOnThrow();
+    log::hxLog.info(db.queryAll<MyTable>());
     return 0;
 }();
