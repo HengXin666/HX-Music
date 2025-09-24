@@ -115,42 +115,25 @@ public:
 
     // 更新歌单列表
     Q_INVOKABLE void updateAllPlaylistInfoList() {
-        if (_isShowCreated) {
-            PlaylistApi::selectUserCreatedAllPlaylist(
-            ).thenTry([this](auto t) {
-                if (!t) [[unlikely]] {
-                    MessageController::get().show<MsgType::Error>(
-                        "更新歌单简介列表失败:" + t.what());
-                    return;
+        (_isShowCreated 
+            ? PlaylistApi::selectUserCreatedAllPlaylist()
+            : PlaylistApi::selectUserSavedAllPlaylist()
+        ).thenTry([this](auto t) {
+            if (!t) [[unlikely]] {
+                MessageController::get().show<MsgType::Error>(
+                    "更新歌单简介列表失败:" + t.what());
+                return;
+            }
+            QMetaObject::invokeMethod(
+                QCoreApplication::instance(),
+                [this, infoList = t.move()] {
+                clear();
+                PlaylistController::get()._playListArr.clear();
+                for (auto const& info : infoList) {
+                    addData(info);
                 }
-                QMetaObject::invokeMethod(
-                    QCoreApplication::instance(),
-                    [this, infoList = t.move()] {
-                    clear();
-                    PlaylistController::get()._playListArr.clear();
-                    for (auto const& info : infoList) {
-                        addData(info);
-                    }
-                });
             });
-        } else {
-            PlaylistApi::selectUserSavedAllPlaylist(
-            ).thenTry([this](auto t) {
-                if (!t) [[unlikely]] {
-                    MessageController::get().show<MsgType::Error>(
-                        "更新歌单简介列表失败:" + t.what());
-                    return;
-                }
-                QMetaObject::invokeMethod(
-                    QCoreApplication::instance(),
-                    [this, infoList = t.move()] {
-                    clear();
-                    for (auto const& info : infoList) {
-                        addData(info);
-                    }
-                });
-            });
-        }
+        });
     }
 
     /**
@@ -195,7 +178,6 @@ public:
         const QModelIndex& destinationParent,
         int to
     ) override {
-        qDebug() << sourceParent << "-->" << destinationParent;
         if (count != 1 || sourceParent.isValid() || destinationParent.isValid())
             return false;
         if (from < 0 || from >= static_cast<int>(_playListArr.size()))
@@ -225,6 +207,23 @@ public:
 
     Q_INVOKABLE void setShowCreatedPlaylist(bool isShowCreated) {
         _isShowCreated = isShowCreated;
+    }
+
+    // 保存歌单顺序
+    Q_INVOKABLE void savePlaylist() const {
+        std::vector<uint64_t> idList;
+        for (auto const& v : _playListArr)
+            idList.emplace_back(v.id);
+        (_isShowCreated
+            ? PlaylistApi::updateCreatedPlaylistOrder(std::move(idList))
+            : PlaylistApi::updateSavedPlaylistOrder(std::move(idList))
+        ).thenTry([](container::Try<> t) {
+            if (!t) [[unlikely]] {
+                MessageController::get().show<MsgType::Error>(
+                    "保存歌单顺序失败: " + t.what()
+                );
+            }
+        });
     }
 
 private:

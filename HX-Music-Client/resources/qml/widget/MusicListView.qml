@@ -129,7 +129,7 @@ Item {
                 }
             }
 
-            // 拖拽区域 - 只在特定区域可拖拽 (比如左侧拖拽手柄)
+            // 拖拽区域 - 只在特定区域可拖拽
             MouseArea {
                 id: dragArea
                 width: 40
@@ -339,7 +339,8 @@ Item {
 
     // 更新拖拽位置
     function updateDragPosition(yPos) {
-        if (!isDragging) return;
+        if (!isDragging)
+            return;
 
         dragY = yPos;
 

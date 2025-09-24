@@ -285,11 +285,11 @@ public:
     }
 
     /**
-     * @brief 保存歌单接口, 仅本地歌单
+     * @brief 保存歌单接口, 同步歌曲顺序到服务端
      * @return Q_INVOKABLE 
      */
     Q_INVOKABLE void savePlaylist() {
-        PlaylistApi::insertMusic(
+        PlaylistApi::updatePlaylistMusicOrder(
             _id,
             [] {
                 std::vector<uint64_t> songIdList;
@@ -305,33 +305,14 @@ public:
                     if (!_t) [[unlikely]] {
                         MessageController::get().show<MsgType::Error>("插入歌曲失败: " + _t.what());
                     }
-                });
+                }
+            );
         });
         // 同步 now 的情况
         if (GlobalSingleton::get().guiPlaylist.id == GlobalSingleton::get().nowPlaylist.id) {
             GlobalSingleton::get().nowPlaylist.songList = GlobalSingleton::get().guiPlaylist.songList;
         }
         Q_EMIT SignalBusSingleton::get().listIndexChanged();
-
-        // decltype(GlobalSingleton::get().guiPlaylist.songList) newSongList;
-        // newSongList.reserve(_musicArr.size());
-        // for (auto const& it : _musicArr) {
-        //     newSongList.push_back({
-        //         0,
-        //         it.url.toStdString(),
-        //         it.title.toStdString(),
-        //         [&](){
-        //             std::vector<std::string> res;
-        //             for (auto const& it : it.artist) {
-        //                 res.emplace_back(it.toStdString());
-        //             }
-        //             return res;
-        //         }(),
-        //         it.album.toStdString()
-        //     });
-        // }
-        // GlobalSingleton::get().guiPlaylist.songList = std::move(newSongList);
-        // Q_EMIT SignalBusSingleton::get().savePlaylistSignal();
     }
 
     Q_INVOKABLE void clear() {

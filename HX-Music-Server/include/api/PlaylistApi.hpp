@@ -26,7 +26,7 @@
 #include <pojo/vo/PlaylistInfoVO.hpp>
 #include <pojo/vo/PlaylistInfoListVO.hpp>
 #include <pojo/vo/PlaylistVO.hpp>
-#include <pojo/vo/SongIdListVO.hpp>
+#include <pojo/vo/IdListVO.hpp>
 #include <interceptor/TokenInterceptor.hpp>
 #include <dao/MusicDAO.hpp>
 #include <dao/PlaylistDAO.hpp>
@@ -228,21 +228,49 @@ HX_SERVER_API_BEGIN(PlaylistApi) {
                 co_await api::setJsonError("歌曲删除失败", res).sendRes();
             });
         }, TokenInterceptor<PermissionEnum::RegularUser>{})
-        // 为歌单交换歌曲位置
-        .addEndpoint<POST>("/playlist/updateOrder/{id}", [=] ENDPOINT {
+        // 完整更新歌单歌曲顺序
+        .addEndpoint<POST>("/playlist/updateMusicOrder/{id}", [=] ENDPOINT {
             co_await api::coTryCatch([&] CO_FUNC {
-                auto listVO = co_await api::getVO<SongIdListVO>(req);
-                uint64_t id;
-                reflection::fromJson(id, req.getPathParam(0));
-                auto playlistDO = playlistDAO->at(id);
-                if (playlistDO.songIdList.size() != listVO.songList.size()) [[unlikely]] {
+                auto listVO = co_await api::getVO<IdListVO>(req);
+                auto id = req.getPathParam(0).to<uint64_t>();
+                auto songIdList = playlistDAO->at(id, &PlaylistDO::songIdList);
+                if (songIdList.size() != listVO.idList.size()) [[unlikely]] {
                     co_return co_await api::setJsonError("数据不一致, 请刷新", res).sendRes();
                 }
-                playlistDO.songIdList = std::move(listVO.songList);
-                playlistDAO->update(std::move(playlistDO));
+                playlistDAO->updateBy(id, db::FieldPair{&PlaylistDO::songIdList, listVO.idList});
                 co_await api::setJsonSucceed<std::string>("ok", res).sendRes();
             }, [&] CO_FUNC {
                 co_await api::setJsonError("调整歌曲位置失败", res).sendRes();
+            });
+        }, TokenInterceptor<PermissionEnum::RegularUser>{})
+        // 完整更新歌单顺序 (用户创建歌单)
+        .addEndpoint<POST>("/playlist/updateOrder/created", [=] ENDPOINT {
+            co_await api::coTryCatch([&] CO_FUNC {
+                auto listVO = co_await api::getVO<IdListVO>(req);
+                auto id = getTokenData(req).userId;
+                auto songIdList = userDAO->at(id, &UserDO::createdPlaylist);
+                if (songIdList.size() != listVO.idList.size()) [[unlikely]] {
+                    co_return co_await api::setJsonError("数据不一致, 请刷新", res).sendRes();
+                }
+                userDAO->updateBy(id, db::FieldPair{&UserDO::createdPlaylist, listVO.idList});
+                co_await api::setJsonSucceed<std::string>("ok", res).sendRes();
+            }, [&] CO_FUNC {
+                co_await api::setJsonError("调整歌单位置失败", res).sendRes();
+            });
+        }, TokenInterceptor<PermissionEnum::RegularUser>{})
+        // 完整更新歌单顺序 (用户创建歌单)
+        .addEndpoint<POST>("/playlist/updateOrder/saved", [=] ENDPOINT {
+            co_await api::coTryCatch([&] CO_FUNC {
+                auto listVO = co_await api::getVO<IdListVO>(req);
+                auto id = getTokenData(req).userId;
+                auto songIdList = userDAO->at(id, &UserDO::savedPlaylist);
+                if (songIdList.size() != listVO.idList.size()) [[unlikely]] {
+                    co_return co_await api::setJsonError("数据不一致, 请刷新", res).sendRes();
+                }
+                userDAO->updateBy(id, db::FieldPair{&UserDO::savedPlaylist, listVO.idList});
+                co_await api::setJsonSucceed<std::string>("ok", res).sendRes();
+            }, [&] CO_FUNC {
+                co_await api::setJsonError("调整歌单位置失败", res).sendRes();
             });
         }, TokenInterceptor<PermissionEnum::RegularUser>{})
     HX_ENDPOINT_END;

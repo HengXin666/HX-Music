@@ -24,10 +24,10 @@
 namespace HX {
 
 /**
- * @brief 歌曲id List JsonVO
+ * @brief 通用 id List JsonVO
  */
-struct SongIdListVO {
-    std::vector<uint64_t> songList;
+struct IdListVO {
+    std::vector<uint64_t> idList;
 };
 
 } // namespace HX

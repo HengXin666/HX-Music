@@ -241,12 +241,12 @@ struct PlaylistDO {
 - 参数描述: `id`-`歌单ID`; `idx`-`歌曲所在idx`
 - 返回值描述: `ok`
 
-#### 2.2.8 完整更新歌单顺序
+#### 2.2.8 完整更新歌单歌曲顺序
 
-> 接口描述: 完整更新歌单顺序
+> 接口描述: 完整更新歌单歌曲顺序
 - 请求方式: `POST`
-- 接口URL: `/playlist/updateOrder/{id}`
-- 参数描述: `Body` 传递 `Json`
+- 接口URL: `/playlist/updateMusicOrder/{id}`
+- 参数描述: `Body` 传递 `Json` songIdList
 - 返回值描述: `ok`
 
 ### 2.2.9 获取歌单简介
@@ -259,7 +259,27 @@ struct PlaylistDO {
 
 ### 2.2.10 获取用户创建歌单
 
+- /playlist/selectAll/created
+
 ### 2.2.11 获取用户收藏歌单
+
+- /playlist/selectAll/saved
+
+### 2.2.12 完整更新歌单顺序 (用户创建歌单)
+
+> 接口描述: 完整更新歌单歌曲顺序
+- 请求方式: `POST`
+- 接口URL: `/playlist/updateOrder/created`
+- 参数描述: `Body` 传递 `Json` playlistIdList
+- 返回值描述: `ok`
+
+### 2.2.13 完整更新歌单顺序 (用户收藏歌单)
+
+> 接口描述: 完整更新歌单歌曲顺序
+- 请求方式: `POST`
+- 接口URL: `/playlist/updateOrder/saved`
+- 参数描述: `Body` 传递 `Json` playlistIdList
+- 返回值描述: `ok`
 
 ### 2.3 歌词相关接口
 #### 2.3.1 获取歌曲歌词

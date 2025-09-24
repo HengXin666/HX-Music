@@ -28,7 +28,7 @@
 #include <pojo/vo/PlaylistInfoVO.hpp>
 #include <pojo/vo/PlaylistInfoListVO.hpp>
 #include <pojo/vo/PlaylistVO.hpp>
-#include <pojo/vo/SongIdListVO.hpp>
+#include <pojo/vo/IdListVO.hpp>
 
 namespace HX {
 
@@ -164,18 +164,17 @@ struct PlaylistApi {
     }
 
     /**
-     * @brief 交换歌单的歌曲
-     * @param playlistId 歌单id
-     * @param from 来源
-     * @param to 目的地
-     * @return container::FutureResult<container::Try<>> 
+     * @brief 完整的更新歌单的音乐的顺序
+     * @param playlistId 
+     * @param songIdList 
+     * @return container::FutureResult<> 
      */
-    static container::FutureResult<> insertMusic(
+    static container::FutureResult<> updatePlaylistMusicOrder(
         uint64_t playlistId, std::vector<uint64_t> songIdList
     ) {
         return NetSingleton::get().postReq(
-            "/playlist/updateOrder/" + std::to_string(playlistId),
-            SongIdListVO{std::move(songIdList)}
+            "/playlist/updateMusicOrder/" + std::to_string(playlistId),
+            IdListVO{std::move(songIdList)}
         ).thenTry([](container::Try<net::ResponseData> t) {
             api::checkTryAndStatusAndJsonVO<std::string>(std::move(t));
         });
@@ -193,6 +192,38 @@ struct PlaylistApi {
             + std::to_string(playlistId)
             + "/delMusic/"
             + std::to_string(idx)
+        ).thenTry([](container::Try<net::ResponseData> t) {
+            api::checkTryAndStatusAndJsonVO<std::string>(std::move(t));
+        });
+    }
+
+    /**
+     * @brief 完整更新歌单顺序 (用户创建歌单)
+     * @param idList 
+     * @return container::FutureResult<> 
+     */
+    static container::FutureResult<> updateCreatedPlaylistOrder(
+        std::vector<uint64_t> idList
+    ) {
+        return NetSingleton::get().postReq(
+            "/playlist/updateOrder/created",
+            IdListVO{std::move(idList)}
+        ).thenTry([](container::Try<net::ResponseData> t) {
+            api::checkTryAndStatusAndJsonVO<std::string>(std::move(t));
+        });
+    }
+
+    /**
+     * @brief 完整更新歌单顺序 (用户创建歌单)
+     * @param idList 
+     * @return container::FutureResult<> 
+     */
+    static container::FutureResult<> updateSavedPlaylistOrder(
+        std::vector<uint64_t> idList
+    ) {
+        return NetSingleton::get().postReq(
+            "/playlist/updateOrder/saved",
+            IdListVO{std::move(idList)}
         ).thenTry([](container::Try<net::ResponseData> t) {
             api::checkTryAndStatusAndJsonVO<std::string>(std::move(t));
         });
