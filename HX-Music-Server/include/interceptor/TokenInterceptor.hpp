@@ -80,6 +80,9 @@ struct TokenInterceptor {
             ans = false;
             co_await api::setJsonError("错误凭证", res).sendRes();
         });
+        // if (!ans) {
+        //     req.addHeaders("Connection", "close");
+        // }
         co_return ans;
     }
 };
