@@ -522,15 +522,6 @@ public:
             }
         ).template bind<true>(fmPair.dataView...);
     }
-
-    /**
-     * @brief 获取上一次行数变化
-     * @return int
-     */
-    int lastLineChange() const noexcept {
-        return ::sqlite3_changes(_db);
-    }
-
 private:
     ::sqlite3* _db{};
     std::map<std::size_t, internal::StmtCallChain> _sqlCache{};

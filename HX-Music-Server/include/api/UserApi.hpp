@@ -28,6 +28,7 @@
 #include <pojo/vo/UserAddVO.hpp>
 #include <pojo/vo/UserLoginVO.hpp>
 #include <pojo/vo/StrDataVO.hpp>
+#include <pojo/vo/UpdatePasswordVO.hpp>
 #include <utils/Uuid.hpp>
 #include <utils/MD5.hpp>
 
@@ -104,17 +105,23 @@ HX_SERVER_API_BEGIN(UserApi) {
                 if (!idOpt) {
                     co_return co_await api::setJsonError("用户名不存在", res).sendRes();
                 }
-                auto const& userDO = userDAO->at(*idOpt);
-                userLoginVO.password += userDO.salt;
-                if (utils::md5(userLoginVO.password) != userDO.password) {
+                auto [passwd, salt, loginUuid]
+                    = userDAO->at(
+                        *idOpt,
+                        &UserDO::password,
+                        &UserDO::salt,
+                        &UserDO::loggedInUuid
+                    );
+                userLoginVO.password += salt;
+                if (utils::md5(userLoginVO.password) != passwd) {
                     co_return co_await api::setJsonError("用户名或密码错误", res).sendRes();
                 }
                 // 计算凭证, 并且返回
                 auto nowTime = utils::Timestamp::getTimestamp();
                 co_await api::setJsonSucceed(
                     token::TokenApi::get().toToken<TokenData>({
-                        userDO.loggedInUuid,
-                        userDO.id,
+                        loginUuid,
+                        *idOpt,
                         nowTime,
                         nowTime + config::EffectiveDuration
                     }), res
@@ -126,11 +133,22 @@ HX_SERVER_API_BEGIN(UserApi) {
         // 修改密码
         .addEndpoint<POST>("/user/passwdUpdate", [=] ENDPOINT {
             co_await api::coTryCatch([&] CO_FUNC {
-                auto strVO = co_await api::getVO<StrDataVO>(req);
-                uint64_t id = getTokenData(req).userId;
+                auto updatePwdVO = co_await api::getVO<UpdatePasswordVO>(req);
+                auto id = getTokenData(req).userId;
+                auto [passwd, salt]
+                    = userDAO->at(
+                        id,
+                        &UserDO::password,
+                        &UserDO::salt
+                    );
+                updatePwdVO.oldPasswd += salt;
+                // 校验原密码
+                if (utils::md5(updatePwdVO.oldPasswd) != passwd) {
+                    co_return co_await api::setJsonError("密码错误", res).sendRes();
+                }
                 // 密码加盐
-                auto salt = utils::Uuid::makeV4();
-                strVO.data += salt;
+                auto newSalt = utils::Uuid::makeV4();
+                updatePwdVO.newPasswd += salt;
                 // 计算 MD5
                 auto userDO = userDAO->at(id);
                 userDAO->update<UserDO>({
@@ -138,7 +156,7 @@ HX_SERVER_API_BEGIN(UserApi) {
                     std::move(userDO.name),
                     std::move(userDO.signature),
                     std::move(salt),
-                    utils::md5(strVO.data), // 计算 MD5
+                    utils::md5(updatePwdVO.newPasswd ), // 计算 MD5
                     std::move(userDO.createdPlaylist),
                     std::move(userDO.savedPlaylist),
                     userDO.permissionLevel,
@@ -154,18 +172,13 @@ HX_SERVER_API_BEGIN(UserApi) {
             co_await api::coTryCatch([&] CO_FUNC {
                 auto strVO = co_await api::getVO<StrDataVO>(req);
                 uint64_t id = getTokenData(req).userId;
-                auto userDO = userDAO->at(id);
-                userDAO->update<UserDO>({
+                if (userDAO->atName(strVO.data)) {
+                    co_return co_await api::setJsonError("名称已被占用", res).sendRes();
+                }
+                userDAO->updateBy(
                     id,
-                    std::move(strVO.data),
-                    std::move(userDO.signature),
-                    std::move(userDO.salt),
-                    std::move(userDO.password),
-                    std::move(userDO.createdPlaylist),
-                    std::move(userDO.savedPlaylist),
-                    userDO.permissionLevel,
-                    std::move(userDO.loggedInUuid)
-                });
+                    db::FieldPair{&UserDO::name, strVO.data}
+                );
                 co_await api::setJsonSucceed<std::string>("ok", res).sendRes();
             }, [&] CO_FUNC {
                 co_await api::setJsonError("数据非法", res).sendRes();

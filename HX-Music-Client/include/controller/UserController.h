@@ -41,12 +41,17 @@ public:
         NetSingleton::get().setToken(
             GlobalSingleton::get().musicConfig.token
         );
+        testToken();
+    }
+
+    void testToken() {
         UserApi::testTokenReq().thenTry([this](auto t) {
             QMetaObject::invokeMethod(
                 QCoreApplication::instance(),
                 [this, _t = std::move(t)] {
                     if (!_t) {
                         MessageController::get().show<MsgType::Warning>("凭证失效, 请重新登录");
+                        logoutReq();
                         Q_EMIT SignalBusSingleton::get().gotoLoginViewSignal();
                     } else {
                         MessageController::get().show<MsgType::Info>("已登录");
@@ -109,6 +114,34 @@ public:
 
     Q_INVOKABLE bool isLoggedIn() const noexcept {
         return _isLogin;
+    }
+
+    // 修改用户名请求
+    Q_INVOKABLE void updateNameReq(QString name) {
+        UserApi::updateUserName(name.toStdString())
+            .thenTry([this, _name = std::move(name)](auto t) {
+                if (!t) [[unlikely]] {
+                    MessageController::get().show<MsgType::Error>("修改用户名失败: " + t.what());
+                    return;
+                }
+                setName(_name);
+                MessageController::get().show<MsgType::Success>("修改用户名成功");
+                Q_EMIT loginChanged();
+            });
+    }
+
+    // 修改密码请求
+    Q_INVOKABLE void updatePassword(QString oldPwd, QString newPwd) {
+        UserApi::updatePasswd(
+            oldPwd.toStdString(), newPwd.toStdString()
+        ).thenTry([this](auto t) {
+            if (!t) [[unlikely]] {
+                MessageController::get().show<MsgType::Error>("修改密码失败: " + t.what());
+                return;
+            }
+            MessageController::get().show<MsgType::Success>("修改密码成功");
+            testToken();
+        });
     }
 
 Q_SIGNALS:

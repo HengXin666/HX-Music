@@ -3,7 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs
 import HX.Music
-import "./internal"
+import "../widget/internal"
 
 Item {
     id: root
@@ -12,11 +12,6 @@ Item {
 
     property alias serverUrl: serverInput.text
     property alias autoCenterLyrics: autoCenterSwitch.checked
-
-    Rectangle {
-        anchors.fill: parent
-        color: "transparent"
-    }
 
     ScrollView {
         id: scrollArea
@@ -35,7 +30,7 @@ Item {
 
         ColumnLayout {
             id: contentLayout
-            width: scrollArea.width
+            width: parent.width
             spacing: 20
             anchors.margins: 20
 

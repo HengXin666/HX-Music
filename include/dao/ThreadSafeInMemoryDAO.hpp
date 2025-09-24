@@ -74,13 +74,11 @@ struct ThreadSafeInMemoryDAO {
         std::unique_lock _{_mtx};
         auto id = db::getFirstPrimaryKeyRef<T>(u);
         constexpr auto name = reflection::getMembersNames<T>()[db::GetFirstPrimaryKeyIndex<T>];
-        _db.update<"where ", meta::FixedString<name.size() + 1>{name}, "=?">(u)
+        auto& stmt = _db.update<"where ", meta::FixedString<name.size() + 1>{name}, "=?">(u)
             .template bind<true>(id)
             .execOnThrow();
         if constexpr (IsMustSucceed) {
-            if (_db.lastLineChange() == 0) [[unlikely]] {
-                throw std::runtime_error{"update By KeyId Fail: The data is" + log::formatString(u)};
-            }
+            stmt.getLastChanges().check();
         }
         return _map[id] = std::forward<U>(u);
     }
@@ -90,13 +88,11 @@ struct ThreadSafeInMemoryDAO {
     void updateBy(db::GetFirstPrimaryKeyType<T> id, db::FieldPair<MemberPtr>... mbPair) {
         std::unique_lock _{_mtx};
         constexpr auto name = reflection::getMembersNames<T>()[db::GetFirstPrimaryKeyIndex<T>];
-        _db.updateBy<"where ", meta::FixedString<name.size() + 1>{name}, "=?">(mbPair...)
+        auto& stmt = _db.updateBy<"where ", meta::FixedString<name.size() + 1>{name}, "=?">(mbPair...)
             .template bind<true>(id)
             .execOnThrow();
         if constexpr (IsMustSucceed) {
-            if (_db.lastLineChange() == 0) [[unlikely]] {
-                throw std::runtime_error{"update By KeyId Fail: The data is" + log::formatString(id)};
-            }
+            stmt.getLastChanges().check();
         }
         auto& data = _map[id];
         ((data.*(mbPair.ptr) = mbPair.dataView), ...);

@@ -332,7 +332,7 @@ struct PlaylistDO {
 > 接口描述: 修改密码, 修改密码后, 之前的凭证全部无效
 - 请求方式: `POST`
 - 接口URL: `/user/passwdUpdate`
-- 参数描述: json: str
+- 参数描述: json: [原密码, 新密码]
 - 返回值描述: ok
 
 ### 2.5.4 修改用户名

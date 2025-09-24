@@ -3,7 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import Qt5Compat.GraphicalEffects
-import "./internal"
+import "../widget/internal"
 import HX.Music
 
 Item {
@@ -95,6 +95,8 @@ Item {
                     onTextChanged: {
                         UserController.setName(text);
                     }
+                    onAccepted: loginButton.clicked()
+                    KeyNavigation.tab: passwordField
                     Connections {
                         target: UserController
                         function onNameChanged() {
@@ -119,6 +121,7 @@ Item {
                         UserController.logoutReq();
                         MessageController.showWarning("已退出登录");
                     }
+                    KeyNavigation.tab: loginButton
                     // 信号
                     Connections {
                         target: UserController
@@ -141,8 +144,14 @@ Item {
                     iconSource: "qrc:/icons/lock.svg"
                     placeholderText: "密码"
                     isPasswordMode: true
+                    clickableIconSource: "qrc:/icons/unlock.svg"
+                    onIconClicked: (isDefault) => {
+                        isPasswordMode = isDefault;
+                    }
+                    onAccepted: loginButton.clicked()
                 }
                 GlowButton {
+                    id: loginButton
                     Layout.alignment: Qt.AlignLeft
                     text: "Login"
                     baseColor: Theme.backgroundColor

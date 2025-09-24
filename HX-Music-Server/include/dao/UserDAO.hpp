@@ -62,11 +62,21 @@ struct UserDAO : public dao::ThreadSafeInMemoryDAO<UserDO> {
 
     template <typename... MemberPtr>
     void updateBy(db::GetFirstPrimaryKeyType<T> id, db::FieldPair<MemberPtr>... mbPair) {
-        Base::updateBy(id, mbPair...);
         if constexpr ((std::is_same_v<MemberPtr, decltype(&UserDO::name)> || ...)) {
-            // 没有打算支持
-            static_assert(false, "@todo");
+            (([&] <typename MP> (db::FieldPair<MP> mbp) {
+                if (mbp.ptr == &UserDO::name) {
+                    std::unique_lock _{_mtx};
+                    auto& t = _map[id];
+                    if (mbp.dataView != t.name) {
+                        _nameMapId.erase(t.name);
+                        _nameMapId.emplace(mbp.dataView, t.id);
+                    }
+                    return true;
+                }
+                return false;
+            }(mbPair)) || ...);
         }
+        Base::updateBy(id, mbPair...);
     }
 
     void updateLoginUuid(uint64_t id, std::string const& loginUuid) {

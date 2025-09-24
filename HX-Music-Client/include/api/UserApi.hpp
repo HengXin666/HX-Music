@@ -23,6 +23,8 @@
 
 #include <api/Api.hpp>
 #include <pojo/vo/UserLoginVO.hpp>
+#include <pojo/vo/StrDataVO.hpp>
+#include <pojo/vo/UpdatePasswordVO.hpp>
 
 namespace HX {
 
@@ -48,6 +50,24 @@ struct UserApi {
             NetSingleton::get().setToken(
                 GlobalSingleton::get().musicConfig.token = std::move(token)
             );
+        });
+    }
+
+    // 修改用户名
+    static container::FutureResult<> updateUserName(std::string name) {
+        return NetSingleton::get().postReq(
+            "/user/nameUpdate", StrDataVO{std::move(name)}
+        ).thenTry([](auto t) {
+            api::checkTryAndStatusAndJsonVO<std::string>(std::move(t));
+        });
+    }
+
+    // 修改密码
+    static container::FutureResult<> updatePasswd(std::string oldPwd, std::string newPWd) {
+        return NetSingleton::get().postReq(
+            "/user/passwdUpdate", UpdatePasswordVO{std::move(oldPwd), std::move(newPWd)}
+        ).thenTry([](auto t) {
+            api::checkTryAndStatusAndJsonVO<std::string>(std::move(t));
         });
     }
 };

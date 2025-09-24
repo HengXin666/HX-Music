@@ -8,6 +8,7 @@ import HX.Music
 import "./widget"
 import "./widget/internal"
 import "./data"
+import "./view"
 import "./window"
 
 BorderlessWindow {
@@ -258,14 +259,36 @@ BorderlessWindow {
                                     }
                                 }
                                 SideNavItem {
-                                    id: aboutButton
+                                    id: userButton
                                     Layout.preferredWidth: 50
-                                    text: "关于"
+                                    text: "用户"
                                     textColor: Theme.textColor
                                     highlightColor: Theme.highlightingColor
                                     checked: settingStackView.currentIndex === 2
                                     onClicked: {
                                         settingStackView.currentIndex = 2;
+                                    }
+                                }
+                                SideNavItem {
+                                    id: backendButton
+                                    Layout.preferredWidth: 50
+                                    text: "后端"
+                                    textColor: Theme.textColor
+                                    highlightColor: Theme.highlightingColor
+                                    checked: settingStackView.currentIndex === 3
+                                    onClicked: {
+                                        settingStackView.currentIndex = 3;
+                                    }
+                                }
+                                SideNavItem {
+                                    id: aboutButton
+                                    Layout.preferredWidth: 50
+                                    text: "关于"
+                                    textColor: Theme.textColor
+                                    highlightColor: Theme.highlightingColor
+                                    checked: settingStackView.currentIndex === 4
+                                    onClicked: {
+                                        settingStackView.currentIndex = 4;
                                     }
                                 }
                             }
@@ -278,6 +301,8 @@ BorderlessWindow {
 
                                 LoginView {}
                                 SettingView {}
+                                UserView {}
+                                BackendView {}
                                 Rectangle {
                                     // 关于页面 @todo
                                     color: "transparent"
