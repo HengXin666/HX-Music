@@ -33,6 +33,9 @@ Item {
                     radius: avatarImage.width / 2
                 }
             }
+            cache: true
+            asynchronous: true
+            mipmap: true 
             // 信号
             Connections {
                 target: UserController

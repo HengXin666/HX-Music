@@ -58,7 +58,7 @@ HX_SERVER_API_BEGIN(UserApi) {
             });
         }, TokenInterceptor<PermissionEnum::ReadOnlyUser>{})
         // 修改头像
-        .addEndpoint<GET>("/user/avatar/update", [=] ENDPOINT {
+        .addEndpoint<POST>("/user/avatar/update", [=] ENDPOINT {
             co_await api::coTryCatch([&] CO_FUNC {
                 co_await req.saveToFile(
                     "./file/avatar/"

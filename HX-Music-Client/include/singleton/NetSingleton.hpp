@@ -75,6 +75,17 @@ struct NetSingleton {
         );
     }
 
+    template <net::HttpMethod Method>
+    container::FutureResult<container::Try<net::ResponseData>> pushFile(std::string url, std::string filePath) {
+        log::hxLog.debug("http -> uploadChunked:", Method, _backendUrl + url, "file:", filePath);
+        return _cliPool.uploadChunked<Method>(
+            std::move(url),
+            std::move(filePath),
+            net::HttpContentType::OctetStream,
+            {{std::string{config::HttpHeadTokenKay}, _token}}
+        );
+    }
+
     template <
         typename Lambda, 
         typename Res = coroutine::AwaiterReturnValue<std::invoke_result_t<Lambda, net::WebSocketClient>>

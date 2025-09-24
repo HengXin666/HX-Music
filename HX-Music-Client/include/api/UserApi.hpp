@@ -70,6 +70,16 @@ struct UserApi {
             api::checkTryAndStatusAndJsonVO<std::string>(std::move(t));
         });
     }
+
+    // 上传头像
+    static container::FutureResult<> updateAvatarReq(std::string path) {
+        return NetSingleton::get().pushFile<net::HttpMethod::POST>(
+            "/user/avatar/update",
+            std::move(path)
+        ).thenTry([](auto t) {
+            api::checkTryAndStatusAndJsonVO<std::string>(std::move(t));
+        });
+    }
 };
 
 } // namespace HX

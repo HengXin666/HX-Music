@@ -144,6 +144,22 @@ public:
         });
     }
 
+    // 上传头像
+    Q_INVOKABLE void updateAvatarReq(QString const& path) {
+        std::filesystem::path filePath{path.toStdString()};
+        if (auto ext = filePath.extension(); ext != ".png" && ext != ".jpg" && ext != ".jpeg") {
+            MessageController::get().show<MsgType::Error>("上传头像失败: 文件不是图片");
+            return;
+        }
+        UserApi::updateAvatarReq(std::move(filePath).string())
+            .thenTry([this](auto t) {
+                if (!t) [[unlikely]] {
+                    MessageController::get().show<MsgType::Error>("上传头像失败: " + t.what());
+                    return;
+                }
+                Q_EMIT loginChanged();
+            });
+    }
 Q_SIGNALS:
     void backendUrlChanged();
     void nameChanged();

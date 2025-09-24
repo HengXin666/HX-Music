@@ -301,7 +301,9 @@ BorderlessWindow {
 
                                 LoginView {}
                                 SettingView {}
-                                UserView {}
+                                UserView {
+                                    anchors.fill: parent
+                                }
                                 BackendView {}
                                 Rectangle {
                                     // 关于页面 @todo
