@@ -388,7 +388,7 @@ public:
 
     // 爬取歌曲歌词
     Q_INVOKABLE void crawlKaRaOKAssLyrics(uint64_t id) {
-        LyricsApi::crawlKaRaOKAssLyrics(id)
+        LyricsApi::crawlKaRaOKAssLyricsByWs(id)
             .thenTry([=](auto t) {
                 if (!t) [[unlikely]] {
                     MessageController::get().show<MsgType::Error>("爬取歌词失败:" + t.what());

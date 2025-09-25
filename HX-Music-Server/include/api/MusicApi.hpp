@@ -253,7 +253,7 @@ HX_SERVER_API_BEGIN(MusicApi) {
                 *task.atWork = false;
             }
             co_await file.close();
-        })
+        }, TokenInterceptor<PermissionEnum::RegularUser>{})
         // 分页查找歌曲
         .addEndpoint<POST>("/music/select", [=] ENDPOINT {
             co_await api::coTryCatch([&] CO_FUNC {

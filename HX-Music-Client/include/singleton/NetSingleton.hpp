@@ -99,7 +99,8 @@ struct NetSingleton {
         log::hxLog.debug("ws -> get:", _url);
         return _cliPool.wsLoop(
             std::move(_url),
-            std::forward<Lambda>(lambda)
+            std::forward<Lambda>(lambda),
+            {{std::string{config::HttpHeadTokenKay}, _token}}
         );
     }
 
