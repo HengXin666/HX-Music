@@ -160,10 +160,60 @@ public:
                 Q_EMIT loginChanged();
             });
     }
+
+    // 添加用户
+    Q_INVOKABLE void addUser(
+        QString const& name,
+        QString const& passwd,
+        PermissionEnum level
+    ) {
+        UserApi::addUser(name.toStdString(), passwd.toStdString(), level)
+            .thenTry([](auto t) {
+                if (!t) [[unlikely]] {
+                    MessageController::get().show<MsgType::Error>("添加用户失败: " + t.what());
+                } else {
+                    MessageController::get().show<MsgType::Success>("添加用户成功");
+                }
+            });
+    }
+
+    // 获取用户列表
+    Q_INVOKABLE void getUserInfoList() {
+        UserApi::selectAllUser().thenTry([this](container::Try<std::vector<UserInfo>> t) {
+            if (!t) [[unlikely]] {
+                MessageController::get().show<MsgType::Error>("获取用户列表: " + t.what());
+                return;
+            }
+            QVariantList res;
+            for (auto&& v : t.move()) {
+                QVariantMap data;
+                data["userId"] = QString::number(v.userId);
+                data["name"] = QString::fromStdString(v.name);
+                data["createdPlaylistLen"] = QString::number(v.createdPlaylistLen);
+                data["savedPlaylistLen"] = QString::number(v.savedPlaylistLen);
+                data["permissionLevel"] = QString::number(static_cast<uint8_t>(v.permissionLevel));
+                res.append(data);
+            }
+            Q_EMIT updateUserInfoList(std::move(res));
+        });
+    }
+
+    // 删除用户
+    Q_INVOKABLE void delUser(uint64_t id) {
+        UserApi::delUserById(id)
+            .thenTry([](auto t) {
+                if (!t) [[unlikely]] {
+                    MessageController::get().show<MsgType::Error>("删除用户失败: " + t.what());
+                } else {
+                    MessageController::get().show<MsgType::Success>("删除用户成功");
+                }
+            });
+    }
 Q_SIGNALS:
     void backendUrlChanged();
     void nameChanged();
     void loginChanged();
+    void updateUserInfoList(QVariantList list);
 
 private:
     bool _isLogin = false;

@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -211,6 +212,426 @@ Item {
                     }
                     onClicked: {
                         logArea.text = "";
+                    }
+                }
+            }
+
+            // 添加用户
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                // 自定义标题
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 4
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 1
+                        color: Theme.paratextColor
+                        opacity: 0.3
+                    }
+
+                    Text {
+                        text: "添加用户"
+                        font.pixelSize: 18
+                        font.bold: true
+                        color: Theme.highlightingColor
+                    }
+                }
+
+                // 添加用户
+                ColumnLayout {
+                    spacing: 8
+                    Layout.alignment: Qt.AlignLeft
+
+                    IconTextField {
+                        id: userNameField
+                        Layout.alignment: Qt.AlignLeft
+                        Layout.preferredWidth: 230
+                        iconDefaultColor: Theme.textColor
+                        iconHighlightColor: Theme.highlightingColor
+                        borderHighlightColor: Theme.highlightingColor
+                        iconSource: "qrc:/icons/user.svg"
+                        placeholderText: "用户名"
+                        KeyNavigation.tab: password1Field
+                        onAccepted: password2Field.accepted()
+                    }
+                    IconTextField {
+                        id: password1Field
+                        Layout.alignment: Qt.AlignLeft
+                        Layout.preferredWidth: 230
+                        iconDefaultColor: Theme.textColor
+                        iconHighlightColor: Theme.highlightingColor
+                        borderHighlightColor: Theme.highlightingColor
+                        iconSource: "qrc:/icons/lock.svg"
+                        placeholderText: "密码"
+                        isPasswordMode: true
+                        clickableIconSource: "qrc:/icons/unlock.svg"
+                        onIconClicked: (isDefault) => {
+                            isPasswordMode = isDefault;
+                        }
+                        KeyNavigation.tab: password2Field
+                        onAccepted: password2Field.accepted()
+                    }
+                    IconTextField {
+                        id: password2Field
+                        Layout.alignment: Qt.AlignLeft
+                        Layout.preferredWidth: 230
+                        iconDefaultColor: Theme.textColor
+                        iconHighlightColor: Theme.highlightingColor
+                        borderHighlightColor: Theme.highlightingColor
+                        iconSource: "qrc:/icons/lock.svg"
+                        placeholderText: "再次输入密码"
+                        isPasswordMode: true
+                        clickableIconSource: "qrc:/icons/unlock.svg"
+                        onIconClicked: (isDefault) => {
+                            isPasswordMode = isDefault;
+                        }
+                        onAccepted: {
+                            if (userNameField.text.length === 0) {
+                                MessageController.showError("用户名不能为空");
+                                return;
+                            }
+                            if (password1Field.text.length === 0) {
+                                MessageController.showError("密码不能为空");
+                                return;
+                            }
+                            if (password1Field.text !== password2Field.text) {
+                                MessageController.showError("两次输入的新密码不一致");
+                                return;
+                            }
+                            UserController.addUser(userNameField.text, password1Field.text, levelComboBox.currentIndex);
+                        }
+                    }
+
+                    RowLayout {
+                        spacing: 8
+                        Layout.alignment: Qt.AlignLeft
+                        
+                        Label {
+                            text: "用户权限"
+                            color: Theme.textColor
+                            font.pixelSize: 16
+                        }
+
+                        ComboBox {
+                            id: levelComboBox
+                            model: ["管理员", "普通用户", "只读用户"]
+                        }
+                    }
+
+                    Button {
+                        text: "新增用户"
+                        background: Rectangle {
+                            color: Theme.backgroundColor
+                            radius: 6
+                            border.width: 1
+                            border.color: Theme.paratextColor
+                        }
+                        onClicked: password2Field.accepted()
+                    }
+                }
+            }
+
+            // 删除用户
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                spacing: 8
+
+                // 自定义标题
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 4
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 1
+                        color: Theme.paratextColor
+                        opacity: 0.3
+                    }
+
+                    Text {
+                        text: "添加用户"
+                        font.pixelSize: 18
+                        font.bold: true
+                        color: Theme.highlightingColor
+                    }
+                }
+
+                // 添加用户
+                ColumnLayout {
+                    spacing: 12
+                    Layout.alignment: Qt.AlignLeft
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+
+                    RowLayout {
+                        Button {
+                            text: "刷新列表"
+                            Layout.alignment: Qt.AlignLeft
+                            background: Rectangle {
+                                color: Theme.backgroundColor
+                                radius: 6
+                                border.width: 1
+                                border.color: Theme.paratextColor
+                            }
+                            contentItem: Text {
+                                text: parent.text
+                                font.pixelSize: 14
+                                color: Theme.textColor
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                            }
+                            onClicked: userListView.refreshUserList()
+                        }
+                        // 空状态提示
+                        Label {
+                            text: `用户总数: ${userListView.count}`
+                            color: Theme.textColor
+                            font.pixelSize: 16
+                        }
+                    }
+
+                    Rectangle {
+                        Layout.preferredWidth: root.width - 20
+                        Layout.preferredHeight: 300
+                        radius: 8
+                        color: Theme.backgroundColor
+
+                        // 表头
+                        RowLayout {
+                            id: tableHead
+                            spacing: 5
+                            height: 30
+
+                            Text {
+                                text: "用户ID"
+                                font.pixelSize: 14
+                                font.bold: true
+                                color: Theme.textColor
+                                Layout.preferredWidth: 80
+                                elide: Text.ElideRight
+                                verticalAlignment: Text.AlignVCenter
+                                horizontalAlignment: Text.AlignHCenter
+                            }
+
+                            Text {
+                                text: "用户名"
+                                font.pixelSize: 14
+                                font.bold: true
+                                color: Theme.textColor
+                                Layout.preferredWidth: 240
+                                elide: Text.ElideRight
+                                verticalAlignment: Text.AlignVCenter
+                                horizontalAlignment: Text.AlignHCenter
+                            }
+
+                            Text {
+                                text: "创建歌单数量"
+                                font.pixelSize: 14
+                                font.bold: true
+                                color: Theme.textColor
+                                Layout.preferredWidth: 100
+                                elide: Text.ElideRight
+                                verticalAlignment: Text.AlignVCenter
+                                horizontalAlignment: Text.AlignHCenter
+                            }
+
+                            Text {
+                                text: "收藏歌单数量"
+                                font.pixelSize: 14
+                                font.bold: true
+                                color: Theme.textColor
+                                Layout.alignment: Qt.AlignCenter
+                                Layout.preferredWidth: 100
+                                elide: Text.ElideRight
+                                verticalAlignment: Text.AlignVCenter
+                                horizontalAlignment: Text.AlignHCenter
+                            }
+
+                            Text {
+                                text: "权限级别"
+                                font.pixelSize: 14
+                                font.bold: true
+                                color: Theme.textColor
+                                Layout.preferredWidth: 100
+                                elide: Text.ElideRight
+                                verticalAlignment: Text.AlignVCenter
+                                horizontalAlignment: Text.AlignHCenter
+                            }
+
+                            Item {
+                                Layout.fillWidth: true
+                            }
+
+                            Text {
+                                text: "操作"
+                                font.pixelSize: 14
+                                font.bold: true
+                                color: Theme.textColor
+                                Layout.preferredWidth: 80
+                                elide: Text.ElideRight
+                                verticalAlignment: Text.AlignVCenter
+                                horizontalAlignment: Text.AlignHCenter
+                            }
+                        }
+
+                        // 用户列表
+                        ListView {
+                            id: userListView
+                            clip: true
+                            spacing: 5
+                            anchors.top: tableHead.bottom
+                            anchors.topMargin: 5
+                            anchors.leftMargin: 8
+                            anchors.rightMargin: 8
+                            anchors.bottomMargin: 8
+                            width: parent.width - 2 * anchors.leftMargin
+                            height: 300
+
+                            model: ListModel {
+                                id: userListModel
+                            }
+                            
+                            ScrollBar.vertical: ScrollBar {
+                                policy: ScrollBar.AsNeeded
+                                width: 12
+                            }
+
+                            delegate: Rectangle {
+                                id: delegateRoot
+                                required property int userId
+                                required property string name
+                                required property int createdPlaylistLen
+                                required property int savedPlaylistLen
+                                required property int permissionLevel
+                                required property int index
+                                width: userListView.width
+                                height: 36
+                                color: "transparent"
+
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.margins: 8
+                                    spacing: 8
+
+                                    Text {
+                                        text: `[${delegateRoot.userId}]`
+                                        font.pixelSize: 14
+                                        color: Theme.textColor
+                                        elide: Text.ElideRight
+                                        verticalAlignment: Text.AlignVCenter
+                                        Layout.preferredWidth: 80
+                                    }
+
+                                    Text {
+                                        text: delegateRoot.name
+                                        font.pixelSize: 14
+                                        color: Theme.textColor
+                                        elide: Text.ElideRight
+                                        verticalAlignment: Text.AlignVCenter
+                                        Layout.preferredWidth: 240
+                                    }
+
+                                    Text {
+                                        text: delegateRoot.createdPlaylistLen
+                                        font.pixelSize: 14
+                                        color: Theme.textColor
+                                        elide: Text.ElideRight
+                                        verticalAlignment: Text.AlignVCenter
+                                        horizontalAlignment: Text.AlignHCenter
+                                        Layout.preferredWidth: 100
+                                    }
+
+                                    Text {
+                                        text: delegateRoot.savedPlaylistLen
+                                        font.pixelSize: 14
+                                        color: Theme.textColor
+                                        elide: Text.ElideRight
+                                        verticalAlignment: Text.AlignVCenter
+                                        horizontalAlignment: Text.AlignHCenter
+                                        Layout.preferredWidth: 100
+                                    }
+
+                                    Text {
+                                        text: {
+                                            switch (delegateRoot.permissionLevel) {
+                                                case 0: return "管理员";
+                                                case 1: return "普通用户";
+                                                case 2: return "只读用户";
+                                                default: return "未知";
+                                            }
+                                        }
+                                        font.pixelSize: 14
+                                        color: {
+                                            switch (delegateRoot.permissionLevel) {
+                                                case 0: return "#ff6b6b"; // 红色表示管理员
+                                                case 1: return Theme.textColor;
+                                                case 2: return "#4ecdc4"; // 青色表示只读用户
+                                                default: return Theme.textColor;
+                                            }
+                                        }
+                                        elide: Text.ElideRight
+                                        verticalAlignment: Text.AlignVCenter
+                                        horizontalAlignment: Text.AlignHCenter
+                                        Layout.preferredWidth: 100
+                                    }
+
+                                    Button {
+                                        text: "删除"
+                                        Layout.preferredWidth: 80
+                                        background: Rectangle {
+                                            color: parent.hovered ? "#ff6b6b" : Theme.backgroundColor
+                                            radius: 4
+                                            border.width: 1
+                                            border.color: parent.hovered ? "#ff6b6b" : Theme.paratextColor
+                                        }
+                                        contentItem: Text {
+                                            text: parent.text
+                                            font.pixelSize: 12
+                                            color: parent.hovered ? "white" : Theme.textColor
+                                            horizontalAlignment: Text.AlignHCenter
+                                            verticalAlignment: Text.AlignVCenter
+                                        }
+                                        onClicked: {
+                                            // MessageController.showWarning(`真的要删除 [${delegateRoot.name}] 吗? 5 秒内再次点击删除以删除用户!`);
+                                            UserController.delUser(delegateRoot.userId);
+                                        }
+                                    }
+                                }
+                            }
+
+                            function refreshUserList() {
+                                UserController.getUserInfoList();
+                            }
+
+                            Component.onCompleted: {
+                                Qt.callLater(() => refreshUserList());
+                            }
+
+                            Connections {
+                                target: UserController
+                                function onUpdateUserInfoList(list) {
+                                    userListModel.clear();
+                                    
+                                    for (let i = 0; i < list.length; ++i) {
+                                        const v = list[i];
+                                        userListModel.append({
+                                            userId: parseInt(v.userId),
+                                            name: v.name,
+                                            createdPlaylistLen: parseInt(v.createdPlaylistLen),
+                                            savedPlaylistLen: parseInt(v.savedPlaylistLen),
+                                            permissionLevel: parseInt(v.permissionLevel)
+                                        });
+                                    }
+
+                                    console.log("size: ", userListModel.count);
+                                }
+                            }
+                        }
                     }
                 }
             }

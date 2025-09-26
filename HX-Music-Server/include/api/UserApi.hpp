@@ -29,6 +29,7 @@
 #include <pojo/vo/UserLoginVO.hpp>
 #include <pojo/vo/StrDataVO.hpp>
 #include <pojo/vo/UpdatePasswordVO.hpp>
+#include <pojo/vo/UserInfoListVO.hpp>
 #include <utils/Uuid.hpp>
 #include <utils/MD5.hpp>
 
@@ -184,6 +185,36 @@ HX_SERVER_API_BEGIN(UserApi) {
                 co_await api::setJsonError("数据非法", res).sendRes();
             });
         }, TokenInterceptor<PermissionEnum::RegularUser>{})
+        // 删除用户
+        .addEndpoint<POST, DEL>("/user/del/{id}", [=] ENDPOINT {
+            co_await api::coTryCatch([&] CO_FUNC {
+                auto id = req.getPathParam(0).to<uint64_t>();
+                if (id == getTokenData(req).userId) {
+                    co_return co_await api::setJsonError("不能删除自己", res).sendRes();
+                }
+                userDAO->del(id);
+                co_await api::setJsonSucceed<std::string>("ok", res).sendRes();
+            }, [&] CO_FUNC {
+                co_await api::setJsonError("数据非法, 用户不存在", res).sendRes();
+            });
+        }, TokenInterceptor<PermissionEnum::Administrator>{})
+        // 获取用户列表
+        .addEndpoint<GET>("/user/selectAll", [=] ENDPOINT {
+            auto list = userDAO->lockSelect([](UserDAO::MapType const& mp) {
+                std::vector<UserInfoVO> list;
+                for (auto const& [_, v] : mp) {
+                    list.emplace_back(
+                        v.id,
+                        v.name,
+                        v.createdPlaylist.size(),
+                        v.savedPlaylist.size(),
+                        v.permissionLevel
+                    );
+                }
+                return list;
+            });
+            co_await api::setJsonSucceed(UserInfoListVO{std::move(list)}, res).sendRes();
+        }, TokenInterceptor<PermissionEnum::Administrator>{})
     HX_ENDPOINT_END;
 } HX_SERVER_API_END;
 

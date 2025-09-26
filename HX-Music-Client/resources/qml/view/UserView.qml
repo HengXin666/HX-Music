@@ -228,7 +228,7 @@ Item {
                         isPasswordMode = isDefault;
                     }
                     KeyNavigation.tab: password1Field
-                    onAccepted: password2Field.accepted();
+                    onAccepted: password2Field.accepted()
                 }
                 IconTextField {
                     id: password1Field
@@ -245,36 +245,52 @@ Item {
                         isPasswordMode = isDefault;
                     }
                     KeyNavigation.tab: password2Field
-                    onAccepted: password2Field.accepted();
+                    onAccepted: password2Field.accepted()
                 }
-                IconTextField {
-                    id: password2Field
+                RowLayout {
+                    spacing: 8
                     Layout.alignment: Qt.AlignLeft
-                    Layout.preferredWidth: 230
-                    iconDefaultColor: Theme.textColor
-                    iconHighlightColor: Theme.highlightingColor
-                    borderHighlightColor: Theme.highlightingColor
-                    iconSource: "qrc:/icons/lock.svg"
-                    placeholderText: "再次输入新密码"
-                    isPasswordMode: true
-                    clickableIconSource: "qrc:/icons/unlock.svg"
-                    onIconClicked: (isDefault) => {
-                        isPasswordMode = isDefault;
+
+                    IconTextField {
+                        id: password2Field
+                        Layout.alignment: Qt.AlignLeft
+                        Layout.preferredWidth: 230
+                        iconDefaultColor: Theme.textColor
+                        iconHighlightColor: Theme.highlightingColor
+                        borderHighlightColor: Theme.highlightingColor
+                        iconSource: "qrc:/icons/lock.svg"
+                        placeholderText: "再次输入新密码"
+                        isPasswordMode: true
+                        clickableIconSource: "qrc:/icons/unlock.svg"
+                        onIconClicked: (isDefault) => {
+                            isPasswordMode = isDefault;
+                        }
+                        onAccepted: {
+                            if (oldPasswordField.text.length === 0) {
+                                MessageController.showError("旧密码不能为空");
+                                return;
+                            }
+                            if (password1Field.text.length === 0) {
+                                MessageController.showError("新密码不能为空");
+                                return;
+                            }
+                            if (password1Field.text !== password2Field.text) {
+                                MessageController.showError("两次输入的新密码不一致");
+                                return;
+                            }
+                            UserController.updatePassword(oldPasswordField.text, password1Field.text);
+                        }
                     }
-                    onAccepted: {
-                        if (oldPasswordField.text.length === 0) {
-                            MessageController.showError("旧密码不能为空");
-                            return;
+
+                    Button {
+                        text: "修改"
+                        background: Rectangle {
+                            color: Theme.backgroundColor
+                            radius: 6
+                            border.width: 1
+                            border.color: Theme.paratextColor
                         }
-                        if (password1Field.text.length === 0) {
-                            MessageController.showError("新密码不能为空");
-                            return;
-                        }
-                        if (password1Field.text !== password2Field.text) {
-                            MessageController.showError("两次输入的新密码不一致");
-                            return;
-                        }
-                        UserController.updatePassword(oldPasswordField.text, password1Field.text);
+                        onClicked: password2Field.accepted()
                     }
                 }
             }

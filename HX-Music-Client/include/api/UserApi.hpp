@@ -25,6 +25,8 @@
 #include <pojo/vo/UserLoginVO.hpp>
 #include <pojo/vo/StrDataVO.hpp>
 #include <pojo/vo/UpdatePasswordVO.hpp>
+#include <pojo/vo/UserAddVO.hpp>
+#include <pojo/UserInfo.hpp>
 
 namespace HX {
 
@@ -38,6 +40,20 @@ struct UserApi {
             .thenTry([](auto t) {
                 api::checkTryAndStatusAndJsonVO<std::string>(std::move(t));
             });
+    }
+
+    // 添加用户
+    static container::FutureResult<> addUser(
+        std::string name,
+        std::string passwd,
+        PermissionEnum level
+    ) {
+        return NetSingleton::get().postReq(
+            "/user/add",
+            UserAddVO{std::move(name), std::move(passwd), level}
+        ).thenTry([](auto t) {
+            api::checkTryAndStatusAndJsonVO<std::string>(std::move(t));
+        });
     }
 
     // 登录
@@ -78,6 +94,24 @@ struct UserApi {
             std::move(path)
         ).thenTry([](auto t) {
             api::checkTryAndStatusAndJsonVO<std::string>(std::move(t));
+        });
+    }
+
+    // 删除用户
+    static container::FutureResult<> delUserById(uint64_t id) {
+        return NetSingleton::get().delReq(
+            "/user/del/" + std::to_string(id)
+        ).thenTry([](auto t) {
+            api::checkTryAndStatusAndJsonVO<std::string>(std::move(t));
+        });
+    }
+
+    // 获取用户列表
+    static container::FutureResult<std::vector<UserInfo>> selectAllUser() {
+        return NetSingleton::get().getReq(
+            "/user/selectAll"
+        ).thenTry([](auto t) {
+            return api::checkTryAndStatusAndJsonVO<UserInfoListVO>(std::move(t)).list;
         });
     }
 };

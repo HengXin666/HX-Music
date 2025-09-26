@@ -82,7 +82,11 @@ public:
         _assParse.setFrameSize(1920, 1080);
         {
             auto buf = internal::readQrcFile(":default/default.ass");
-            _assParse.readMemory({buf.data(), static_cast<std::size_t>(buf.size())});
+            _assParse = preprocessLyricBoundingBoxes(
+                0,
+                10000,
+                {buf.data(), static_cast<std::size_t>(buf.size())}
+            );
         }
 
         // 加载配置文件
@@ -133,7 +137,11 @@ public:
                 } else {
                     {
                         auto buf = internal::readQrcFile(":default/loading.ass");
-                        _assParse.readMemory({buf.data(), static_cast<std::size_t>(buf.size())});
+                        _assParse = preprocessLyricBoundingBoxes(
+                            0,
+                            10000,
+                            {buf.data(), static_cast<std::size_t>(buf.size())}
+                        );
                     }
                     renderAFrameInstantly();
                     log::hxLog.debug("加载歌词:", info->getId());
