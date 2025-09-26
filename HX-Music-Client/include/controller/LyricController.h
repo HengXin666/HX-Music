@@ -397,6 +397,15 @@ public:
                 MessageController::get().show<MsgType::Info>("成功获取到歌词!" + std::to_string(id));
             });
     }
+
+    // 扫描音乐库, 并且爬取歌词
+    Q_INVOKABLE void startScan() {
+        LyricsApi::startScan([](std::string msg) {
+            Q_EMIT SignalBusSingleton::get().backendViewLogUpdated(
+                QString::fromStdString(std::move(msg))
+            );
+        });
+    }
 Q_SIGNALS:
     void updateLyriced();
 

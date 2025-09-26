@@ -192,4 +192,12 @@ coroutine::Task<> coTryCatch(MainLambda main, ErrLambda err) {
     }
 }
 
+inline coroutine::Task<> sendTextNoTry(net::WebSocketServer& ws, std::string msg) {
+    try {
+        co_await ws.sendText(std::move(msg));
+    } catch (...) {
+        ;
+    }
+}
+
 } // namespace HX::api

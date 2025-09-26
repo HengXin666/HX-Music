@@ -79,7 +79,7 @@ public:
             py::module myscript = py::module::import("main");
             // 获取 py 类
             _kaRaOKAss = myscript.attr("KaRaOKAss")();
-            if (!_kaRaOKAss || _kaRaOKAss.is_none()) {
+            if (!_kaRaOKAss || _kaRaOKAss.is_none()) [[unlikely]] {
                 throw std::runtime_error("KaRaOKAss ctor failed");
             }
         }).wait();
@@ -110,22 +110,6 @@ public:
      * @param absolutePath 本地歌曲的绝对路径
      * @param outputPath 输出路径
      */
-    ToKaRaOKAss& _findLyricsFromNet(
-        std::filesystem::path const& absolutePath,
-        std::filesystem::path const& outputPath
-    ) {
-        _pool.addTask([=, this]() {
-            auto& [_, _kaRaOKAss] = _pyData.get<0>();
-            _kaRaOKAss.attr("findLyricsFromNet")(absolutePath.string(), outputPath.string(), 0);
-        }).wait();
-        return *this;
-    }
-
-    /**
-     * @brief 从本地文件在网络上匹配歌词并保存到指定路径
-     * @param absolutePath 本地歌曲的绝对路径
-     * @param outputPath 输出路径
-     */
     container::FutureResult<> findLyricsFromNet(
         std::filesystem::path absolutePath,
         std::filesystem::path outputPath
@@ -135,18 +119,6 @@ public:
             auto const& [_, _kaRaOKAss] = _pyData.get<0>();
             _kaRaOKAss.attr("findLyricsFromNet")(_absolutePath.string(), _outputPath.string(), 0);
         });
-    }
-
-    /**
-     * @brief 对歌词进行日语注音
-     * @param absolutePath 歌词的绝对路径
-     */
-    ToKaRaOKAss& _doJapanesePhonetics(std::filesystem::path const& absolutePath) {
-        _pool.addTask([=, this]() {
-            auto& [_, _kaRaOKAss] = _pyData.get<0>();
-            _kaRaOKAss.attr("doJapanesePhonetics")(absolutePath.string());
-        }).wait();
-        return *this;
     }
 
     /**
@@ -164,34 +136,11 @@ public:
      * @brief 转变为双行卡拉ok样式
      * @param absolutePath 歌词的绝对路径
      */
-    ToKaRaOKAss& _toTwoLineKaraokeStyle(std::filesystem::path const& absolutePath) {
-        _pool.addTask([=, this]() {
-            auto& [_, _kaRaOKAss] = _pyData.get<0>();
-            _kaRaOKAss.attr("toTwoLineKaraokeStyle")(absolutePath.string());
-        }).wait();
-        return *this;
-    }
-
-    /**
-     * @brief 转变为双行卡拉ok样式
-     * @param absolutePath 歌词的绝对路径
-     */
     container::FutureResult<> toTwoLineKaraokeStyle(std::filesystem::path absolutePath) {
         return _pool.addTask([_absolutePath = std::move(absolutePath), this]() {
             auto& [_, _kaRaOKAss] = _pyData.get<0>();
             _kaRaOKAss.attr("toTwoLineKaraokeStyle")(_absolutePath.string());
         });
-    }
-
-    /**
-     * @brief 应用卡拉ok模板
-     * @param absolutePath 歌词的绝对路径
-     */
-    void _callApplyKaraokeTemplateLua(std::filesystem::path const& absolutePath) {
-        _pool.addTask([=, this]() {
-            auto& [_, _kaRaOKAss] = _pyData.get<0>();
-            _kaRaOKAss.attr("callApplyKaraokeTemplateLua")(absolutePath.string());
-        }).wait();
     }
 
     /**

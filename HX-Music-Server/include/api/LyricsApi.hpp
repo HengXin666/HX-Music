@@ -55,32 +55,6 @@ HX_SERVER_API_BEGIN(LyricsApi) {
                 co_await api::setJsonError("歌曲id不存在 或者 路径错误", res).sendRes();
             });
         }, TokenInterceptor<PermissionEnum::ReadOnlyUser>{})
-        // 网络爬取歌曲歌词并且日语注音卡拉ok化
-        .addEndpoint<POST>("/lyrics/ass/karaok/{id}", [=] ENDPOINT {
-            co_await api::coTryCatch([&] CO_FUNC {
-                auto id = req.getPathParam(0).to<MusicDAO::PrimaryKeyType>();
-                auto musicDO = musicDAO->at(id);
-                std::filesystem::path assPath{std::filesystem::current_path() / "file/lyrics/ass" / (std::string{req.getPathParam(0)} + ".ass")};
-                log::hxLog.info("歌词查找:", std::filesystem::current_path() / "file/music" / musicDO.path, "->", assPath);
-                try {
-                    toKaRaOKAssPtr->_findLyricsFromNet(
-                        std::filesystem::current_path() / "file/music" / musicDO.path,
-                        assPath
-                    )
-                     ._doJapanesePhonetics(assPath)
-                     ._toTwoLineKaraokeStyle(assPath)
-                     ._callApplyKaraokeTemplateLua(assPath);
-                    co_await api::setJsonSucceed<std::string>("ok", res).sendRes();
-                } catch (std::exception const& e) {
-                    if (std::string_view{e.what()}.find("LyricsNotFoundError") == std::string_view::npos) {
-                        throw;
-                    }
-                }
-                co_await api::setJsonError("找不到符合条件的歌词...", res).sendRes();
-            }, [&] CO_FUNC {
-                co_await api::setJsonError("歌曲id不存在 或者 路径错误", res).sendRes();
-            });
-        }, TokenInterceptor<PermissionEnum::RegularUser>{})
         // 异步获取歌词接口
         .addEndpoint<WS>("/lyrics/ass/karaok/ws", [=] ENDPOINT {
             auto ws = co_await net::WebSocketFactory::accept(req, res);
@@ -169,83 +143,81 @@ HX_SERVER_API_BEGIN(LyricsApi) {
                 }
             }
         }, TokenInterceptor<PermissionEnum::RegularUser>{})
-        // 测试接口: 获取到爬取的歌词
-        .addEndpoint<GET>("/lyrics/test/req/{id}/to/{name}", [=] ENDPOINT {
-            co_await api::coTryCatch([&] CO_FUNC {
-                auto id = req.getPathParam(0).to<MusicDAO::PrimaryKeyType>();
-                auto musicDO = musicDAO->at(id);
-                std::filesystem::path assPath{std::filesystem::current_path() / "file/lyrics/ass" / (std::string{req.getPathParam(1)} + ".ass")};
-                log::hxLog.info("歌词查找:", std::filesystem::current_path() / "file/music" / musicDO.path, "->", assPath);
-                try {
-                    toKaRaOKAssPtr->_findLyricsFromNet(
-                        std::filesystem::current_path() / "file/music" / musicDO.path,
-                        assPath
-                    );
-                    co_await api::setJsonSucceed<std::string>("ok", res).sendRes();
-                } catch (std::exception const& e) {
-                    if (std::string_view{e.what()}.find("LyricsNotFoundError") == std::string_view::npos) {
-                        throw;
-                    }
+        // 批量爬取所有没有歌词的歌曲的歌词
+        .addEndpoint<WS>("/lyrics/ass/karaok/all/ws", [=, scanMtx = std::make_shared<std::atomic_bool>(false)] ENDPOINT {
+            struct IdAndPath {
+                uint64_t id;
+                std::string path;
+            };
+            auto ws = co_await net::WebSocketFactory::accept(req, res);
+            co_await api::sendTextNoTry(ws, "任务开始: 批量爬取所有没有歌词的歌曲的歌词");
+            if (scanMtx.get()->load()) {
+                co_await ws.sendText("错误: 任务正在进行中, 不要重复开始!");
+                co_await ws.close();
+            }
+            scanMtx->store(true);
+            std::size_t cnt = 0;
+            auto pathArr = musicDAO->lockSelect([](MusicDAO::MapType const& mp) {
+                std::vector<IdAndPath> path;
+                path.reserve(mp.size());
+                for (auto const& [_, v] : mp) {
+                    path.emplace_back(v.id, v.path);
                 }
-                co_await api::setJsonError("找不到符合条件的歌词...", res).sendRes();
-            }, [&] CO_FUNC {
-                co_await api::setJsonError("歌曲id不存在 或者 路径错误", res).sendRes();
+                return path;
             });
-        })
-        // 测试接口: 进行日语注音
-        .addEndpoint<GET>("/lyrics/test/doJp/{name}", [=] ENDPOINT {
-            co_await api::coTryCatch([&] CO_FUNC {
-                std::filesystem::path assPath{std::filesystem::current_path() / "file/lyrics/ass" / (std::string{req.getPathParam(0)} + ".ass")};
-                log::hxLog.info("进行日语注音:", assPath);
-                try {
-                    toKaRaOKAssPtr->_doJapanesePhonetics(assPath);
-                    co_await api::setJsonSucceed<std::string>("ok", res).sendRes();
-                } catch (std::exception const& e) {
-                    if (std::string_view{e.what()}.find("LyricsNotFoundError") == std::string_view::npos) {
-                        throw;
+            namespace fs = std::filesystem;
+            for (auto& v : pathArr) {
+                fs::path assPath {
+                    std::filesystem::current_path()
+                    / "file/lyrics/ass"
+                    / (std::to_string(v.id) + ".ass")
+                };
+                if (!fs::exists(assPath)) {
+                    co_await ws.sendText("正在为: " + v.path + "爬取歌词");
+                    {
+                        container::Try<> err{};
+                        do {
+                            try {
+                                co_await toKaRaOKAssPtr->findLyricsFromNet(
+                                    std::filesystem::current_path() / "file/music" / v.path,
+                                    assPath
+                                ).via(req.getIO());
+                                break;
+                            } catch (std::exception const& e) {
+                                err.setException(std::current_exception());
+                            }
+                            co_await ws.sendText("发生错误: " + err.what());
+                        } while (false);
+                        if (!err) [[unlikely]] {
+                            continue;
+                        }
                     }
+                    // 日语注音
+                    co_await api::sendTextNoTry(ws, "正在进行日语注音...");
+                    co_await toKaRaOKAssPtr->doJapanesePhonetics(
+                        std::move(assPath)
+                    ).via(req.getIO());
+                    // 双行卡拉ok化
+                    co_await api::sendTextNoTry(ws, "正在双行卡拉ok化...");
+                    co_await toKaRaOKAssPtr->toTwoLineKaraokeStyle(
+                        std::move(assPath)
+                    ).via(req.getIO());
+                    // 应用卡拉ok模板
+                    co_await api::sendTextNoTry(ws, "正在应用卡拉ok模板...");
+                    co_await toKaRaOKAssPtr->callApplyKaraokeTemplateLua(
+                        std::move(assPath)
+                    ).via(req.getIO());
+                    co_await api::sendTextNoTry(ws, v.path + "爬取歌词完毕..., 暂停等待: 5s");
+                    using namespace std::chrono;
+                    co_await static_cast<coroutine::EventLoop&>(req.getIO())
+                        .makeTimer()
+                        .sleepFor(5s);
                 }
-                co_await api::setJsonError("找不到符合条件的歌词...", res).sendRes();
-            }, [&] CO_FUNC {
-                co_await api::setJsonError("歌曲id不存在 或者 路径错误", res).sendRes();
-            });
-        })
-        // 测试接口: 双行卡拉ok化
-        .addEndpoint<GET>("/lyrics/test/toTwo/{name}", [=] ENDPOINT {
-            co_await api::coTryCatch([&] CO_FUNC {
-                std::filesystem::path assPath{std::filesystem::current_path() / "file/lyrics/ass" / (std::string{req.getPathParam(0)} + ".ass")};
-                log::hxLog.info("双行卡拉ok化:", assPath);
-                try {
-                    toKaRaOKAssPtr->_toTwoLineKaraokeStyle(assPath);
-                    co_await api::setJsonSucceed<std::string>("ok", res).sendRes();
-                } catch (std::exception const& e) {
-                    if (std::string_view{e.what()}.find("LyricsNotFoundError") == std::string_view::npos) {
-                        throw;
-                    }
-                }
-                co_await api::setJsonError("找不到符合条件的歌词...", res).sendRes();
-            }, [&] CO_FUNC {
-                co_await api::setJsonError("歌曲id不存在 或者 路径错误", res).sendRes();
-            });
-        })
-        // 测试接口: 应用卡拉Ok模板
-        .addEndpoint<GET>("/lyrics/test/call/{name}", [=] ENDPOINT {
-            co_await api::coTryCatch([&] CO_FUNC {
-                std::filesystem::path assPath{std::filesystem::current_path() / "file/lyrics/ass" / (std::string{req.getPathParam(0)} + ".ass")};
-                log::hxLog.info("应用卡拉Ok模板:", assPath);
-                try {
-                    toKaRaOKAssPtr->_callApplyKaraokeTemplateLua(assPath);
-                    co_await api::setJsonSucceed<std::string>("ok", res).sendRes();
-                } catch (std::exception const& e) {
-                    if (std::string_view{e.what()}.find("LyricsNotFoundError") == std::string_view::npos) {
-                        throw;
-                    }
-                }
-                co_await api::setJsonError("找不到符合条件的歌词...", res).sendRes();
-            }, [&] CO_FUNC {
-                co_await api::setJsonError("歌曲id不存在 或者 路径错误", res).sendRes();
-            });
-        })
+            }
+            co_await api::sendTextNoTry(ws, "任务结束: 批量爬取所有没有歌词的歌曲的歌词");
+            scanMtx->store(false);
+            co_await ws.close();
+        }, TokenInterceptor<PermissionEnum::Administrator>{})
     HX_ENDPOINT_END;
 } HX_SERVER_API_END;
 

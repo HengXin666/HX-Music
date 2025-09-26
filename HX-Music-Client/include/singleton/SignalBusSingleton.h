@@ -153,7 +153,17 @@ Q_SIGNALS:
      * @param path 文件路径
      * @param playlistId 需要加入的歌单id
      */
-    void uploadFileByCallBackSignal(QString const& path, uint64_t playlistId, std::function<void(uint64_t)> cb);
+    void uploadFileByCallBackSignal(
+        QString const& path,
+        uint64_t playlistId,
+        std::function<void(uint64_t)> cb
+    );
+
+    /**
+     * @brief 为后端设置界面的日志添加内容
+     * @param msg 日志字符串
+     */
+    void backendViewLogUpdated(QString const& msg);
 };
 
 } // namespace HX

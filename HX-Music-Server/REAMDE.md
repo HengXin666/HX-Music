@@ -154,11 +154,10 @@ struct PlaylistDO {
 #### 2.1.4 扫描音乐
 
 > 接口描述: 如果用户手动在目录下添加了音乐; 而不是通过程序上传. 那么就需要扫描!
-- 请求方式: `GET`
-- 接口URL: `/music/runScan`
+- 请求方式: `ws`
+- 接口URL: `/music/runScan/ws`
 - 参数描述: 无
 - 返回值描述: ok
-- `@todo`: 日后换为 WebSocket, 可以支持进度显示...完成通知...
 
 #### 2.1.5 获取音乐信息
 
@@ -297,6 +296,14 @@ struct PlaylistDO {
 - 接口URL: `/lyrics/ass/karaok/{id}`
 - 参数描述: `id` 歌曲Id
 - 返回值描述: ok (string)
+
+#### 2.3.3 批量爬取所有没有歌词的歌曲的歌词
+
+> 接口描述: 批量爬取所有没有歌词的歌曲的歌词
+- 请求方式: `ws`
+- 接口URL: `/lyrics/ass/karaok/all/ws`
+- 参数描述: 无
+- 返回值描述: WebSocket
 
 ### 2.4 封面相关接口
 #### 2.4.1 获取封面

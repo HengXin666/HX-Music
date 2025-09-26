@@ -209,6 +209,27 @@ public:
             return api::checkTryAndStatusAndJsonVO<SongListVO>(std::move(t)).songList;
         });
     }
+
+    /**
+     * @brief 扫描歌曲
+     * @tparam Cb 
+     * @param cb 
+     * @return 
+     */
+    template <typename Cb>
+        requires (requires (Cb&& cb) {
+            { cb(std::string{}) };
+        })
+    static container::FutureResult<container::Try<>> startScan(Cb&& cb) {
+        return NetSingleton::get().wsReq(
+            "/music/runScan/ws",
+            [_cb = std::forward<Cb>(cb)](net::WebSocketClient ws) -> coroutine::Task<> {
+                for (;;) {
+                    _cb(co_await ws.recvText());
+                }
+            }
+        );
+    }
 };
 
 } // namespace HX

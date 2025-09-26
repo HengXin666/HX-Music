@@ -25,6 +25,7 @@
 
 #include <cmd/MusicCommand.hpp>
 #include <singleton/OnlineImagePoll.h>
+#include <api/MusicApi.hpp>
 
 // debug
 #include <HXLibs/log/Log.hpp>
@@ -325,6 +326,15 @@ public:
      */
     void setListIndex(int index) noexcept {
         GlobalSingleton::get().musicConfig.listIndex = index;
+    }
+
+    // 扫描音乐库
+    Q_INVOKABLE void startScan() {
+        MusicApi::startScan([](std::string msg) {
+            Q_EMIT SignalBusSingleton::get().backendViewLogUpdated(
+                QString::fromStdString(std::move(msg))
+            );
+        });
     }
 Q_SIGNALS:
     void playingChanged(bool isPlaying);

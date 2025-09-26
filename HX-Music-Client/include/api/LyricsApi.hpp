@@ -51,66 +51,68 @@ struct LyricsApi {
      * @param id 歌曲id
      * @return container::FutureResult<> 
      */
-    static container::FutureResult<> crawlKaRaOKAssLyrics(uint64_t id) {
-        return NetSingleton::get().postReq(
-            "/lyrics/ass/karaok/"
-            + std::to_string(id), {}, net::NONE
-        ).thenTry([](container::Try<net::ResponseData> t) {
-            api::checkTryAndStatusAndJsonVO<std::string>(std::move(t));
-        });
-    }
-
-    /**
-     * @brief 爬取 卡拉OK Ass 歌词
-     * @param id 歌曲id
-     * @return container::FutureResult<> 
-     */
     static container::FutureResult<container::Try<>> crawlKaRaOKAssLyricsByWs(uint64_t id) {
         return NetSingleton::get().wsReq(
             "/lyrics/ass/karaok/ws",
             [id](net::WebSocketClient ws) -> coroutine::Task<> {
-            co_await ws.sendJson<WsLyricsMsgVO<>>({
-                id,
-                WsLyricsMsgEnum::CrawlLyrics
-            });
-            log::hxLog.debug("正在爬取歌词");
-            if (auto msg = co_await ws.recvJson<WsLyricsMsgVO<std::string>>();
-                msg.data.value() != "ok"
-            ) {
-                throw std::runtime_error{msg.data.value()};
+                co_await ws.sendJson<WsLyricsMsgVO<>>({
+                    id,
+                    WsLyricsMsgEnum::CrawlLyrics
+                });
+                log::hxLog.debug("正在爬取歌词");
+                if (auto msg = co_await ws.recvJson<WsLyricsMsgVO<std::string>>();
+                    msg.data.value() != "ok"
+                ) {
+                    throw std::runtime_error{msg.data.value()};
+                }
+                co_await ws.sendJson<WsLyricsMsgVO<>>({
+                    id,
+                    WsLyricsMsgEnum::JpTranscription
+                });
+                log::hxLog.debug("正在进行日语注音");
+                if (auto msg = co_await ws.recvJson<WsLyricsMsgVO<std::string>>();
+                    msg.data.value() != "ok"
+                ) {
+                    throw std::runtime_error{msg.data.value()};
+                }
+                co_await ws.sendJson<WsLyricsMsgVO<>>({
+                    id,
+                    WsLyricsMsgEnum::TwoLineKaraokeStyle
+                });
+                log::hxLog.debug("正在转为双行卡拉ok");
+                if (auto msg = co_await ws.recvJson<WsLyricsMsgVO<std::string>>();
+                    msg.data.value() != "ok"
+                ) {
+                    throw std::runtime_error{msg.data.value()};
+                }
+                co_await ws.sendJson<WsLyricsMsgVO<>>({
+                    id,
+                    WsLyricsMsgEnum::CallKaraokeTemplateLua
+                });
+                log::hxLog.debug("正在应用卡拉ok模板");
+                if (auto msg = co_await ws.recvJson<WsLyricsMsgVO<std::string>>();
+                    msg.data.value() != "ok"
+                ) {
+                    throw std::runtime_error{msg.data.value()};
+                }
+                log::hxLog.debug("爬取歌词: [", id, "] 完成!");
             }
-            co_await ws.sendJson<WsLyricsMsgVO<>>({
-                id,
-                WsLyricsMsgEnum::JpTranscription
-            });
-            log::hxLog.debug("正在进行日语注音");
-            if (auto msg = co_await ws.recvJson<WsLyricsMsgVO<std::string>>();
-                msg.data.value() != "ok"
-            ) {
-                throw std::runtime_error{msg.data.value()};
+        );
+    }
+
+    template <typename Cb>
+        requires (requires (Cb&& cb) {
+            { cb(std::string{}) };
+        })
+    static container::FutureResult<container::Try<>> startScan(Cb&& cb) {
+        return NetSingleton::get().wsReq(
+            "/lyrics/ass/karaok/all/ws",
+            [_cb = std::forward<Cb>(cb)](net::WebSocketClient ws) -> coroutine::Task<> {
+                for (;;) {
+                    _cb(co_await ws.recvText());
+                }
             }
-            co_await ws.sendJson<WsLyricsMsgVO<>>({
-                id,
-                WsLyricsMsgEnum::TwoLineKaraokeStyle
-            });
-            log::hxLog.debug("正在转为双行卡拉ok");
-            if (auto msg = co_await ws.recvJson<WsLyricsMsgVO<std::string>>();
-                msg.data.value() != "ok"
-            ) {
-                throw std::runtime_error{msg.data.value()};
-            }
-            co_await ws.sendJson<WsLyricsMsgVO<>>({
-                id,
-                WsLyricsMsgEnum::CallKaraokeTemplateLua
-            });
-            log::hxLog.debug("正在应用卡拉ok模板");
-            if (auto msg = co_await ws.recvJson<WsLyricsMsgVO<std::string>>();
-                msg.data.value() != "ok"
-            ) {
-                throw std::runtime_error{msg.data.value()};
-            }
-            log::hxLog.debug("爬取歌词: [", id, "] 完成!");
-        });
+        );
     }
 };
 

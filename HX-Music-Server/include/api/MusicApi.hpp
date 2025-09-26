@@ -31,6 +31,7 @@
 #include <pojo/vo/SelectDataVO.hpp>
 #include <pojo/vo/SongListVO.hpp>
 #include <interceptor/TokenInterceptor.hpp>
+#include <pybind/ToKaRaOKAss.hpp>
 #include <utils/DirFor.hpp>
 #include <utils/MusicInfo.hpp>
 #include <utils/Uuid.hpp>
@@ -52,7 +53,7 @@ HX_SERVER_API_BEGIN(MusicApi) {
         uint64_t nowOffset;             // 当前写入进度 (偏移指针)
         std::unique_ptr<std::atomic_bool> atWork;       // 记录是否开始任务
     };
-    auto musicDAO 
+    auto musicDAO
         = dao::MemoryDAOPool::get<MusicDAO, config::MusicDbPath>();
 
     /**
@@ -61,8 +62,8 @@ HX_SERVER_API_BEGIN(MusicApi) {
     auto saveMusicInfo = [=](
         std::string path,                       // 相对于 ./file/music 的路径
         const std::filesystem::path& fullPath,  // path 加上 ./file/music 的路径
-        coroutine::EventLoop& loop              // 一个新建的事件循环, 不应该为 res/req .getIO!
-    ) {
+        coroutine::EventLoop& loop              // 事件循环
+    ) -> coroutine::Task<uint64_t> {
         MusicInfo info{fullPath};
         auto imgOpt = info.getAlbumArtAdvanced();
         log::hxLog.info("新增歌曲:", path);
@@ -74,17 +75,17 @@ HX_SERVER_API_BEGIN(MusicApi) {
             info.getAlbum(),
             static_cast<uint64_t>(info.getLengthInMilliseconds()),
             imgOpt ? imgOpt->type : ""
-        });  
+        });
         if (imgOpt) {
             auto img = *imgOpt;
             utils::AsyncFile file{loop};
-            file.syncOpen(
+            co_await file.open(
                 "./file/cover/" + std::to_string(dao.id) + std::move(img.type)
             );
-            file.syncWrite(img.buf);
-            file.syncClose();
+            co_await file.write(img.buf);
+            co_await file.close();
         }
-        return dao.id;
+        co_return dao.id;
     };
     auto musicUploadTaskMap
         = std::make_shared<utils::ThreadSafeMap<
@@ -107,21 +108,28 @@ HX_SERVER_API_BEGIN(MusicApi) {
             });
         })
         // 扫描服务端音乐
-        .addEndpoint<GET>("/music/runScan", [=] ENDPOINT {
+        .addEndpoint<WS>("/music/runScan/ws", [=] ENDPOINT {
+            auto ws = co_await net::WebSocketFactory::accept(req, res);
             std::size_t cnt = 0;
-            coroutine::EventLoop loop;
-            utils::traverseDirectory("./file/music", {},
-                [&](const std::filesystem::path& relativePath) {
+            co_await api::sendTextNoTry(ws, "任务开始: 扫描服务端音乐");
+            co_await utils::coTraverseDirectory("./file/music", {},
+                [&](const std::filesystem::path& relativePath) -> coroutine::Task<> {
                 std::string path = relativePath.string();
                 std::filesystem::path fullPath = std::filesystem::path{"./file/music"} / relativePath;
                 if (!std::filesystem::is_directory(fullPath) && !musicDAO->isExist(path)) {
-                    saveMusicInfo(std::move(path), fullPath, loop);
+                    co_await saveMusicInfo(std::move(path), fullPath, res.getIO());
                     ++cnt;
+                    co_await api::sendTextNoTry(ws, "新增 1 首: [" 
+                        + fullPath.string()
+                        + "], 总共 "
+                        + std::to_string(cnt)
+                        + " 首.");
                 }
             });
-            co_await api::setJsonSucceed(
-                "OK: 扫描完成, 新增 " + std::to_string(cnt) + " 首音乐!",
-            res).sendRes();
+            co_await api::sendTextNoTry(ws,
+                "OK: 扫描完成, 新增 " + std::to_string(cnt) + " 首音乐!");
+            co_await api::sendTextNoTry(ws, "任务结束: 扫描服务端音乐");
+            co_await ws.close();
         }, TokenInterceptor<PermissionEnum::Administrator>{})
         // 获取音乐信息
         .addEndpoint<GET>("/music/info/{id}", [=] ENDPOINT {
@@ -152,7 +160,7 @@ HX_SERVER_API_BEGIN(MusicApi) {
                     = "./file/music" / std::filesystem::path{vo.path};
                 std::filesystem::path tmpFilePath
                     = "./file/music" / std::filesystem::path{vo.path + ".tmp"s};
-                if (std::filesystem::exists(filePath) 
+                if (std::filesystem::exists(filePath)
                  || std::filesystem::exists(tmpFilePath)
                 ) [[unlikely]] {
                     if (std::filesystem::is_regular_file(filePath)) [[likely]] {
@@ -237,9 +245,12 @@ HX_SERVER_API_BEGIN(MusicApi) {
                         = "./file/music" / std::filesystem::path{task.path};
                     std::filesystem::rename(tmpFilePath, filePath);
                     // 刮削到数据库
-                    coroutine::EventLoop loop;
-                    auto id 
-                        = saveMusicInfo(std::move(task.path), filePath, loop);
+                    auto id
+                        = co_await saveMusicInfo(
+                            std::move(task.path),
+                            filePath,
+                            res.getIO()
+                        );
                     // 发送 id
                     co_await ws.sendText(std::to_string(id));
                     // 删除任务
