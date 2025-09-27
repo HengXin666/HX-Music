@@ -159,6 +159,17 @@ BorderlessWindow {
         anchors.fill: parent
         color: "transparent"
 
+        Keys.enabled: true  // 不设置按键使能，获取不了按键事件
+        Keys.onPressed: (event) => {
+            if (event.key === Qt.Key_MediaPlay) {
+                MusicController.togglePause();
+            } else if (event.key === Qt.Key_MediaNext) {
+                MusicController.next();
+            } else if (event.key === Qt.Key_MediaPrevious) {
+                MusicController.prev();
+            }
+        }
+
         // 暴露 stackView 引用
         property alias stackViewRef: stackView
         property alias settingStackView: settingStackView
@@ -372,6 +383,7 @@ BorderlessWindow {
                 settingStackView.currentIndex = 0;
             }
         }
+
     }
 
     // 背景 (双缓冲渲染)

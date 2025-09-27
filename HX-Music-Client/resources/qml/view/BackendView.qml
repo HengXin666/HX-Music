@@ -589,13 +589,6 @@ Item {
                                             border.width: 1
                                             border.color: parent.hovered ? "#ff6b6b" : Theme.paratextColor
                                         }
-                                        contentItem: Text {
-                                            text: parent.text
-                                            font.pixelSize: 12
-                                            color: parent.hovered ? "white" : Theme.textColor
-                                            horizontalAlignment: Text.AlignHCenter
-                                            verticalAlignment: Text.AlignVCenter
-                                        }
                                         onClicked: {
                                             // MessageController.showWarning(`真的要删除 [${delegateRoot.name}] 吗? 5 秒内再次点击删除以删除用户!`);
                                             UserController.delUser(delegateRoot.userId);
@@ -627,8 +620,6 @@ Item {
                                             permissionLevel: parseInt(v.permissionLevel)
                                         });
                                     }
-
-                                    console.log("size: ", userListModel.count);
                                 }
                             }
                         }

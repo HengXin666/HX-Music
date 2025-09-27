@@ -38,6 +38,8 @@ struct MusicClient {
             []() { QCoreApplication::exit(-1); },
             Qt::QueuedConnection
         );
+
+        _app.setWindowIcon(QIcon{":/logo/appIcon.png"});
     }
 
     MusicClient& loadConfig() {

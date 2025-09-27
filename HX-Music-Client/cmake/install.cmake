@@ -161,8 +161,13 @@ endif()
 # find_package(Qt6 REQUIRED COMPONENTS WaylandCompositor WaylandClient)
 # target_link_libraries(HX-Music-Client PRIVATE Qt6::WaylandCompositor Qt6::WaylandClient)
 
-# find_package(Qt6 REQUIRED COMPONENTS DBus)
-# target_link_libraries(HX-Music-Client PRIVATE Qt6::DBus)
+find_package(Qt6 REQUIRED COMPONENTS DBus)
+target_link_libraries(HX-Music-Client PRIVATE Qt6::DBus)
+
+# 查找 X11
+find_package(X11 REQUIRED)
+target_link_libraries(HX-Music-Client PRIVATE ${X11_LIBRARIES})
+
 
 set_target_properties(HX-Music-Client PROPERTIES
     ${BUNDLE_ID_OPTION}
