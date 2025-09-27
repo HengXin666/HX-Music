@@ -173,7 +173,7 @@ HX_SERVER_API_BEGIN(LyricsApi) {
                     / (std::to_string(v.id) + ".ass")
                 };
                 if (!fs::exists(assPath)) {
-                    co_await ws.sendText("正在为: " + v.path + "爬取歌词");
+                    co_await api::sendTextNoTry(ws, "正在为: " + v.path + "爬取歌词");
                     {
                         container::Try<> err{};
                         do {
@@ -182,11 +182,12 @@ HX_SERVER_API_BEGIN(LyricsApi) {
                                     std::filesystem::current_path() / "file/music" / v.path,
                                     assPath
                                 ).via(req.getIO());
+                                err.setVal(container::NonVoidType<>{});
                                 break;
                             } catch (std::exception const& e) {
                                 err.setException(std::current_exception());
                             }
-                            co_await ws.sendText("发生错误: " + err.what());
+                            co_await api::sendTextNoTry(ws, "发生错误: " + err.what());
                         } while (false);
                         if (!err) [[unlikely]] {
                             continue;
@@ -195,17 +196,17 @@ HX_SERVER_API_BEGIN(LyricsApi) {
                     // 日语注音
                     co_await api::sendTextNoTry(ws, "正在进行日语注音...");
                     co_await toKaRaOKAssPtr->doJapanesePhonetics(
-                        std::move(assPath)
+                        assPath
                     ).via(req.getIO());
                     // 双行卡拉ok化
                     co_await api::sendTextNoTry(ws, "正在双行卡拉ok化...");
                     co_await toKaRaOKAssPtr->toTwoLineKaraokeStyle(
-                        std::move(assPath)
+                        assPath
                     ).via(req.getIO());
                     // 应用卡拉ok模板
                     co_await api::sendTextNoTry(ws, "正在应用卡拉ok模板...");
                     co_await toKaRaOKAssPtr->callApplyKaraokeTemplateLua(
-                        std::move(assPath)
+                        assPath
                     ).via(req.getIO());
                     co_await api::sendTextNoTry(ws, v.path + "爬取歌词完毕..., 暂停等待: 5s");
                     using namespace std::chrono;

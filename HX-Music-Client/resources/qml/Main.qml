@@ -28,6 +28,7 @@ BorderlessWindow {
 
     function onTrayShow() {
         visible = true;
+        mainWin.winShow();
     }
 
     function onTrayClose() {

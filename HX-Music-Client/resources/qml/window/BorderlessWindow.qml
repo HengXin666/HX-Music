@@ -113,6 +113,10 @@ Window {
         }
     }
 
+    function winShow() {
+        show();
+    }
+
     // 内部状态数据
     QtObject {
         id: self

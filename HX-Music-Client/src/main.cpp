@@ -152,7 +152,6 @@ struct MusicClient {
         _engine.addImageProvider("netImagePoll", new HX::NetImagePoll{}); // 内部会释放!
 
         // 应该使用 _ 和 [0-9a-Z], 不能使用`-`
-        // _engine.load(QUrl{QStringLiteral("qrc:/qml/Main.qml")});
         _engine.loadFromModule("HX.Music", "Main");
 
         // 集中保存

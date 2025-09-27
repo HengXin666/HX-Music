@@ -129,45 +129,35 @@ public:
             &SignalBusSingleton::newSongLoaded,
             this,
             [this](MusicInformation* info) {
-                if (GlobalSingleton::get().musicConfig.playlistId == Playlist::kNonePlaylist) {
-                    // auto path = findLyricFile(info->filePath());
-                    // auto data = utils::FileUtils::getFileContent(path);
-                    // _assParse = preprocessLyricBoundingBoxes(
-                    //     0,
-                    //     info->getLengthInMilliseconds(),
-                    //     data
-                    // );
-                    MessageController::get().show<MsgType::Warning>("ub: 歌词本地加载 @todo");
-                } else {
-                    {
-                        auto buf = internal::readQrcFile(":/default/loading.ass");
+                {
+                    auto buf = internal::readQrcFile(":/default/loading.ass");
+                    _assParse = preprocessLyricBoundingBoxes(
+                        0,
+                        10000,
+                        {buf.data(), static_cast<std::size_t>(buf.size())}
+                    );
+                }
+                renderAFrameInstantly();
+                log::hxLog.debug("加载歌词:", info->getId());
+                // 网络加载歌词到内存
+                LyricsApi::getAssLyrics(
+                    info->getId()
+                ).thenTry([this, ms = info->getLengthInMilliseconds()](container::Try<std::string> t) {
+                    if (!t) [[unlikely]] {
+                        MessageController::get().show<MsgType::Error>("加载歌词失败:" + t.what());
+                        return;
+                    }
+                    QMetaObject::invokeMethod(
+                        QCoreApplication::instance(),
+                        [this, ms, buf = t.move()]{
                         _assParse = preprocessLyricBoundingBoxes(
                             0,
-                            10000,
-                            {buf.data(), static_cast<std::size_t>(buf.size())}
+                            ms,
+                            buf
                         );
-                    }
-                    renderAFrameInstantly();
-                    log::hxLog.debug("加载歌词:", info->getId());
-                    // 网络加载歌词到内存
-                    LyricsApi::getAssLyrics(info->getId())
-                        .thenTry([this, ms = info->getLengthInMilliseconds()](container::Try<std::string> t) {
-                            if (!t) [[unlikely]] {
-                                MessageController::get().show<MsgType::Error>("加载歌词失败:" + t.what());
-                                return;
-                            }
-                            QMetaObject::invokeMethod(
-                                QCoreApplication::instance(),
-                                [this, ms, buf = t.move()]{
-                                _assParse = preprocessLyricBoundingBoxes(
-                                    0,
-                                    ms,
-                                    buf
-                                );
-                                renderAFrameInstantly();
-                            });
-                        });
-                }
+                        renderAFrameInstantly();
+                    });
+                });
             });
 
         /* lyricAddOffset 歌词加上偏移量 */
@@ -181,9 +171,10 @@ public:
             });
 
         /* isFullScreenChanged 切换全屏, 需要立即渲染新模式的一帧 */
-        connect(this, &LyricController::isFullScreenChanged, this, [this] {
-            renderAFrameInstantly();
-        });
+        connect(this, &LyricController::isFullScreenChanged, this,
+            [this] {
+                renderAFrameInstantly();
+            });
     }
 
     /**
@@ -286,7 +277,7 @@ public:
             painter->drawImage(
                 img->dst_x - _twoBlockBounds.left,
                 img->dst_y - _twoBlockBounds.btmYMin
-                + (_twoBlockBounds.btmYMax - _twoBlockBounds.btmYMin),
+                + (_twoBlockBounds.topYMax - _twoBlockBounds.topYMin),
                 image
             );
         }
@@ -315,7 +306,7 @@ public:
         // 按上下分组
         int midLine = _assParse.getHeight() >> 1;
         int w = _twoBlockBounds.right - _twoBlockBounds.left;
-        int h = (_twoBlockBounds.btmYMax - _twoBlockBounds.btmYMin)
+        int h = ( _twoBlockBounds.btmYMax - _twoBlockBounds.btmYMin)
               + (_twoBlockBounds.topYMax - _twoBlockBounds.topYMin);
         QImage res{w, h, QImage::Format_RGBA8888};
         res.fill(Qt::transparent);

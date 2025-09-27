@@ -61,8 +61,13 @@ AssParse LyricController::preprocessLyricBoundingBoxes(
         });
     });
     _hasCachedBlock = res.hasTop() || res.hasBtm();
+    if (!res.hasTop()) {
+        res.topYMax = res.topYMin = 0;
+    }
+    if (!res.hasBtm()) {
+        res.btmYMax = res.btmYMin = 0;
+    }
     _twoBlockBounds = std::move(res);
-    // log::hxLog.info(_twoBlockBounds);
     return std::move(assArr.front());
 }
 
