@@ -81,7 +81,7 @@ public:
     {
         _assParse.setFrameSize(1920, 1080);
         {
-            auto buf = internal::readQrcFile(":default/default.ass");
+            auto buf = internal::readQrcFile(":/default/default.ass");
             _assParse = preprocessLyricBoundingBoxes(
                 0,
                 10000,
@@ -102,6 +102,10 @@ public:
                 800, 200,
                 0, false,
                 false, false,
+                0,
+                false,
+                false,
+                false,
                 true
             };
         }
@@ -136,7 +140,7 @@ public:
                     MessageController::get().show<MsgType::Warning>("ub: 歌词本地加载 @todo");
                 } else {
                     {
-                        auto buf = internal::readQrcFile(":default/loading.ass");
+                        auto buf = internal::readQrcFile(":/default/loading.ass");
                         _assParse = preprocessLyricBoundingBoxes(
                             0,
                             10000,

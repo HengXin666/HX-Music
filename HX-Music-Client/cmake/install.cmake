@@ -10,6 +10,7 @@ file(GLOB_RECURSE qrc_files CONFIGURE_DEPENDS
 
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Qml Quick)
 
+
 qt_add_executable(HX-Music-Client
     ${src_files}
     ${qrc_files}
@@ -43,6 +44,7 @@ set(QT_QML_GENERATE_QMLLS_INI ON)
 qt_add_qml_module(HX-Music-Client
     URI HX.Music # QML 中 import 的名字
     VERSION 1.0
+    RESOURCE_PREFIX /
     QML_FILES
         # 主界面
         resources/qml/Main.qml

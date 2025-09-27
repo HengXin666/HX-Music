@@ -5,11 +5,11 @@ import QtQuick.Layouts
 import QtQuick.Window
 import Qt5Compat.GraphicalEffects
 import HX.Music
-import "./widget"
-import "./widget/internal"
-import "./data"
-import "./view"
-import "./window"
+import "qrc:/HX/Music/qml/widget"
+import "qrc:/HX/Music/qml/widget/internal"
+import "qrc:/HX/Music/qml/data"
+import "qrc:/HX/Music/qml/view"
+import "qrc:/HX/Music/qml/window"
 
 BorderlessWindow {
     id: mainWin

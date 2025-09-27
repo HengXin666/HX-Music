@@ -20,7 +20,7 @@ if(CMAKE_PROJECT_NAME STREQUAL "HX-Music-Client")
     include(cmake/utils.cmake)
     include(cmake/develop.cmake)
     message("Building: ${CMAKE_PROJECT_NAME}")
-
+    # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wuninitialized -Winit-self")
     if (CMAKE_BUILD_TYPE STREQUAL "Release")
         message("=-=-=-=-=-=-=当前是 [Release] 模式=-=-=-=-=-=-=")
     else()

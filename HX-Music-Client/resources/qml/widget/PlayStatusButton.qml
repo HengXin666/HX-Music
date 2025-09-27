@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import HX.Music
-import "./internal"
+import "qrc:/HX/Music/qml/widget/internal"
 
 /*
     音乐状态按钮:

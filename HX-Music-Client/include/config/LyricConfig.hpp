@@ -37,19 +37,19 @@ struct LyricConfig {
     int maeWindowHeight;
 
     // 偏移量
-    long long lyricOffset;
+    long long lyricOffset = 0;
 
     // 是否打开窗口
-    bool isWindowOpened;
+    bool isWindowOpened = false;
 
     // 歌词是否上锁
-    bool isLocked;
+    bool isLocked = false;
 
     // 是否全屏
-    bool isFullScreen;
+    bool isFullScreen = false;
 
     // 是否自动居中
-    bool isAutoCenter;
+    bool isAutoCenter = true;
 };
 
 } // namespace HX

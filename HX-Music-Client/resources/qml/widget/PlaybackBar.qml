@@ -6,7 +6,7 @@ import Qt5Compat.GraphicalEffects
 import QtQuick.Layouts
 import QtQuick.Window
 import HX.Music
-import "./internal"
+import "qrc:/HX/Music/qml/widget/internal"
 
 ProgressBarRect {
     id: root

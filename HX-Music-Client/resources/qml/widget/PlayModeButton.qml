@@ -3,7 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Controls.Material
 import HX.Music
-import "./internal"
+import "qrc:/HX/Music/qml/widget/internal"
 
 Item {
     id: root

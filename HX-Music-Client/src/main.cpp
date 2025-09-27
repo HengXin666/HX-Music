@@ -152,6 +152,7 @@ struct MusicClient {
         _engine.addImageProvider("netImagePoll", new HX::NetImagePoll{}); // 内部会释放!
 
         // 应该使用 _ 和 [0-9a-Z], 不能使用`-`
+        // _engine.load(QUrl{QStringLiteral("qrc:/qml/Main.qml")});
         _engine.loadFromModule("HX.Music", "Main");
 
         // 集中保存
@@ -166,7 +167,6 @@ struct MusicClient {
         auto* trayController = new TrayController{&_app};
         trayController->init(&_engine);
         cp->setContextProperty("TrayManager", trayController);
-        QObject *rootObject = _engine.rootObjects().isEmpty() ? nullptr : _engine.rootObjects().first();
         return *this;
     }
 
@@ -192,6 +192,18 @@ private:
 #include <QQuickStyle>
 
 int main(int argc, char* argv[]) {
+    // for (auto&& p : QStringList{
+    //     "qrc:/qml/Main.qml",
+    //     "qrc:/Main.qml",
+    //     "qrc:Main.qml",
+    //     ":/qml/Main.qml",
+    //     ":/Main.qml",
+    //     ":Main.qml",
+    // }) {
+    //     auto buf = HX::internal::readQrcFile(p);
+    //     HX::log::hxLog.warning(p.toStdString(), "size:", buf.size());
+    // }
+    // return 0;
     QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
     QSurfaceFormat fmt;
     fmt.setRenderableType(QSurfaceFormat::OpenGL);
