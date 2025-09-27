@@ -11,6 +11,7 @@
 #include <controller/PlaylistController.h>
 #include <controller/MessageController.h>
 #include <controller/UserController.h>
+#include <controller/TrayController.h>
 #include <cmd/MusicCommand.hpp>
 #include <config/MusicConfig.hpp>
 #include <config/Theme.hpp>
@@ -157,6 +158,11 @@ struct MusicClient {
             HX::GlobalSingleton::get().saveConfig();
             lyricController->saveConfig();
         });
+
+        // 托盘控制器, 要求在 QML 后创建
+        auto* trayController = new TrayController{&_app};
+        trayController->init(&_engine);
+        cp->setContextProperty("TrayManager", trayController);
         return *this;
     }
 
@@ -167,7 +173,7 @@ struct MusicClient {
     MusicClient& operator=(MusicClient&&) noexcept = delete;
     
 private:
-    QGuiApplication _app;
+    QApplication _app;
     QQmlApplicationEngine _engine;
     HX::WindowMaskUtil _windowMaskUtil{};
 };

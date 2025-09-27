@@ -23,8 +23,28 @@ BorderlessWindow {
     property var lyricsState: LyricsState {} // 歌词悬浮窗口状态控制
 
     onClosing: {
+        visible = false;
+    }
+
+    function onTrayShow() {
+        visible = true;
+    }
+
+    function onTrayClose() {
         lyricsState.del();
-        Qt.quit(); // 强制退出应用
+        Qt.callLater(() => Qt.quit());
+    }
+
+    function onTrayTogglePause() {
+        MusicController.togglePause();
+    }
+
+    function onTrayPrev() {
+        MusicController.prev();
+    }
+
+    function onTrayNext() {
+        MusicController.next();
     }
 
     titleBar: Rectangle {
