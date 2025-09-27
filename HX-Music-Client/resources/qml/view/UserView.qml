@@ -17,7 +17,7 @@ Item {
         rightPadding: 12
 
         ScrollBar.vertical: ScrollBar {
-            policy: ScrollBar.AlwaysOn
+            policy: ScrollBar.AlwaysOff
             interactive: true
             // 使用 implicitWidth 避免和 ScrollView 相互绑定
             implicitWidth: 12
@@ -95,14 +95,8 @@ Item {
                         }
                     }
 
-                    Button {
+                    TextButton {
                         text: "修改"
-                        background: Rectangle {
-                            color: Theme.backgroundColor
-                            radius: 6
-                            border.width: 1
-                            border.color: Theme.paratextColor
-                        }
                         onClicked: usernameField.accepted();
                     }
                 }
@@ -282,14 +276,8 @@ Item {
                         }
                     }
 
-                    Button {
+                    TextButton {
                         text: "修改"
-                        background: Rectangle {
-                            color: Theme.backgroundColor
-                            radius: 6
-                            border.width: 1
-                            border.color: Theme.paratextColor
-                        }
                         onClicked: password2Field.accepted()
                     }
                 }

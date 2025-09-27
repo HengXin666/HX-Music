@@ -67,7 +67,7 @@ HX_SERVER_API_BEGIN(MusicApi) {
         MusicInfo info{fullPath};
         auto imgOpt = info.getAlbumArtAdvanced();
         log::hxLog.info("新增歌曲:", path);
-        auto const& dao = musicDAO->add<MusicDO>({
+        auto dao = musicDAO->add<MusicDO>({
             {},
             std::move(path),
             info.getTitle(),
@@ -94,7 +94,6 @@ HX_SERVER_API_BEGIN(MusicApi) {
         // 断点续传下载音乐
         .addEndpoint<GET, HEAD>("/music/download/{id}", [=] ENDPOINT {
             using namespace std::string_literals;
-            log::hxLog.debug("请求 Path:", req.getReqPath());
             co_await api::coTryCatch([&] CO_FUNC {
                 auto idStrView = req.getPathParam(0);
                 MusicDAO::PrimaryKeyType id{};

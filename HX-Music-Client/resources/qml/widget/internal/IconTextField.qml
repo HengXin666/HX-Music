@@ -12,10 +12,10 @@ Rectangle {
     // 暴露的属性
     property bool isPasswordMode: false
     property url iconSource
-    property url clickableIconSource: ""        // 可点击图标源, 默认为null表示不可点击
-    property color iconDefaultColor: "gray"     // 图标默认颜色
-    property color iconHighlightColor: "blue"   // 图标高亮颜色
-    property color borderHighlightColor: "blue" // 边框高亮颜色
+    property url clickableIconSource: iconSource    // 可点击图标源, 默认为null表示不可点击
+    property color iconDefaultColor: "gray"         // 图标默认颜色
+    property color iconHighlightColor: "blue"       // 图标高亮颜色
+    property color borderHighlightColor: "blue"     // 边框高亮颜色
     property alias placeholderText: textInput.placeholderText
 
     signal accepted() // 按下回车键时触发

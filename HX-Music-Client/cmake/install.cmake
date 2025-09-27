@@ -70,6 +70,7 @@ qt_add_qml_module(HX-Music-Client
         resources/qml/widget/internal/IconTextField.qml
         resources/qml/widget/internal/SideNavItem.qml
         resources/qml/widget/internal/GlowButton.qml
+        resources/qml/widget/internal/TextButton.qml
         # 页面
         resources/qml/view/SettingView.qml
         resources/qml/view/LoginView.qml
@@ -99,6 +100,10 @@ target_link_libraries(HX-Music-Client PRIVATE Qt::Xml)
 # Qt拓展 (并行库)
 # find_package(Qt6 REQUIRED COMPONENTS Concurrent)
 # target_link_libraries(HX-Music-Client PRIVATE Qt6::Concurrent)
+
+# 主题
+find_package(Qt6 REQUIRED COMPONENTS QuickControls2)
+target_link_libraries(HX-Music-Client PRIVATE Qt6::QuickControls2)
 
 if (WIN32)
     # 解决路径问题, 确保 windeployqt.exe 存在
@@ -161,13 +166,12 @@ endif()
 # find_package(Qt6 REQUIRED COMPONENTS WaylandCompositor WaylandClient)
 # target_link_libraries(HX-Music-Client PRIVATE Qt6::WaylandCompositor Qt6::WaylandClient)
 
-find_package(Qt6 REQUIRED COMPONENTS DBus)
-target_link_libraries(HX-Music-Client PRIVATE Qt6::DBus)
+# find_package(Qt6 REQUIRED COMPONENTS DBus)
+# target_link_libraries(HX-Music-Client PRIVATE Qt6::DBus)
 
 # 查找 X11
-find_package(X11 REQUIRED)
-target_link_libraries(HX-Music-Client PRIVATE ${X11_LIBRARIES})
-
+# find_package(X11 REQUIRED)
+# target_link_libraries(HX-Music-Client PRIVATE ${X11_LIBRARIES})
 
 set_target_properties(HX-Music-Client PROPERTIES
     ${BUNDLE_ID_OPTION}

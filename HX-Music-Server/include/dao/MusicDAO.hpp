@@ -18,7 +18,7 @@
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <unordered_set>
+#include <set>
 
 #include <dao/ThreadSafeInMemoryDAO.hpp>
 #include <pojo/do/MusicDO.hpp>
@@ -44,7 +44,7 @@ struct MusicDAO : public dao::ThreadSafeInMemoryDAO<MusicDO> {
     T add(U&& u) {
         auto t = Base::add(std::forward<U>(u));
         Base::uniqueLock([&] {
-            _pathSet.insert(t.path);
+            _pathSet.insert(std::move(t.path));
         });
         return t;
     }
@@ -52,11 +52,11 @@ struct MusicDAO : public dao::ThreadSafeInMemoryDAO<MusicDO> {
     template <typename U>
     T update(U&& u) {
         std::string oldPath = Base::at(u.id).path;
-        const auto& t = Base::update(std::forward<U>(u));
+        auto t = Base::update(std::forward<U>(u));
         Base::uniqueLock([&] {
             if (oldPath != t.path) {
                 _pathSet.erase(oldPath);
-                _pathSet.insert(t.path);
+                _pathSet.insert(std::move(t.path));
             }
         });
         return t;
@@ -83,7 +83,7 @@ struct MusicDAO : public dao::ThreadSafeInMemoryDAO<MusicDO> {
     }
 private:
     // 记录路径
-    std::unordered_set<std::string_view> _pathSet;
+    std::set<std::string, std::less<>> _pathSet;
 };
 
 } // namespace HX

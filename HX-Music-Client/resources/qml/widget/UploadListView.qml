@@ -6,6 +6,7 @@ import QtQuick.Window
 import QtQuick.Dialogs
 import Qt5Compat.GraphicalEffects
 import HX.Music
+import "./internal"
 
 Item {
     id: root
@@ -27,21 +28,28 @@ Item {
 
             Label {
                 text: "上传列表"
+                color: Theme.textColor
                 font.bold: true
                 font.pixelSize: 18
                 Layout.fillWidth: true
             }
 
+            Label {
+                text: "自动创建歌单 (上传文件夹)"
+                color: Theme.textColor
+                font.bold: true
+                font.pixelSize: 14
+            }
+
             Switch {
                 id: autoCreatePlaylistSwitch
-                text: "自动创建歌单 (上传文件夹)"
                 checked: true
                 onCheckedChanged: {
                     uploadListModel.setAutomaticallyCreatePlaylist(checked);
                 }
             }
 
-            Button {
+            TextButton {
                 text: "清空已完成"
                 onClicked: {
                     // 这里需要实现清空已完成项目的逻辑
@@ -168,7 +176,7 @@ Item {
                         }
 
                         // 操作按钮
-                        Button {
+                        TextButton {
                             text: {
                                 if (delegateItem.model.uploadStatus === 0)
                                     return "开始";
@@ -225,6 +233,7 @@ Item {
                     const completed = 0;
                     return `总计: ${total} 已完成: ${completed}`;
                 }
+                color: Theme.textColor
 
                 // 绑定信号
                 Connections {
@@ -242,6 +251,7 @@ Item {
             Label {
                 id: speedLabel
                 text: "0 B/s"
+                color: Theme.textColor
                 // 绑定信号
                 Connections {
                     target: uploadListModel

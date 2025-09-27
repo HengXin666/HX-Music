@@ -32,6 +32,9 @@ struct MusicClient {
         : _app{argc, argv}
         , _engine{}
     {
+        // 禁止QMenu使用原生阴影
+        _app.setAttribute(Qt::AA_DontUseNativeMenuBar, true);
+
         QObject::connect(
             &_engine,
             &QQmlApplicationEngine::objectCreationFailed,
@@ -163,6 +166,7 @@ struct MusicClient {
         auto* trayController = new TrayController{&_app};
         trayController->init(&_engine);
         cp->setContextProperty("TrayManager", trayController);
+        QObject *rootObject = _engine.rootObjects().isEmpty() ? nullptr : _engine.rootObjects().first();
         return *this;
     }
 
@@ -180,8 +184,21 @@ private:
 
 } // namespace HX
 
+#include <QApplication>
+#include <QQmlApplicationEngine>
+#include <QSurfaceFormat>
+#include <QQuickWindow>
+#include <QStyleFactory>
+#include <QQuickStyle>
 
 int main(int argc, char* argv[]) {
+    QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
+    QSurfaceFormat fmt;
+    fmt.setRenderableType(QSurfaceFormat::OpenGL);
+    fmt.setProfile(QSurfaceFormat::CoreProfile);
+    fmt.setVersion(3, 3); // 至少OpenGL 3.3
+    QSurfaceFormat::setDefaultFormat(fmt);
+    QQuickStyle::setStyle("Imagine"); // 或 "Universal"
     HX::MusicClient app{argc, argv};
     return app.loadConfig()
               .buildQml()

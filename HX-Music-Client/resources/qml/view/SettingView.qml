@@ -22,7 +22,7 @@ Item {
         rightPadding: 12
 
         ScrollBar.vertical: ScrollBar {
-            policy: ScrollBar.AlwaysOn
+            policy: ScrollBar.AlwaysOff
             interactive: true
             // 使用 implicitWidth 避免和 ScrollView 相互绑定
             implicitWidth: 12
@@ -72,25 +72,25 @@ Item {
                     color: Theme.textColor
                     font.pixelSize: 16
                 }
-
-                TextField {
+                // 后端网址
+                IconTextField {
                     id: serverInput
-                    placeholderText: "http://127.0.0.1:28205/"
+                    Layout.preferredWidth: 500
+                    Layout.alignment: Qt.AlignCenter
+                    iconDefaultColor: Theme.textColor
+                    iconHighlightColor: Theme.highlightingColor
+                    borderHighlightColor: Theme.highlightingColor
+                    iconSource: "qrc:/icons/cloud-server.svg"
+                    placeholderText: "https://..."
                     text: UserController.getBackendUrl()
-                    color: Theme.textColor
-                    background: Rectangle {
-                        color: Theme.backgroundColor
-                        radius: 6
-                        border.color: Theme.paratextColor
-                    }
                     onTextChanged: {
                         UserController.setBackendUrl(serverInput.text);
                         MessageController.showInfo("服务器地址已自动保存");
                     }
-                    // 连接 Theme 的 backendUrl 属性变化
+                    // 连接 UserController 的 backendUrl 属性变化
                     Connections {
                         target: UserController
-                        onBackendUrlChanged: {
+                        function onBackendUrlChanged() {
                             const url = UserController.getBackendUrl();
                             if (url !== serverInput.text) {
                                 serverInput.text = url;
@@ -220,14 +220,8 @@ Item {
                     }
                 }
 
-                Button {
+                TextButton {
                     text: "重置颜色主题"
-                    background: Rectangle {
-                        color: Theme.backgroundColor
-                        radius: 6
-                        border.width: 1
-                        border.color: Theme.paratextColor
-                    }
                     onClicked: {
                         Theme.textColor = "#ffffff";
                         Theme.paratextColor = "#b3b3b3";
@@ -257,14 +251,8 @@ Item {
                         }
                     }
 
-                    Button {
+                    TextButton {
                         text: "选择背景图片"
-                        background: Rectangle {
-                            color: Theme.backgroundColor
-                            radius: 6
-                            border.width: 1
-                            border.color: Theme.highlightingColor
-                        }
                         onClicked: fileDialog.open()
                     }
 
@@ -281,14 +269,8 @@ Item {
                         }
                     }
 
-                    Button {
+                    TextButton {
                         text: "清除背景"
-                        background: Rectangle {
-                            color: Theme.backgroundColor
-                            radius: 6
-                            border.width: 1
-                            border.color: Theme.paratextColor
-                        }
                         onClicked: {
                             Theme.backgroundImgUrl = Theme.defaultBackgroundImgUrl;
                             MessageController.showInfo("背景图片已清除并自动保存");

@@ -17,13 +17,6 @@ Item {
         // 解决 rightPadding 循环绑定问题, 不直接依赖 ScrollBar.width
         rightPadding: 12
 
-        ScrollBar.vertical: ScrollBar {
-            policy: ScrollBar.AlwaysOn
-            interactive: true
-            // 使用 implicitWidth 避免和 ScrollView 相互绑定
-            implicitWidth: 12
-        }
-
         ColumnLayout {
             id: contentLayout
             width: parent.width
@@ -76,14 +69,8 @@ Item {
                         color: Theme.textColor
                         font.pixelSize: 16
                     }
-                    Button {
+                    TextButton {
                         text: "开始扫描"
-                        background: Rectangle {
-                            color: Theme.backgroundColor
-                            radius: 6
-                            border.width: 1
-                            border.color: Theme.highlightingColor
-                        }
                         onClicked: MusicController.startScan()
                     }
                 }
@@ -124,14 +111,8 @@ Item {
                         color: Theme.textColor
                         font.pixelSize: 16
                     }
-                    Button {
+                    TextButton {
                         text: "开始扫描"
-                        background: Rectangle {
-                            color: Theme.backgroundColor
-                            radius: 6
-                            border.width: 1
-                            border.color: Theme.highlightingColor
-                        }
                         onClicked: LyricController.startScan()
                     }
                 }
@@ -201,15 +182,9 @@ Item {
                 }
 
                 // 清空日志按钮
-                Button {
+                TextButton {
                     text: "清空日志"
                     Layout.alignment: Qt.AlignRight
-                    background: Rectangle {
-                        color: Theme.backgroundColor
-                        radius: 6
-                        border.width: 1
-                        border.color: Theme.highlightingColor
-                    }
                     onClicked: {
                         logArea.text = "";
                     }
@@ -319,17 +294,20 @@ Item {
                         ComboBox {
                             id: levelComboBox
                             model: ["管理员", "普通用户", "只读用户"]
+
+                            // 设置默认显示文字颜色
+                            contentItem: Text {
+                                text: levelComboBox.displayText
+                                font.pixelSize: 16
+                                color: Theme.textColor  // 指定文字颜色
+                                verticalAlignment: Text.AlignVCenter
+                                horizontalAlignment: Text.AlignHCenter
+                            }
                         }
                     }
 
-                    Button {
+                    TextButton {
                         text: "新增用户"
-                        background: Rectangle {
-                            color: Theme.backgroundColor
-                            radius: 6
-                            border.width: 1
-                            border.color: Theme.paratextColor
-                        }
                         onClicked: password2Field.accepted()
                     }
                 }
@@ -354,14 +332,14 @@ Item {
                     }
 
                     Text {
-                        text: "添加用户"
+                        text: "删除用户"
                         font.pixelSize: 18
                         font.bold: true
                         color: Theme.highlightingColor
                     }
                 }
 
-                // 添加用户
+                // 删除用户
                 ColumnLayout {
                     spacing: 12
                     Layout.alignment: Qt.AlignLeft
@@ -369,22 +347,9 @@ Item {
                     Layout.fillHeight: true
 
                     RowLayout {
-                        Button {
+                        TextButton {
                             text: "刷新列表"
                             Layout.alignment: Qt.AlignLeft
-                            background: Rectangle {
-                                color: Theme.backgroundColor
-                                radius: 6
-                                border.width: 1
-                                border.color: Theme.paratextColor
-                            }
-                            contentItem: Text {
-                                text: parent.text
-                                font.pixelSize: 14
-                                color: Theme.textColor
-                                horizontalAlignment: Text.AlignHCenter
-                                verticalAlignment: Text.AlignVCenter
-                            }
                             onClicked: userListView.refreshUserList()
                         }
                         // 空状态提示
@@ -395,6 +360,7 @@ Item {
                         }
                     }
 
+                    // 删除用户
                     Rectangle {
                         Layout.preferredWidth: root.width - 20
                         Layout.preferredHeight: 300

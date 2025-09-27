@@ -467,6 +467,8 @@ Item {
 
                     // 新建歌单 / 导入歌单
                     MusicActionButton {
+                        Layout.preferredWidth: 16
+                        Layout.preferredHeight: 16
                         url: "qrc:/icons/add.svg"
                         onClicked: addPlaylistPopup.open();
                     }
