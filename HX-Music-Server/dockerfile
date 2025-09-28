@@ -1,6 +1,6 @@
 FROM archlinux:latest AS base
 
-# 设置官方镜像源，保证不会 404
+# 设置官方镜像源, 保证不会 404
 RUN echo 'Server = https://mirrors.kernel.org/archlinux/$repo/os/$arch' > /etc/pacman.d/mirrorlist \
     && pacman -Sy --noconfirm reflector \
     && reflector --protocol https --country China --sort rate --save /etc/pacman.d/mirrorlist \
@@ -66,7 +66,7 @@ RUN /opt/uv-env/bin/pip install --upgrade pip && /opt/uv-env/bin/pip install uv
 ENV PATH="/opt/uv-env/bin:$PATH"
 
 # 拷贝构建好的 HX-Music-Server 和 pyTool
-COPY --from=builder /home/makepkg/HX-Music/HX-Music-Server/build/HX-Music-Server /opt/HX-Music/HX-Music-Server/build/HX-Music-Server
+COPY --from=builder /home/makepkg/HX-Music/build/HX-Music-Server /opt/HX-Music/build/HX-Music-Server
 COPY --from=builder /home/makepkg/HX-Music/pyTool /opt/HX-Music/pyTool
 COPY --from=builder /usr/share/aegisub/automation/autoload /usr/share/aegisub/automation/autoload
 
@@ -75,7 +75,7 @@ RUN mkdir -p /opt/HX-Music/data/file
 VOLUME ["/opt/HX-Music/data/file"]
 
 # 设置工作目录
-WORKDIR /opt/HX-Music/HX-Music-Server/build
+WORKDIR /opt/HX-Music/build/HX-Music-Server
 
 # 暴露端口
 EXPOSE 28205
