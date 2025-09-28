@@ -82,7 +82,7 @@ public:
             ThemeConfig config;
             coroutine::EventLoop loop;
             utils::AsyncFile file{loop};
-            file.syncOpen("./themeConfig.json", utils::OpenMode::Read);
+            file.syncOpen(getConfigPath("themeConfig.json"), utils::OpenMode::Read);
             reflection::fromJson(config, file.syncReadAll());
             file.syncClose();
 
@@ -105,7 +105,7 @@ public:
     ~Theme() noexcept {
         coroutine::EventLoop loop;
         utils::AsyncFile file{loop};
-        file.syncOpen("./themeConfig.json", utils::OpenMode::Write);
+        file.syncOpen(getConfigPath("themeConfig.json"), utils::OpenMode::Write);
         std::string json;
         reflection::toJson<true, ThemeConfig>({
             _textColor.name(QColor::HexArgb).toStdString(),
@@ -126,7 +126,7 @@ public:
     // 悬浮色系
     
     // 背景色
-    HX_QML_QCOLOR_PROPERTY(backgroundColor          , "#121212");
+    HX_QML_QCOLOR_PROPERTY(backgroundColor          , "#12121298");
 
     // 背景图片
     HX_QML_TYPE_PROPERTY(QString, backgroundImgUrl  , "qrc:/img/background.jpg");

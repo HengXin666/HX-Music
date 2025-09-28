@@ -59,21 +59,8 @@ package() {
     echo "警告: 未找到应用图标"
   fi
 
-  # 创建桌面文件
-  echo "=== 创建桌面文件 ==="
-  mkdir -p "$pkgdir/usr/share/applications"
-  cat > "$pkgdir/usr/share/applications/$pkgname.desktop" << EOF
-[Desktop Entry]
-Version=1.0
-Type=Application
-Name=HX Music Client
-Comment=$pkgdesc
-Exec=HX-Music-Client
-Icon=$pkgname
-Categories=Audio;Music;Player;
-Terminal=false
-StartupNotify=true
-EOF
+  # 创建快捷方式(安装桌面启动器)
+  install -Dm644 "hx-music-client.desktop" "$pkgdir/usr/share/applications/hx-music-client.desktop"
 
   echo "=== 打包完成 ==="
 }

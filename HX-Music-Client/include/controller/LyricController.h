@@ -93,7 +93,7 @@ public:
         coroutine::EventLoop loop{};
         utils::AsyncFile file{loop};
         try {
-            file.syncOpen("./lyricConfig.json", utils::OpenMode::Read);
+            file.syncOpen(getConfigPath("lyricConfig.json"), utils::OpenMode::Read);
             reflection::fromJson(_lyricConfig, file.syncReadAll());
             file.syncClose();
         } catch (...) {
@@ -184,7 +184,7 @@ public:
         // 保存配置文件
         coroutine::EventLoop loop{};
         utils::AsyncFile file{loop};
-        file.syncOpen("./lyricConfig.json", utils::OpenMode::Write);
+        file.syncOpen(getConfigPath("lyricConfig.json"), utils::OpenMode::Write);
         std::string json;
         reflection::toJson<true>(_lyricConfig, json);
         file.syncWrite(json);
