@@ -1,0 +1,59 @@
+# Maintainer: Heng_Xin <282000500@qq.com>
+pkgname=hx-music-client
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="HX Music Client - A Qt + QML music player"
+arch=('x86_64')
+url="https://github.com/HengXin666/HX-Music"
+license=('GPL-3.0 license')
+
+depends=(
+  'qt6-base'
+  'qt6-declarative'
+  'qt6-svg'
+  'qt6-multimedia'
+  'libpulse'
+  'mesa'
+  'tbb'
+  'taglib'
+  'curl'
+  'freetype2'
+  'fontconfig'
+  'harfbuzz'
+  'fribidi'
+)
+makedepends=('cmake' 'ninja' 'qt6-tools' 'git')
+
+source=("git+https://github.com/HengXin666/HX-Music")
+sha256sums=('SKIP')
+
+prepare() {
+  cd "$srcdir/HX-Music"
+  git submodule update --init --recursive
+}
+
+build() {
+  cmake -B build -S "$srcdir/HX-Music/HX-Music-Client" \
+    -G Ninja \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=/usr
+  cmake --build build
+}
+
+package() {
+  cmake --install build --prefix "$pkgdir/usr"
+
+  # 安装 QML 资源 (如果没有打进 qrc)
+  if [ -d "$srcdir/hx-music-client/qml" ]; then
+    mkdir -p "$pkgdir/usr/share/$pkgname/qml"
+    cp -r "$srcdir/hx-music-client/qml/"* "$pkgdir/usr/share/$pkgname/qml/"
+  fi
+
+  # 安装 desktop 文件
+  install -Dm644 "$srcdir/hx-music-client/hx-music-client.desktop" \
+    "$pkgdir/usr/share/applications/hx-music-client.desktop"
+
+  # 安装图标
+  install -Dm644 "$srcdir/hx-music-client/resources/icon.png" \
+    "$pkgdir/usr/share/icons/hicolor/128x128/apps/hx-music-client.png"
+}

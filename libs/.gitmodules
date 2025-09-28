@@ -1,0 +1,3 @@
+[submodule "libs/HXLibs"]
+    path = libs/HXLibs
+    url = https://github.com/HengXin666/HXLibs.git
