@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import HX.Music
-import "qrc:/HX/Music/qml/widget/internal"
 
 Item {
     id: messageManager

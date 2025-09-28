@@ -33,27 +33,47 @@ prepare() {
 }
 
 build() {
-  cmake -B build -S "$srcdir/HX-Music/HX-Music-Client" \
+  cd "$srcdir/HX-Music"
+  cmake -B build -S . \
     -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX=/usr
-  cmake --build build
+  cmake --build build --target HX-Music-Client
 }
 
+# 精确安装 QML 文件的替代方案
 package() {
+  cd "$srcdir/HX-Music"
+  
+  echo "=== 安装主程序 ==="
   cmake --install build --prefix "$pkgdir/usr"
 
-  # 安装 QML 资源 (如果没有打进 qrc)
-  if [ -d "$srcdir/hx-music-client/qml" ]; then
-    mkdir -p "$pkgdir/usr/share/$pkgname/qml"
-    cp -r "$srcdir/hx-music-client/qml/"* "$pkgdir/usr/share/$pkgname/qml/"
+  # 安装图标
+  echo "=== 安装图标 ==="
+  if [ -f "HX-Music-Client/resources/logo/appIcon.png" ]; then
+    echo "找到图标在 HX-Music-Client/resources/logo/appIcon.png"
+    mkdir -p "$pkgdir/usr/share/icons/hicolor/512x512/apps"
+    cp -v HX-Music-Client/resources/logo/appIcon.png \
+       "$pkgdir/usr/share/icons/hicolor/512x512/apps/$pkgname.png"
+  else
+    echo "警告: 未找到应用图标"
   fi
 
-  # 安装 desktop 文件
-  install -Dm644 "$srcdir/hx-music-client/hx-music-client.desktop" \
-    "$pkgdir/usr/share/applications/hx-music-client.desktop"
+  # 创建桌面文件
+  echo "=== 创建桌面文件 ==="
+  mkdir -p "$pkgdir/usr/share/applications"
+  cat > "$pkgdir/usr/share/applications/$pkgname.desktop" << EOF
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=HX Music Client
+Comment=$pkgdesc
+Exec=HX-Music-Client
+Icon=$pkgname
+Categories=Audio;Music;Player;
+Terminal=false
+StartupNotify=true
+EOF
 
-  # 安装图标
-  install -Dm644 "$srcdir/hx-music-client/resources/icon.png" \
-    "$pkgdir/usr/share/icons/hicolor/128x128/apps/hx-music-client.png"
+  echo "=== 打包完成 ==="
 }

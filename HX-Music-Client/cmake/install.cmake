@@ -6,10 +6,15 @@ file(GLOB_RECURSE src_files CONFIGURE_DEPENDS
 
 file(GLOB_RECURSE qrc_files CONFIGURE_DEPENDS 
     resources/*.qrc
+    qml/*.qrc
 )
 
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Qml Quick)
 
+qt_policy(SET QTP0001 NEW)
+qt_policy(SET QTP0002 NEW)
+qt_policy(SET QTP0003 NEW) # Qt 6.7
+qt_policy(SET QTP0004 NEW) # Qt 6.8
 
 qt_add_executable(HX-Music-Client
     ${src_files}
@@ -44,43 +49,43 @@ set(QT_QML_GENERATE_QMLLS_INI ON)
 qt_add_qml_module(HX-Music-Client
     URI HX.Music # QML 中 import 的名字
     VERSION 1.0
-    RESOURCE_PREFIX /
+    NO_PLUGIN
     QML_FILES
         # 主界面
-        resources/qml/Main.qml
+        qml/Main.qml
         # 窗口
-        resources/qml/window/LyricsWindow.qml
-        resources/qml/window/BorderlessWindow.qml
-        resources/qml/window/FullScreenWindow.qml
+        qml/window/LyricsWindow.qml
+        qml/window/BorderlessWindow.qml
+        qml/window/FullScreenWindow.qml
         # 控件
-        resources/qml/widget/PlaybackBar.qml
-        resources/qml/widget/MainSideBar.qml
-        resources/qml/widget/MusicProgressBar.qml
-        resources/qml/widget/VolumeButton.qml
-        resources/qml/widget/PlayModeButton.qml
-        resources/qml/widget/LoopingScrollingText.qml
-        resources/qml/widget/MusicListView.qml
-        resources/qml/widget/PlayStatusButton.qml
-        resources/qml/widget/ProgressBarRect.qml
-        resources/qml/widget/PlaylistView.qml
-        resources/qml/widget/MessageManager.qml
-        resources/qml/widget/UploadListView.qml
+        qml/widget/PlaybackBar.qml
+        qml/widget/MainSideBar.qml
+        qml/widget/MusicProgressBar.qml
+        qml/widget/VolumeButton.qml
+        qml/widget/PlayModeButton.qml
+        qml/widget/LoopingScrollingText.qml
+        qml/widget/MusicListView.qml
+        qml/widget/PlayStatusButton.qml
+        qml/widget/ProgressBarRect.qml
+        qml/widget/PlaylistView.qml
+        qml/widget/MessageManager.qml
+        qml/widget/UploadListView.qml
         # 内部控件组件
-        resources/qml/widget/internal/MusicActionButton.qml
-        resources/qml/widget/internal/AudioVisualizerBars.qml
-        resources/qml/widget/internal/ColorPicker.qml
-        resources/qml/widget/internal/IconTextField.qml
-        resources/qml/widget/internal/SideNavItem.qml
-        resources/qml/widget/internal/GlowButton.qml
-        resources/qml/widget/internal/TextButton.qml
+        qml/widget/internal/MusicActionButton.qml
+        qml/widget/internal/AudioVisualizerBars.qml
+        qml/widget/internal/ColorPicker.qml
+        qml/widget/internal/IconTextField.qml
+        qml/widget/internal/SideNavItem.qml
+        qml/widget/internal/GlowButton.qml
+        qml/widget/internal/TextButton.qml
         # 页面
-        resources/qml/view/SettingView.qml
-        resources/qml/view/LoginView.qml
-        resources/qml/view/AllMusicListView.qml
-        resources/qml/view/UserView.qml
-        resources/qml/view/BackendView.qml
+        qml/view/SettingView.qml
+        qml/view/LoginView.qml
+        qml/view/AllMusicListView.qml
+        qml/view/UserView.qml
+        qml/view/BackendView.qml
         # 全局状态数据
-        resources/qml/data/LyricsState.qml
+        qml/data/LyricsState.qml
 )
 
 # Qt拓展 (音频播放)

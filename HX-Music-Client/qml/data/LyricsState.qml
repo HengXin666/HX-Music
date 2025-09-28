@@ -10,7 +10,7 @@ QtObject {
     function switchWindow() {
         if (windowLyrics === null) {
             if (componentLyrics === null) {
-                componentLyrics = Qt.createComponent("qrc:/HX/Music/qml/window/LyricsWindow.qml");
+                componentLyrics = Qt.createComponent("qrc:/LyricsWindow.qml");
             }
             // 加载
             if (componentLyrics.status === Component.Ready) {

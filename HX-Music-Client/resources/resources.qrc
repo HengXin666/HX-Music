@@ -63,35 +63,4 @@
         <file alias="default.ass">default/default.ass</file>
         <file alias="loading.ass">default/loading.ass</file>
     </qresource>
-    <qresource prefix="/HX/Music">
-        <file>qml/Main.qml</file>
-        <file>qml/window/LyricsWindow.qml</file>
-        <file>qml/window/BorderlessWindow.qml</file>
-        <file>qml/window/FullScreenWindow.qml</file>
-        <file>qml/widget/PlaybackBar.qml</file>
-        <file>qml/widget/MusicProgressBar.qml</file>
-        <file>qml/widget/VolumeButton.qml</file>
-        <file>qml/widget/PlayModeButton.qml</file>
-        <file>qml/widget/LoopingScrollingText.qml</file>
-        <file>qml/widget/MusicListView.qml</file>
-        <file>qml/widget/PlayStatusButton.qml</file>
-        <file>qml/widget/ProgressBarRect.qml</file>
-        <file>qml/widget/MainSideBar.qml</file>
-        <file>qml/widget/PlaylistView.qml</file>
-        <file>qml/widget/MessageManager.qml</file>
-        <file>qml/widget/UploadListView.qml</file>
-        <file>qml/widget/internal/MusicActionButton.qml</file>
-        <file>qml/widget/internal/AudioVisualizerBars.qml</file>
-        <file>qml/widget/internal/ColorPicker.qml</file>
-        <file>qml/widget/internal/IconTextField.qml</file>
-        <file>qml/widget/internal/SideNavItem.qml</file>
-        <file>qml/widget/internal/GlowButton.qml</file>
-        <file>qml/widget/internal/TextButton.qml</file>
-        <file>qml/data/LyricsState.qml</file>
-        <file>qml/view/AllMusicListView.qml</file>
-        <file>qml/view/LoginView.qml</file>
-        <file>qml/view/SettingView.qml</file>
-        <file>qml/view/UserView.qml</file>
-        <file>qml/view/BackendView.qml</file>
-    </qresource>
 </RCC>

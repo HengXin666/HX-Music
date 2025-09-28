@@ -3,7 +3,6 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import Qt5Compat.GraphicalEffects
-import "qrc:/HX/Music/qml/widget/internal"
 import HX.Music
 
 Item {

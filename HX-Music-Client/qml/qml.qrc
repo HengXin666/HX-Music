@@ -1,0 +1,33 @@
+<RCC>
+    <qresource prefix="/">
+        <file alias="Main.qml">Main.qml</file>
+        <file alias="LyricsWindow.qml">window/LyricsWindow.qml</file>
+        <file alias="BorderlessWindow.qml">window/BorderlessWindow.qml</file>
+        <file alias="FullScreenWindow.qml">window/FullScreenWindow.qml</file>
+        <file alias="PlaybackBar.qml">widget/PlaybackBar.qml</file>
+        <file alias="MusicProgressBar.qml">widget/MusicProgressBar.qml</file>
+        <file alias="VolumeButton.qml">widget/VolumeButton.qml</file>
+        <file alias="PlayModeButton.qml">widget/PlayModeButton.qml</file>
+        <file alias="LoopingScrollingText.qml">widget/LoopingScrollingText.qml</file>
+        <file alias="MusicListView.qml">widget/MusicListView.qml</file>
+        <file alias="PlayStatusButton.qml">widget/PlayStatusButton.qml</file>
+        <file alias="ProgressBarRect.qml">widget/ProgressBarRect.qml</file>
+        <file alias="MainSideBar.qml">widget/MainSideBar.qml</file>
+        <file alias="PlaylistView.qml">widget/PlaylistView.qml</file>
+        <file alias="MessageManager.qml">widget/MessageManager.qml</file>
+        <file alias="UploadListView.qml">widget/UploadListView.qml</file>
+        <file alias="MusicActionButton.qml">widget/internal/MusicActionButton.qml</file>
+        <file alias="AudioVisualizerBars.qml">widget/internal/AudioVisualizerBars.qml</file>
+        <file alias="ColorPicker.qml">widget/internal/ColorPicker.qml</file>
+        <file alias="IconTextField.qml">widget/internal/IconTextField.qml</file>
+        <file alias="SideNavItem.qml">widget/internal/SideNavItem.qml</file>
+        <file alias="GlowButton.qml">widget/internal/GlowButton.qml</file>
+        <file alias="TextButton.qml">widget/internal/TextButton.qml</file>
+        <file alias="LyricsState.qml">data/LyricsState.qml</file>
+        <file alias="AllMusicListView.qml">view/AllMusicListView.qml</file>
+        <file alias="LoginView.qml">view/LoginView.qml</file>
+        <file alias="SettingView.qml">view/SettingView.qml</file>
+        <file alias="UserView.qml">view/UserView.qml</file>
+        <file alias="BackendView.qml">view/BackendView.qml</file>
+    </qresource>
+</RCC>

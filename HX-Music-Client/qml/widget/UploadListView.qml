@@ -6,7 +6,6 @@ import QtQuick.Window
 import QtQuick.Dialogs
 import Qt5Compat.GraphicalEffects
 import HX.Music
-import "qrc:/HX/Music/qml/widget/internal"
 
 Item {
     id: root
