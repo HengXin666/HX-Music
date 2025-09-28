@@ -1,0 +1,23 @@
+services:
+  hx-music-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        HTTP_PROXY: "http://10.60.30.222:2334"
+        HTTPS_PROXY: "http://10.60.30.222:2334"
+        NO_PROXY: "localhost,127.0.0.1"
+    container_name: hx-music-server
+    ports:
+      - "28205:28205"
+    volumes:
+      - ../data/file:/opt/HX-Music/data/file
+    restart: always
+    environment:
+      - PYTHONPATH=/opt/HX-Music/pyTool/venv/lib/python3.13/site-packages
+      - AEGISUB_HOME=/usr/share/aegisub
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:28205/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

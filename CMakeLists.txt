@@ -4,8 +4,14 @@ project(HX-Music)
 # 公共依赖: HXLibs
 add_subdirectory(libs/HXLibs)
 
-# 子模块: 客户端
-add_subdirectory(HX-Music-Client)
+# 控制是否构建客户端和服务端
+option(BUILD_CLIENT "Build HX-Music client" ON)
+option(BUILD_SERVER "Build HX-Music server" ON)
 
-# 子模块: 服务端
-add_subdirectory(HX-Music-Server)
+if(BUILD_CLIENT)
+    add_subdirectory(HX-Music-Client)
+endif()
+
+if(BUILD_SERVER AND LINUX)
+    add_subdirectory(HX-Music-Server)
+endif()
