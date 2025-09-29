@@ -1,0 +1,88 @@
+FROM archlinux:latest AS base
+
+# 设置官方镜像源, 保证不会 404
+RUN echo 'Server = https://mirrors.kernel.org/archlinux/$repo/os/$arch' > /etc/pacman.d/mirrorlist \
+    && pacman -Sy --noconfirm reflector \
+    && reflector --protocol https --country China --sort rate --save /etc/pacman.d/mirrorlist \
+    && pacman -Syy --noconfirm
+
+FROM base AS builder
+
+# 升级系统并安装 git
+RUN pacman -Syu --needed --noconfirm git base-devel sudo wget unzip cmake clang taglib python-pip pybind11 openssl
+
+# 创建 makepkg 用户
+ARG user=makepkg
+RUN useradd --system --create-home $user \
+    && echo "$user ALL=(ALL:ALL) NOPASSWD:ALL" > /etc/sudoers.d/$user
+USER $user
+WORKDIR /home/$user
+
+# 安装 yay
+RUN git clone https://aur.archlinux.org/yay.git \
+    && cd yay \
+    && makepkg -sri --needed --noconfirm \
+    && cd /home/$user \
+    && rm -rf yay .cache
+
+# 安装 Aegisub
+RUN yay -S --noconfirm aegisub
+
+# 克隆 HX-Music
+RUN git clone https://github.com/HengXin666/HX-Music.git /home/$user/HX-Music
+
+# 复制 Lua 脚本
+RUN mkdir -p /usr/share/aegisub/automation/autoload/ \
+    && sudo cp /home/$user/HX-Music/pyTool/lua/set-karaoke-style.lua /usr/share/aegisub/automation/autoload/
+
+# 安装 uv 并加入 PATH
+RUN pip install --break-system-packages uv
+ENV PATH="/home/makepkg/.local/bin:$PATH"
+
+# 初始化 uv
+WORKDIR /home/$user/HX-Music/pyTool
+RUN uv sync
+RUN source /home/makepkg/HX-Music/pyTool/.venv/bin/activate
+
+WORKDIR /home/$user/HX-Music
+RUN git submodule update --init --recursive
+
+# 构建 HX-Music-Server
+WORKDIR /home/$user/HX-Music
+RUN mkdir -p build
+
+WORKDIR /home/$user/HX-Music/build
+RUN cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_CLIENT=OFF -DBUILD_SERVER=ON
+RUN cmake --build . --config Release --target HX-Music-Server --
+
+FROM base AS runtime
+
+# 安装运行时依赖
+RUN pacman -Sy --noconfirm --needed python-pip taglib wget unzip pybind11 openssl
+
+# 创建 uv 虚拟环境
+RUN python -m venv /opt/uv-env
+RUN /opt/uv-env/bin/pip install --upgrade pip && /opt/uv-env/bin/pip install uv
+ENV PATH="/opt/uv-env/bin:$PATH"
+
+# 拷贝构建好的 HX-Music-Server 和 pyTool
+COPY --from=builder /home/makepkg/HX-Music/build/HX-Music-Server /opt/HX-Music/build/HX-Music-Server
+COPY --from=builder /home/makepkg/HX-Music/pyTool /opt/HX-Music/pyTool
+COPY --from=builder /usr/share/aegisub/automation/autoload /usr/share/aegisub/automation/autoload
+
+# 测试使用
+WORKDIR /opt/HX-Music/pyTool
+RUN uv run main.py 
+
+# 创建数据卷
+RUN mkdir -p /opt/HX-Music/data/file
+VOLUME ["/opt/HX-Music/data/file"]
+
+# 设置工作目录
+WORKDIR /opt/HX-Music/build/HX-Music-Server
+
+# 暴露端口
+EXPOSE 28205
+
+# 启动服务
+CMD ["uv", "run", "./HX-Music-Server"]

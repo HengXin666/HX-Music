@@ -5,9 +5,9 @@ auto hx_init = []{
     using namespace HX;
     try {
         auto cwd = std::filesystem::current_path();
-        log::hxLog.debug("当前工作路径是:", cwd);
+        log::hxLog.info("当前工作路径是:", cwd);
         std::filesystem::current_path("../../data");
-        log::hxLog.debug("切换到路径:", std::filesystem::current_path());
+        log::hxLog.info("切换到路径:", std::filesystem::current_path());
     } catch (const std::filesystem::filesystem_error& e) {
         log::hxLog.error("Error:", e.what());
     }
