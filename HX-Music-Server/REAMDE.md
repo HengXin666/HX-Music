@@ -1,16 +1,15 @@
 # HX-Music 服务端
 
 ## 一、Docker 部署
+### 1.1 DockerFile
 
-当前目录下:
+- 请见: [dockle/REAMDE.md](./docker/REAMDE.md)
 
-```sh
-docker-compose up -d
-```
+### 1.2 Docker-compose
+> [!TIP]
+> @todo, 等我上传镜像
 
-即可
-
-## 二、手动部署 | 本地构建
+## 二、本地构建
 
 > [!TIP]
 > 比较麻烦, 但是如果需要进行开发, 那这是必须滴.

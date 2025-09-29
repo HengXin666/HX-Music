@@ -1,0 +1,110 @@
+FROM archlinux:latest AS builder
+LABEL maintainer="Heng_Xin <282000500@qq.com>"
+
+# 设置官方镜像源
+RUN echo 'Server = https://mirrors.kernel.org/archlinux/$repo/os/$arch' > /etc/pacman.d/mirrorlist \
+    && pacman -Sy --noconfirm reflector \
+    && reflector --protocol https --country China --sort rate --save /etc/pacman.d/mirrorlist \
+    && pacman -Syy --noconfirm
+
+# 安装基础工具, Python, Pybind11, 以及虚拟图形环境 (Aegisub 应用卡拉ok模板需要)
+RUN pacman -Syu --needed --noconfirm \
+    git base-devel sudo wget unzip cmake clang taglib python python-pip pybind11 openssl xorg-server-xvfb
+
+# 创建 makepkg 用户
+ARG user=makepkg
+RUN useradd --system --create-home $user \
+    && echo "$user ALL=(ALL:ALL) NOPASSWD:ALL" > /etc/sudoers.d/$user
+
+USER $user
+WORKDIR /home/$user
+
+# 安装 yay (AUR 包管理器)
+RUN git clone https://aur.archlinux.org/yay.git \
+    && cd yay \
+    && makepkg -sri --needed --noconfirm \
+    && cd .. && rm -rf yay .cache
+
+# 使用 yay 安装 Aegisub
+RUN yay -S --noconfirm aegisub
+
+# 切换回 root 用户
+USER root
+RUN mkdir /loli
+WORKDIR /loli
+# 克隆 HX-Music
+RUN git clone https://github.com/HengXin666/HX-Music.git HX-Music
+
+# 复制 Lua 脚本
+RUN sudo mkdir -p /usr/share/aegisub/automation/autoload/ \
+    && sudo cp ./HX-Music/pyTool/lua/set-karaoke-style.lua /usr/share/aegisub/automation/autoload/
+
+# 直接全局安装 Python 依赖
+RUN pip install --break-system-packages --no-cache-dir uv
+
+# 直接全局安装 Python 依赖，允许覆盖系统管理
+WORKDIR /loli/HX-Music/pyTool
+
+# 安装所有 Python 依赖
+# 使用 pyproject.toml 安装依赖到全局 Python
+RUN pip install --break-system-packages -r requirements.txt
+
+# 复制 nltk 数据, 避免网络问题
+COPY /loli/HX-Music/HX-Music-Server/docker/src/nltk_data /root/nltk_data
+
+# 测试 Python 环境
+WORKDIR /loli/HX-Music/pyTool
+
+# 测试日语注音
+RUN python main.py
+
+# 启动虚拟图形环境并运行 Python 脚本
+RUN xvfb-run -s "-screen 0 2560x1600x24" python ./toTwo.py && \
+    if [ -f "./6_ok.ass" ]; then echo "6_ok.ass 文件已生成"; else echo "6_ok.ass 文件未生成"; exit 1; fi
+
+# 固定 Python 路径
+ENV PYTHON_EXECUTABLE=/usr/bin/python3
+ENV PYTHON_INCLUDE_DIR=/usr/include/python3.13
+ENV PYTHON_LIBRARY=/usr/lib/libpython3.13.so
+
+# 初始化子模块
+WORKDIR /loli/HX-Music
+RUN git submodule update --init --recursive
+
+# 构建 HX-Music-Server
+WORKDIR /loli/HX-Music/build
+RUN cmake .. \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_CLIENT=OFF \
+    -DBUILD_SERVER=ON \
+    -DPYTHON_EXECUTABLE=$PYTHON_EXECUTABLE \
+    -DPYTHON_INCLUDE_DIR=$PYTHON_INCLUDE_DIR \
+    -DPYTHON_LIBRARY=$PYTHON_LIBRARY
+
+RUN cmake --build . --config Release --target HX-Music-Server --
+
+# 清理构建工具和缓存
+RUN pacman -Rns --noconfirm base-devel yay \
+    && pacman -Sc --noconfirm \
+    && rm -rf /home/makepkg/.cache \
+    && rm -rf root/.cache
+
+# 挂载目录
+RUN mkdir -p /loli/HX-Music/data && \
+    chown -R root:root /loli/HX-Music
+
+VOLUME ["/loli/HX-Music/data"]
+EXPOSE 28205
+
+WORKDIR /loli/HX-Music/build/HX-Music-Server
+
+RUN cat <<'EOF' > ./start-hx-music.sh
+#!/bin/bash
+# 启动 HX-Music-Server 使用虚拟显示
+xvfb-run --server-args="-screen 0 2560x1600x24" ./HX-Music-Server
+EOF
+
+# 赋予可执行权限
+RUN chmod +x ./start-hx-music.sh
+
+CMD [ "./start-hx-music.sh" ]

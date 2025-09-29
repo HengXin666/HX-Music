@@ -1,0 +1,32 @@
+services:
+  hx-music-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # 代理
+        HTTP_PROXY: "http://10.60.30.222:2334"
+        HTTPS_PROXY: "http://10.60.30.222:2334"
+        NO_PROXY: "localhost,127.0.0.1"
+    image: hx-music-server:latest
+    container_name: hx-music-server
+    ports:
+      # 端口映射
+      - "28205:28205"
+    volumes:
+      - ../data:/loli/HX-Music/data
+    restart: always
+    environment:
+      - AEGISUB_HOME=/usr/share/aegisub
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:28205/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    # 赋予容器基本的操作系统权限, 以使用 io_uring
+    security_opt:
+      - seccomp:unconfined
+    cap_add:
+      - SYS_ADMIN
+      - SYS_RESOURCE
+      - NET_ADMIN
