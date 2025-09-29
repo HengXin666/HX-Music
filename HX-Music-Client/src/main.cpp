@@ -1,6 +1,8 @@
 #include <QApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
+#include <QLocalServer>
+#include <QLocalSocket>
 
 #include <singleton/SignalBusSingleton.h>
 #include <singleton/GlobalSingleton.hpp>
@@ -31,6 +33,7 @@ struct MusicClient {
     MusicClient(int argc, char* argv[])
         : _app{argc, argv}
         , _engine{}
+        , _server{nullptr}
     {
         // 禁止QMenu使用原生阴影
         _app.setAttribute(Qt::AA_DontUseNativeMenuBar, true);
@@ -47,6 +50,43 @@ struct MusicClient {
     }
 
     MusicClient& loadConfig() {
+        return *this;
+    }
+
+    MusicClient& checkSingleInstanceApp() {
+        QString serverName = QApplication::applicationName();
+        QLocalSocket socket;
+        socket.connectToServer(serverName);
+        if (socket.waitForConnected(500)) {
+            // 已有实例运行, 发送激活信号
+            socket.write("ACTIVATE");
+            socket.waitForBytesWritten(500);
+            socket.readAll(); // 确保 close
+            ::exit(0);
+        } else {
+            // 第一个实例, 创建服务器
+            _server = new QLocalServer{&_app};
+            if (!_server->listen(serverName)) {
+                // 如果监听失败, 可能是残留的服务器, 移除后重新监听
+                if (_server->serverError() == QAbstractSocket::AddressInUseError) {
+                    QLocalServer::removeServer(serverName);
+                    _server->listen(serverName);
+                }
+            }
+            QObject::connect(_server, &QLocalServer::newConnection, &_app, [this]() {
+                QLocalSocket* socket = _server->nextPendingConnection();
+                if (socket) {
+                    QObject::connect(socket, &QLocalSocket::readyRead, &_app, [this, socket] {
+                        QByteArray data = socket->readAll();;
+                        if (data == "ACTIVATE") {
+                            QMetaObject::invokeMethod(_engine.rootObjects().first(), "onTrayShow");
+                        }
+                        socket->close();
+                        socket->deleteLater();
+                    });
+                }
+            });
+        }
         return *this;
     }
 
@@ -141,7 +181,7 @@ struct MusicClient {
         cp->setContextProperty("LyricController", lyricController);
         // 注册img链接: image://musicLyric
         _engine.addImageProvider("musicLyric", lyricController); // 内部会释放!
-        
+
         // 注册img链接: image://svgColored
         _engine.addImageProvider("svgColored", new HX::QmlSvgPars); // 内部会释放!
 
@@ -174,10 +214,11 @@ struct MusicClient {
     }
 
     MusicClient& operator=(MusicClient&&) noexcept = delete;
-    
+
 private:
     QApplication _app;
     QQmlApplicationEngine _engine;
+    QLocalServer* _server;
     HX::WindowMaskUtil _windowMaskUtil{};
 };
 
@@ -191,27 +232,16 @@ private:
 #include <QQuickStyle>
 
 int main(int argc, char* argv[]) {
-    // for (auto&& p : QStringList{
-    //     "qrc:/qml/Main.qml",
-    //     "qrc:/Main.qml",
-    //     "qrc:Main.qml",
-    //     ":/qml/Main.qml",
-    //     ":/Main.qml",
-    //     ":Main.qml",
-    // }) {
-    //     auto buf = HX::internal::readQrcFile(p);
-    //     HX::log::hxLog.warning(p.toStdString(), "size:", buf.size());
-    // }
-    // return 0;
     QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
     QSurfaceFormat fmt;
     fmt.setRenderableType(QSurfaceFormat::OpenGL);
     fmt.setProfile(QSurfaceFormat::CoreProfile);
-    fmt.setVersion(3, 3); // 至少OpenGL 3.3
+    fmt.setVersion(3, 3); // 至少 OpenGL 3.3
     QSurfaceFormat::setDefaultFormat(fmt);
     QQuickStyle::setStyle("Imagine"); // 或 "Universal"
     HX::MusicClient app{argc, argv};
-    return app.loadConfig()
+    return app.checkSingleInstanceApp()
+              .loadConfig()
               .buildQml()
               .exec();
 }

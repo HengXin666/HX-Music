@@ -1,4 +1,5 @@
 FROM archlinux:latest AS builder
+LABEL maintainer="Heng_Xin <282000500@qq.com>"
 
 # 设置官方镜像源
 RUN echo 'Server = https://mirrors.kernel.org/archlinux/$repo/os/$arch' > /etc/pacman.d/mirrorlist \
@@ -6,9 +7,9 @@ RUN echo 'Server = https://mirrors.kernel.org/archlinux/$repo/os/$arch' > /etc/p
     && reflector --protocol https --country China --sort rate --save /etc/pacman.d/mirrorlist \
     && pacman -Syy --noconfirm
 
-# 安装基础工具, Python, Pybind11
+# 安装基础工具, Python, Pybind11, 以及虚拟图形环境 (Aegisub 应用卡拉ok模板需要)
 RUN pacman -Syu --needed --noconfirm \
-    git base-devel sudo wget unzip cmake clang taglib python python-pip pybind11 openssl
+    git base-devel sudo wget unzip cmake clang taglib python python-pip pybind11 openssl xorg-server-xvfb
 
 # 创建 makepkg 用户
 ARG user=makepkg
@@ -54,16 +55,9 @@ WORKDIR /loli/HX-Music/pyTool
 # 测试日语注音
 RUN python main.py
 
-# 测试调用lua脚本
-RUN python toTwo.py
-
-# 判断是否在当前路径生成了 6_ok.ass
-RUN if [ -f "./6_ok.ass" ]; then \
-        echo "6_ok.ass 文件已生成"; \
-    else \
-        echo "6_ok.ass 文件未生成"; \
-        exit 1; \
-    fi
+# 启动虚拟图形环境并运行 Python 脚本
+RUN xvfb-run -s "-screen 0 2560x1600x24" python ./toTwo.py && \
+    if [ -f "./6_ok.ass" ]; then echo "6_ok.ass 文件已生成"; else echo "6_ok.ass 文件未生成"; exit 1; fi
 
 # 固定 Python 路径
 ENV PYTHON_EXECUTABLE=/usr/bin/python3
@@ -100,4 +94,14 @@ VOLUME ["/loli/HX-Music/data"]
 EXPOSE 28205
 
 WORKDIR /loli/HX-Music/build/HX-Music-Server
-CMD ["./HX-Music-Server"]
+
+RUN cat <<'EOF' > ./start-hx-music.sh
+#!/bin/bash
+# 启动 HX-Music-Server 使用虚拟显示
+xvfb-run --server-args="-screen 0 2560x1600x24" ./HX-Music-Server
+EOF
+
+# 赋予可执行权限
+RUN chmod +x ./start-hx-music.sh
+
+CMD [ "./start-hx-music.sh" ]
