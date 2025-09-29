@@ -1,19 +1,20 @@
 FROM archlinux:latest AS builder
 
-# 设置官方镜像源, 保证不会 404
+# 设置官方镜像源
 RUN echo 'Server = https://mirrors.kernel.org/archlinux/$repo/os/$arch' > /etc/pacman.d/mirrorlist \
     && pacman -Sy --noconfirm reflector \
     && reflector --protocol https --country China --sort rate --save /etc/pacman.d/mirrorlist \
     && pacman -Syy --noconfirm
 
-# 安装构建工具, Python, Pybind11
+# 安装基础工具, Python, Pybind11
 RUN pacman -Syu --needed --noconfirm \
     git base-devel sudo wget unzip cmake clang taglib python python-pip pybind11 openssl
 
-# 创建makepkg用户(构建AUR包)
+# 创建 makepkg 用户
 ARG user=makepkg
 RUN useradd --system --create-home $user \
     && echo "$user ALL=(ALL:ALL) NOPASSWD:ALL" > /etc/sudoers.d/$user
+
 USER $user
 WORKDIR /home/$user
 
@@ -23,57 +24,80 @@ RUN git clone https://aur.archlinux.org/yay.git \
     && makepkg -sri --needed --noconfirm \
     && cd .. && rm -rf yay .cache
 
-# 安装 Aegisub
+# 使用 yay 安装 Aegisub
 RUN yay -S --noconfirm aegisub
 
+# 切换回 root 用户
+USER root
+RUN mkdir /loli
+WORKDIR /loli
 # 克隆 HX-Music
 RUN git clone https://github.com/HengXin666/HX-Music.git HX-Music
 
 # 复制 Lua 脚本
-RUN mkdir -p /usr/share/aegisub/automation/autoload/ \
-    && sudo cp HX-Music/pyTool/lua/set-karaoke-style.lua /usr/share/aegisub/automation/autoload/
+RUN sudo mkdir -p /usr/share/aegisub/automation/autoload/ \
+    && sudo cp ./HX-Music/pyTool/lua/set-karaoke-style.lua /usr/share/aegisub/automation/autoload/
 
-# 安装 uv
-RUN pip install --break-system-packages uv
-ENV PATH="/home/makepkg/.local/bin:$PATH"
+# 直接全局安装 Python 依赖
+RUN pip install --break-system-packages --no-cache-dir uv
 
-# 初始化 uv 虚拟环境
-WORKDIR /home/$user/HX-Music/pyTool
-RUN uv sync
+# 直接全局安装 Python 依赖，允许覆盖系统管理
+WORKDIR /loli/HX-Music/pyTool
 
-# 测试使用
-RUN uv run main.py 
+# 安装所有 Python 依赖
+# 使用 pyproject.toml 安装依赖到全局 Python
+RUN pip install --break-system-packages --no-cache-dir .
 
-# 使用runtime Python, 无需复制虚拟环境
-RUN uv python pin
+# 测试 Python 环境
+WORKDIR /loli/HX-Music/pyTool
 
-WORKDIR /home/$user/HX-Music
+# 测试日语注音
+RUN python main.py
+
+# 测试调用lua脚本
+RUN python toTwo.py
+
+# 判断是否在当前路径生成了 6_ok.ass
+RUN if [ -f "./6_ok.ass" ]; then \
+        echo "6_ok.ass 文件已生成"; \
+    else \
+        echo "6_ok.ass 文件未生成"; \
+        exit 1; \
+    fi
+
+# 固定 Python 路径
+ENV PYTHON_EXECUTABLE=/usr/bin/python3
+ENV PYTHON_INCLUDE_DIR=/usr/include/python3.13
+ENV PYTHON_LIBRARY=/usr/lib/libpython3.13.so
+
+# 初始化子模块
+WORKDIR /loli/HX-Music
 RUN git submodule update --init --recursive
 
-# 构建 HX-Music-Server, 并指定 Python 环境
-WORKDIR /home/$user/HX-Music/build
+# 构建 HX-Music-Server
+WORKDIR /loli/HX-Music/build
 RUN cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_CLIENT=OFF \
     -DBUILD_SERVER=ON \
-    -DPYTHON_EXECUTABLE=/home/makepkg/HX-Music/pyTool/.venv/bin/python3 \
-    -DPYTHON_INCLUDE_DIR=/home/makepkg/HX-Music/pyTool/.venv/include/python3.13 \
-    -DPYTHON_LIBRARY=/home/makepkg/HX-Music/pyTool/.venv/lib/libpython3.13.so
+    -DPYTHON_EXECUTABLE=$PYTHON_EXECUTABLE \
+    -DPYTHON_INCLUDE_DIR=$PYTHON_INCLUDE_DIR \
+    -DPYTHON_LIBRARY=$PYTHON_LIBRARY
 
 RUN cmake --build . --config Release --target HX-Music-Server --
 
-# 清理不需要的构建文件和AUR工具
-RUN sudo pacman -Rns --noconfirm base-devel yay \
-    && sudo pacman -Sc --noconfirm \
-    && rm -rf /home/makepkg/.cache
+# 清理构建工具和缓存
+RUN pacman -Rns --noconfirm base-devel yay \
+    && pacman -Sc --noconfirm \
+    && rm -rf /home/makepkg/.cache \
+    && rm -rf root/.cache
 
-# 暴露端口和数据目录
-RUN mkdir -p /home/$user/HX-Music/data
-VOLUME ["/home/makepkg/HX-Music"]
+# 挂载目录
+RUN mkdir -p /loli/HX-Music/data && \
+    chown -R root:root /loli/HX-Music
+
+VOLUME ["/loli/HX-Music/data"]
 EXPOSE 28205
 
-# 设置工作目录
-WORKDIR /home/$user/HX-Music/build/HX-Music-Server
-
-# 启动
-CMD ["uv", "run", "./HX-Music-Server"]
+WORKDIR /loli/HX-Music/build/HX-Music-Server
+CMD ["./HX-Music-Server"]

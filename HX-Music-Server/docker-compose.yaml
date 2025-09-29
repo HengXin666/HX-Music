@@ -13,10 +13,9 @@ services:
       # 端口映射
       - "28205:28205"
     volumes:
-      - ../data:/home/makepkg/HX-Music/data
+      - ../data:/loli/HX-Music/data
     restart: always
     environment:
-      - PYTHONPATH=/home/makepkg/HX-Music/pyTool/venv/lib/python3.13/site-packages
       - AEGISUB_HOME=/usr/share/aegisub
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:28205/"]

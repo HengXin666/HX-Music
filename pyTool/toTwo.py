@@ -1,11 +1,8 @@
 from pathlib import Path
 from src.utils.callLua import callApplyKaraokeTemplateLua, callSetKaraokeStyleLua
 
-assFile = Path("output.ass")
-outputFile = Path("output_ok.ass")
-
-# 转双行 k 歌曲
-callSetKaraokeStyleLua(assFile, assFile, "orig")
+assFile = Path("6.ass")
+outputFile = Path("6_ok.ass")
 
 # 应用卡拉ok模板
 callApplyKaraokeTemplateLua(assFile, outputFile)
