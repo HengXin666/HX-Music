@@ -6,8 +6,8 @@
 # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
 
 # 构建脚本
-**/appBulid/**
-!**/appBulid/arch/PKGBUILD
+HX-Music-Client/appBulid/arch/**
+!HX-Music-Client/appBulid/arch/PKGBUILD
 
 # 服务端数据
 data/**
