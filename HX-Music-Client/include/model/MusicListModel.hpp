@@ -177,6 +177,7 @@ public:
             MessageController::get().show<MsgType::Warning>("不可拖拽文件夹, 请去上传列表拖拽. 仅可拖拽单文件!");
             return;
         }
+        MessageController::get().show<MsgType::Info>("正在上传: " + file.filename().string());
         SignalBusSingleton::get().uploadFileByCallBackSignal(
             path,
             _id,

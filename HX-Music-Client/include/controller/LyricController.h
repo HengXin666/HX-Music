@@ -391,6 +391,7 @@ public:
 
     // 爬取歌曲歌词
     Q_INVOKABLE void crawlKaRaOKAssLyrics(uint64_t id) {
+        MessageController::get().show<MsgType::Info>("正在爬取歌词, id = " + std::to_string(id));
         LyricsApi::crawlKaRaOKAssLyricsByWs(id)
             .thenTry([=](auto t) {
                 if (!t) [[unlikely]] {

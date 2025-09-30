@@ -356,7 +356,7 @@ class SQLiteDB {
 
     template <typename InitFunc>
         requires (std::is_same_v<std::invoke_result_t<InitFunc>, internal::StmtCallChain>)
-    internal::StmtCallChain& getSqlCache(std::size_t typeId, InitFunc&& init) {
+    internal::StmtCallChain& getSqlCache(meta::TypeId::IdType typeId, InitFunc&& init) {
         auto it = _sqlCache.find(typeId);
         if (it == _sqlCache.end()) [[unlikely]] {
             auto [jt, ok] = _sqlCache.emplace(typeId, init());
@@ -524,7 +524,7 @@ public:
     }
 private:
     ::sqlite3* _db{};
-    std::map<std::size_t, internal::StmtCallChain> _sqlCache{};
+    std::map<meta::TypeId::IdType, internal::StmtCallChain> _sqlCache{};
 };
 
 [[nodiscard]] inline SQLiteDB open(std::string_view filePath) {

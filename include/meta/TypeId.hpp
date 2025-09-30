@@ -18,13 +18,15 @@
  * along with HX-Music.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#if 0
+
 #include <atomic>
 
 namespace HX::meta {
 
 struct TypeId {
     // 适用于 类成员指针
-    template <auto... Vs>
+    template <auto Vs>
     static std::size_t make() noexcept {
         static const auto id = get();
         return id;
@@ -46,3 +48,36 @@ private:
 };
 
 } // namespace HX::meta
+
+#else
+
+#include <HXLibs/reflection/MemberName.hpp>
+
+namespace HX::meta {
+
+namespace internal {
+
+template <auto Vs>
+struct StaticVal {
+    inline static constexpr auto Val = Vs;
+};
+
+} // namespace internal
+
+struct TypeId {
+    using IdType = void const * const;
+
+    template <auto Vs>
+    static consteval IdType make() noexcept {
+        return static_cast<IdType>(&internal::StaticVal<Vs>::Val);
+    }
+
+    template <typename T>
+    static consteval IdType make() noexcept {
+        return static_cast<IdType>(&reflection::internal::getStaticObj<T>());
+    }
+};
+
+} // namespace HX::meta
+
+#endif

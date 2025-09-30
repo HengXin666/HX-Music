@@ -50,7 +50,7 @@ WORKDIR /loli/HX-Music/pyTool
 RUN pip install --break-system-packages -r requirements.txt
 
 # 复制 nltk 数据, 避免网络问题
-COPY /loli/HX-Music/HX-Music-Server/docker/src/nltk_data /root/nltk_data
+RUN cp -r /loli/HX-Music/HX-Music-Server/docker/src/nltk_data /root/nltk_data
 
 # 测试 Python 环境
 WORKDIR /loli/HX-Music/pyTool
@@ -100,11 +100,15 @@ WORKDIR /loli/HX-Music/build/HX-Music-Server
 
 RUN cat <<'EOF' > ./start-hx-music.sh
 #!/bin/bash
-# 启动 HX-Music-Server 使用虚拟显示
-xvfb-run --server-args="-screen 0 2560x1600x24" ./HX-Music-Server
+set -e
+export DISPLAY=:99
+mkdir -p /tmp/.X11-unix
+Xvfb :99 -screen 0 2560x1600x24 &
+sleep 1
+exec ./HX-Music-Server
 EOF
 
 # 赋予可执行权限
 RUN chmod +x ./start-hx-music.sh
 
-CMD [ "./start-hx-music.sh" ]
+CMD ["./start-hx-music.sh"]

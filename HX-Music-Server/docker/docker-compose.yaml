@@ -14,7 +14,8 @@ services:
       # 端口映射
       - "28205:28205"
     volumes:
-      - ../data:/loli/HX-Music/data
+      # 挂载路径
+      - ../../data:/loli/HX-Music/data
     restart: always
     environment:
       - AEGISUB_HOME=/usr/share/aegisub
