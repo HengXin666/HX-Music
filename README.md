@@ -1,14 +1,17 @@
-# HX-Music
+<h1 align="center" style="color:yellow">HX-Music</h1>
 
-一个 C/S 架构的音乐播放器, 主要面向日语歌曲. 
+## 一、项目简介
+
+本项目是一个 C/S 架构的音乐播放器, 一个主要面向日语歌曲, 支持 Ass 特效字幕的音乐播放器.
 
 - 可以渲染 ASS 字幕于悬浮窗口.
 - 支持上传和下载歌曲到后端 (后端可部署在NAS).
-- 后端可识别歌曲并且匹配日语歌词
+- 后端可识别歌曲并且匹配日语歌词.
 - 支持对日语歌词进行日语注音, 最终 双行 卡拉ok ASS化.
+- 支持多用户, 有 管理员、普通用户、只读用户 三种权限分级.
 
 > [!TIP]
-> 仍在绝赞开发中... (目前仅在`Arch-Linux`的`KDE-Wayland`上测试过)
+> 目前仅在`Arch-Linux`的`KDE-Wayland`上测试过, 目前仅支持 Linux
 
 - C++ QT/QML 客户端: [HX-Music-Client/README.md](HX-Music-Client/README.md)
 
@@ -16,42 +19,82 @@
 
 - Python 日语注音 并且为 双行 卡拉ok ASS => [pyTool/README.md](pyTool/README.md)
 
----
+## 二、客户端界面
 
-已知问题:
+> [!TIP]
+> 未完成, @todo, 原因: 我滴歌曲不多, 等我整理一下...
 
-- [x] 玄学的断开的管道, 大部分时候没事. 但是有时候会触发. 目前不知道如何稳定复现. (原因: [HXLibs: Commit 3d1466b](https://github.com/HengXin666/HXLibs/commit/3d1466bd9e61c0708e9a93893d650ebe02157482))
+## 三、部署说明
+### 3.1 客户端安装
+#### 3.1.1 Arch Linux
 
-- [x] 上传音乐无法及时刷新到界面上. 需要手动刷新... (需要同步一下)
+- 通过 `PKGBUILD` ([HX-Music-Client/appBulid/arch/PKGBUILD](./HX-Music-Client/appBulid/arch/PKGBUILD))
 
-- [x] 玄学的随机的 ass right 预处理计算错误. (使用其他方法临时规避了... 不过感觉有隐患...)
+下载它, 通过:
 
----
+```sh
+makepkg -i
+```
 
-@todo 高优先
+进行构建并安装.
 
-- [x] 用户登陆
+并且对于 Wayland 窗口系统, 应该在 `设置 > 窗口规则` 处导入以下规则:
 
-- [ ] 用户注册 (仅管理员可添加)
+```ini
+[自动顶置顶置]
+Description=自动顶置顶置
+above=true
+aboverule=2
+title=[Wayland置顶]
+titlematch=2
+wmclass=HX
+wmclassmatch=2
 
-- [ ] 歌单编辑
-    - [ ] 描述编辑
-    - [x] 歌单更新: 拖拽 / 交换
+[隐藏切换]
+Description=隐藏切换
+skippager=true
+skippagerrule=2
+skipswitcher=true
+skipswitcherrule=2
+skiptaskbar=true
+skiptaskbarrule=2
+title=[Wayland隐藏切换]
+titlematch=2
+wmclass=HX
+wmclassmatch=2
+```
 
-- [x] 添加音乐到歌单 (从主页)
+以保证在 Wayland 下可以实现 `窗口顶置` 和 `隐藏悬浮歌词窗口在图标任务管理器`
 
-@todo 低优先级
+### 3.2 服务端部署
 
-- [ ] 平滑的开关音频 (音量平滑)
+下方是 `docker-compose.yaml`, 按需修改. 一般仅需要修改带注释的地方
 
-- [ ] 关于
+```yaml
+services:
+  hx-music-server:
+    image: hengxin666/hx-music-server:latest
+    container_name: hx-music-server
+    ports:
+      # 端口映射
+      - "28205:28205"
+    volumes:
+      # 文件存放路径, 包含数据库、音乐文件、字幕文件
+      - ./data:/loli/HX-Music/data
+    restart: always
+    environment:
+      - AEGISUB_HOME=/usr/share/aegisub
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:28205/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    security_opt:
+      - seccomp:unconfined
+    cap_add:
+      - SYS_ADMIN
+      - SYS_RESOURCE
+      - NET_ADMIN
+```
 
-- [ ] 搜索
-
-- [ ] 安全记录状态 (如关机)
-
-- [ ] 各种筛选
-
-- [ ] 导入歌单 (难)
-
-- [ ] 新方案实现记忆窗口位置
+> 更多部署方式, 可以阅读: [HX-Music-Server/REAMDE.md](./HX-Music-Server/REAMDE.md)

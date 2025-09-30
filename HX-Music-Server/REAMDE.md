@@ -6,8 +6,35 @@
 - 请见: [dockle/REAMDE.md](./docker/REAMDE.md)
 
 ### 1.2 Docker-compose
-> [!TIP]
-> @todo, 等我上传镜像
+
+下方是 `docker-compose.yaml`, 按需修改. 一般仅需要修改带注释的地方
+
+```yaml
+services:
+  hx-music-server:
+    image: hengxin666/hx-music-server:latest
+    container_name: hx-music-server
+    ports:
+      # 端口映射
+      - "28205:28205"
+    volumes:
+      # 文件存放路径, 包含数据库、音乐文件、字幕文件
+      - ./data:/loli/HX-Music/data
+    restart: always
+    environment:
+      - AEGISUB_HOME=/usr/share/aegisub
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:28205/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    security_opt:
+      - seccomp:unconfined
+    cap_add:
+      - SYS_ADMIN
+      - SYS_RESOURCE
+      - NET_ADMIN
+```
 
 ## 二、本地构建
 
