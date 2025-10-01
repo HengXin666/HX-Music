@@ -89,6 +89,11 @@ RUN pacman -Rns --noconfirm base-devel yay \
     && rm -rf /home/makepkg/.cache \
     && rm -rf root/.cache
 
+# 清理源码
+RUN rm -rf /loli/HX-Music/HX-Music-Client
+RUN rm -rf /loli/HX-Music/HX-Music-Server
+RUN rm -rf /loli/HX-Music/doc
+
 # 挂载目录
 RUN mkdir -p /loli/HX-Music/data && \
     chown -R root:root /loli/HX-Music
@@ -103,6 +108,7 @@ RUN cat <<'EOF' > ./start-hx-music.sh
 set -e
 export DISPLAY=:99
 mkdir -p /tmp/.X11-unix
+rm -f /tmp/.X99-lock
 Xvfb :99 -screen 0 2560x1600x24 &
 sleep 1
 exec ./HX-Music-Server
