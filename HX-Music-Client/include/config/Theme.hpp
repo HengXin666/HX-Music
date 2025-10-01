@@ -107,7 +107,7 @@ public:
         utils::AsyncFile file{loop};
         file.syncOpen(getConfigPath("themeConfig.json"), utils::OpenMode::Write);
         std::string json;
-        reflection::toJson<true, ThemeConfig>({
+        reflection::toJson<ThemeConfig>({
             _textColor.name(QColor::HexArgb).toStdString(),
             _paratextColor.name(QColor::HexArgb).toStdString(),
             _highlightingColor.name(QColor::HexArgb).toStdString(),

@@ -186,7 +186,7 @@ public:
         utils::AsyncFile file{loop};
         file.syncOpen(getConfigPath("lyricConfig.json"), utils::OpenMode::Write);
         std::string json;
-        reflection::toJson<true>(_lyricConfig, json);
+        reflection::toJson(_lyricConfig, json);
         file.syncWrite(json);
         file.syncClose();
     }

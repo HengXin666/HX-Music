@@ -35,7 +35,7 @@ class ConfigManager {
 public:
     void saveConfig(const MusicConfig& config) {
         std::string json;
-        reflection::toJson<true>(config, json);
+        reflection::toJson(config, json);
         coroutine::EventLoop loop;
         utils::AsyncFile file{loop};
         file.syncOpen(getConfigPath("hxMusicConfig.json"), utils::OpenMode::Write);
