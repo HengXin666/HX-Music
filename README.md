@@ -42,7 +42,7 @@
 
 - `Arch Linux` **Wayland** 下悬浮窗, 渲染 Ass 日语注音的歌词演示视频:
 
-<video controls src="./doc/img/歌词演示_20251001_232837.webm" title="演示歌词"></video>
+https://github.com/user-attachments/assets/fbf3071e-b870-4e98-96ab-ecea40e0a5b6
 
 ## 三、部署说明
 ### 3.1 客户端安装
