@@ -104,14 +104,24 @@ class JpMark:
         """
         return CN_TO_JP_MAP.get(text, text)
     
-    @staticmethod
-    def _fixReadings(tokens: list[dict]) -> list[dict]:
+    def _fixReadings(self, tokens: list[dict]) -> list[dict]:
         """
         特化处理, 一些分割、注音不正确的, 常见的, 可以手动排除
         """
         if len(tokens) == 0:
             return []
-        fixed = [tokens[0]]
+        fixed = []
+        if (tokens[0]["orig"] == "君"):
+            fixed.append({
+                "orig": "君",
+                "hira": "きみ",
+                "kana": "キミ",
+                "hepburn": "kimi",
+                "kunrei": "kimi",
+                "passport": "kimi"
+            })
+        else:
+            fixed.append(tokens[0])
         i = 1
         while i < len(tokens):
             # 检查: あの + 日
@@ -136,6 +146,54 @@ class JpMark:
                     "kunrei": "go han",
                     "passport": "go han"
                 })
+            elif tokens[i]["orig"] == "君":
+                # https://github.com/HengXin666/HX-Music/issues/2
+                # 对于 君 似乎都会被标注为 くん 而不是 きみ
+                # 临时解决方案: 因为歌词几乎不会有 xx君 的. 因此全部使用 きみ 好了
+                # 此外, 如果期望解决, 得使用分词, 而这几乎不行. 因为如果是个别小众的名字
+                # 依旧可能识别错误. 最好是 LVM AI 吧???
+                fixed.append({
+                    "orig": "君",
+                    "hira": "きみ",
+                    "kana": "キミ",
+                    "hepburn": "kimi",
+                    "kunrei": "kimi",
+                    "passport": "kimi"
+                })
+            elif tokens[i]["orig"] == "々":
+                # https://github.com/HengXin666/HX-Music/issues/2
+                # 处理可能的分词错误: 行く先々 -> 行く先 + 々
+                fixed.pop()
+                text: List[str] = list(f'{tokens[i - 1]["orig"]}{tokens[i]["orig"]}')
+                """
+                根本就不可能出现 len < 3
+                因为出现单独的 々 表示前面一定有 Y々
+
+                而这样一定会分词为 Y々, 而没有, 就一定说明是别的东西影响了Y
+                即 XY々 -> XY + 々 (其中len(X) >= 1)
+
+                所以 len >= 3 恒成立; 如果歌词正常就不会越界
+                """
+                if (len(text) < 3):
+                    # hk -> 最终会因为 markLineStr = "".join([_[0] for _ in markList])
+                    # 而停止对该行注音
+                    continue
+                lText = text[:-2] # X
+                rText = text[-2:] # Y々
+                fixed.extend(
+                    self._kks.convert(
+                        JpMark._preprocessing(
+                            "".join(lText)
+                        )
+                    )
+                )
+                fixed.extend(
+                    self._kks.convert(
+                        JpMark._preprocessing(
+                            "".join(rText)
+                        )
+                    )
+                )
             else:
                 fixed.append(tokens[i])
             i += 1
@@ -151,7 +209,7 @@ class JpMark:
         convertRes = []
         for token in tokens:
             convertRes.extend(
-                JpMark._fixReadings(
+                self._fixReadings(
                     self._kks.convert(
                         JpMark._preprocessing(token)
             )))

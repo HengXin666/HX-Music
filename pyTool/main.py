@@ -226,7 +226,8 @@ if __name__ == "__main__":
     # {\\kf16}地{\\kf17}方
     # {\\kf12}) - {\\kf33}彩{\\kf7}音{\\kf7} ({\\kf14}あ{\\kf17}や{\\kf16}ね{\\kf0})
     _ass = AssMark()
-    s = _ass.mark(r'{\kf25}こ{\kf21}れ{\kf16}一{\kf19}つ{\kf14}い{\kf20}く{\kf23}ら{\kf31}で{\kf24}し{\kf18}ょ{\kf17}う{\kf19}多{\kf23}少{\kf25}钱')
+    # s = _ass.mark(r'{\kf25}坂本君')
+    s = _ass.mark(r'{\kf25}行{\kf25}く{\kf25}先{\kf25}々{\kf25}')
     print(s)
     # 示例: 简单回调, 把所有 \kf 改为 \k
     # lddcAssToKaraokeAss("test.ass", "output.ass")

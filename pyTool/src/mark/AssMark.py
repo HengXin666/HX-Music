@@ -178,7 +178,16 @@ class AssMark:
                 # 然后, 把他们进行二次对齐
                 newMarkList = _MatchPronunciation.matchPronunciation(markList)
                 if (newMarkList != markList):
-                    res.append(AssMark._doMark("".join([_.str for _ in kfList]), newMarkList, kfList))
+                    flag = True
+                    # https://github.com/HengXin666/HX-Music/issues/2
+                    # 状态机报错: / 0
+                    # 一ヶ月 被认为是 汉字 + 日语 + 汉字. 但是因为这个是惯用写法 ヶ 没有等价对应. 导致 bug
+                    for tk in newMarkList:
+                        if (len(tk[1]) == 0):
+                            res.append(AssMark._markKanJi(kfList[0], mark))
+                            flag = False
+                    if (flag):
+                        res.append(AssMark._doMark("".join([_.str for _ in kfList]), newMarkList, kfList))
                 else:
                     # 如: |飢|え|た 　 => (飢えた, まえた)
                     # 如: |学|校|生|活 => ('学校生活', 'がっこうせいかつ')
