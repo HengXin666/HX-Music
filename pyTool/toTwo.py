@@ -13,4 +13,4 @@ lua = KaRaOKAss()
 # callSetKaraokeStyleLua(assFile, outputFile, 'orig')
 
 # 应用卡拉ok模板
-callApplyKaraokeTemplateLua(outputFile, outputFile)
+callApplyKaraokeTemplateLua(assFile, outputFile)
